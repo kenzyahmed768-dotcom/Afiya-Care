@@ -1,57 +1,55 @@
 require("dotenv").config();
-const express = require("express"); // Missing in your code
+const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
+const connectDB = require("./config/db");
 
 const app = express();
 
-// Middleware
-app.use(cors({ origin: "http://localhost:3000" })); // Frontend URL
-app.use(express.json()); // Parse JSON bodies
+app.use(cors());
+app.use(express.json());
 
-// Connect MongoDB
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected ✅"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+connectDB();
 
-// User Schema
-const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+
+const User = mongoose.model(
+  "User",
+  new mongoose.Schema({
+    email: String,
+    password: String,
+  })
+);
+
+
+app.get("/", (req, res) => {
+  res.send("Backend is running");
 });
 
-const User = mongoose.model("User", userSchema);
 
-// Register Route
 app.post("/register", async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    // Validate input
-    if (!email || !password)
-      return res.status(400).json({ message: "Please fill all fields" });
+  const userExists = await User.findOne({ email });
+  if (userExists) return res.json({ message: "User already exists" });
 
-    // Check if user exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser)
-      return res.status(400).json({ message: "User already exists ❌" });
+  const hashed = await bcrypt.hash(password, 10);
+  await User.create({ email, password: hashed });
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
-    const newUser = new User({ email, password: hashedPassword });
-    await newUser.save();
-
-    res.status(201).json({ message: "Account created successfully ✅" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
+  res.json({ message: "Registered successfully" });
 });
 
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT} 🚀`));
+
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) return res.json({ message: "Invalid email or password" });
+
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) return res.json({ message: "Invalid email or password" });
+
+  res.json({ message: "Login successful" });
+});
+
+app.listen(5000, () => console.log("Server running on port 5000"));
