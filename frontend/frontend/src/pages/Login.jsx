@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "./style/login.css";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -21,9 +22,8 @@ function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        // Backend currently doesn't return a token, you can store user email instead
         localStorage.setItem("userEmail", email);
-        navigate("/"); // redirect to homepage
+        navigate("/");
       } else {
         setError(data.message || "Invalid credentials");
       }
@@ -34,17 +34,17 @@ function Login() {
   };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "0 auto", padding: "20px" }}>
+    <div className="login-wrapper">
       <h2>Login</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
+      {error && <p className="login-error">{error}</p>}
+      <form onSubmit={handleSubmit} className="login-form">
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          style={{ display: "block", width: "100%", marginBottom: "10px", padding: "8px" }}
+          className="login-input"
         />
         <input
           type="password"
@@ -52,15 +52,17 @@ function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ display: "block", width: "100%", marginBottom: "10px", padding: "8px" }}
+          className="login-input"
         />
-        <button
-          type="submit"
-          style={{ padding: "10px 20px", cursor: "pointer", background: "#1A4FA0", color: "#fff", border: "none", borderRadius: "4px" }}
-        >
+        <a href="/forgot-password" className="login-forgot">Forgot password?</a>
+        <button type="submit" className="login-btn">
           Login
         </button>
       </form>
+      <div className="login-divider"><span>or</span></div>
+      <button className="login-btn-register" onClick={() => navigate("/register")}>
+        Create an account
+      </button>
     </div>
   );
 }

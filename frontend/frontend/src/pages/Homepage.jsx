@@ -1,25 +1,24 @@
 // src/pages/Homepage.jsx
 import "./style/Homepage.css"; // we’ll put your CSS here
-
+import Logo from "../images/logo.jpeg";
 function Homepage() {
   return (
     <>
       {/* NAV */}
-      <nav>
-        <a href="#" className="logo">
-          <div className="logo-icon">AC</div>
-          <div className="logo-text">AFIYA<span>CARE</span></div>
-        </a>
-        <ul className="nav-links">
-          <li><a href="#">Home</a></li>
-          <li><a href="#">About us</a></li>
-          <li><a href="#">Join us</a></li>
-          <li><a href="#">Booking</a></li>
-          <li><a href="#">Services</a></li>
-          <li><a href="#">Blog</a></li>
-          <li><a href="#" className="btn-nav">Book An Appointment</a></li>
-        </ul>
-      </nav>
+<nav>
+  <a href="/" className="logo">
+    <img src={Logo} alt="AfiyaCare Logo" className="logo-img" />
+  </a>
+  <ul className="nav-links">
+    <li><a href="#">Home</a></li>
+    <li><a href="#">About us</a></li>
+    <li><a href="#">Join us</a></li>
+    <li><a href="#">Booking</a></li>
+    <li><a href="#">Services</a></li>
+    <li><a href="#">Blog</a></li>
+    <li><a href="#" className="btn-nav">Book An Appointment</a></li>
+  </ul>
+</nav>
 
       {/* HERO */}
       <section className="hero">
@@ -178,6 +177,7 @@ function Homepage() {
         <div className="footer-grid">
           <div className="footer-brand">
             <a href="#" className="logo">
+              <img src={Logo} alt="AfiyaCare Logo" className="logo-img" />
               <div className="logo-icon footer-logo-icon">AC</div>
               <div className="logo-text footer-logo-text">AFIYA<span>CARE</span></div>
             </a>
