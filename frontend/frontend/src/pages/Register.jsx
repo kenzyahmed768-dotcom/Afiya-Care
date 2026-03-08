@@ -5,29 +5,40 @@ import "./style/register.css";
 function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("patient");
+  const [specialty, setSpecialty] = useState("");
+  const [experience, setExperience] = useState("");
   const [message, setMessage] = useState("");
+
   const navigate = useNavigate();
 
   const handleRegister = async () => {
-  try {
-    const res = await fetch("http://localhost:5000/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const res = await fetch("http://localhost:5000/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
 
-    const data = await res.json();
-    setMessage(data.message);
+        body: JSON.stringify({
+          email,
+          password,
+          role,
+          specialty,
+          experience
+        }),
+      });
 
-    if (res.ok) {
-      setTimeout(() => navigate("/login"), 1500);
+      const data = await res.json();
+      setMessage(data.message);
+
+      if (res.ok) {
+        setTimeout(() => navigate("/login"), 1500);
+      }
+
+    } catch (err) {
+      console.error(err);
+      setMessage("Error connecting to backend");
     }
-
-  } catch (err) {
-    console.error(err);
-    setMessage("Error connecting to backend");
-  }
-};
+  };
 
   return (
     <div className="register-wrapper">
@@ -37,12 +48,14 @@ function Register() {
       {message && <p className="register-message">{message}</p>}
 
       <div className="register-form">
+
         <input
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="register-input"
         />
+
         <input
           type="password"
           placeholder="Password"
@@ -50,6 +63,36 @@ function Register() {
           onChange={(e) => setPassword(e.target.value)}
           className="register-input"
         />
+
+        {/* Role Selection */}
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          className="register-input"
+        >
+          <option value="patient">Register as Patient</option>
+          <option value="doctor">Register as Doctor</option>
+        </select>
+
+        {/* Doctor Fields */}
+        {role === "doctor" && (
+          <>
+            <input
+              placeholder="Specialty"
+              value={specialty}
+              onChange={(e) => setSpecialty(e.target.value)}
+              className="register-input"
+            />
+
+            <input
+              type="number"
+              placeholder="Years of Experience"
+              value={experience}
+              onChange={(e) => setExperience(e.target.value)}
+              className="register-input"
+            />
+          </>
+        )}
 
         <button onClick={handleRegister} className="register-btn">
           Register

@@ -1,5 +1,4 @@
 require("dotenv").config();
-
 const express    = require("express");
 const mongoose   = require("mongoose");
 const cors       = require("cors");
@@ -8,26 +7,34 @@ const nodemailer = require("nodemailer");
 const crypto     = require("crypto");
 
 const app = express();
-
-// ── Middleware ──
 app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 
-// ── MongoDB connection ──
+// Connect to MongoDB
 const connectDB = require("./config/db");
 connectDB();
 
-// ── User Model ──
+// -----------------
+// User model
+// -----------------
 const userSchema = new mongoose.Schema({
-  email:            { type: String, required: true, unique: true },
-  password:         { type: String, required: true },
-  resetToken:       { type: String },
-  resetTokenExpiry: { type: Date },
+  name: String,
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, enum: ["patient", "doctor", "admin"], required: true },
+  status: { type: String, enum: ["pending", "approved"], default: "approved" },
+  specialty: String,
+  experience: Number,
+  certificate: String,
+  resetToken: String,
+  resetTokenExpiry: Date,
 });
 
 const User = mongoose.model("User", userSchema);
 
-// ── Nodemailer ──
+// -----------------
+// Nodemailer setup
+// -----------------
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -36,78 +43,84 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// ─────────────────────────────────────────────
-// POST /register
-// ─────────────────────────────────────────────
+// -----------------
+// Register route
+// -----------------
 app.post("/register", async (req, res) => {
-  const { email, password } = req.body;
-
   try {
+    const { name, email, password, role, specialty, experience } = req.body;
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const salt           = await bcrypt.genSalt(10);
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = new User({ email, password: hashedPassword });
-    await newUser.save();
+    // Set status pending for doctors
+    const status = role === "doctor" ? "pending" : "approved";
 
-    res.json({ message: "User registered successfully!" });
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      specialty: role === "doctor" ? specialty : undefined,
+      experience: role === "doctor" ? experience : undefined,
+      status
+    });
+
+    await newUser.save();
+    res.json({ message: "Registered successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// ─────────────────────────────────────────────
-// POST /login
-// ─────────────────────────────────────────────
+// -----------------
+// Login route
+// -----------------
 app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-
   try {
-    const emailNormalized = email.trim().toLowerCase();
-    const user            = await User.findOne({ email: emailNormalized });
+    const { email, password } = req.body;
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
 
-    if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
+    if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+
+    // Block pending doctors
+    if (user.role === "doctor" && user.status === "pending") {
+      return res.json({ message: "Waiting for admin approval" });
     }
 
-    res.json({ message: "Login successful!" });
+    res.json({ message: "Login successful", role: user.role });
   } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ message: "Server error, please try again" });
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-// ─────────────────────────────────────────────
-// POST /forgot-password
-// ─────────────────────────────────────────────
+// -----------------
+// Forgot password
+// -----------------
 app.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
-
-  if (!email) {
-    return res.status(400).json({ message: "Email is required." });
-  }
+  if (!email) return res.status(400).json({ message: "Email is required" });
 
   try {
     const user = await User.findOne({ email });
-
-    if (!user) {
+    if (!user)
       return res.status(200).json({
         message: "If that email exists, a reset link has been sent.",
       });
-    }
 
     const token  = crypto.randomBytes(32).toString("hex");
-    const expiry = Date.now() + 1000 * 60 * 60; // 1 hour
+    const expiry = Date.now() + 1000 * 60 * 60;
 
     user.resetToken       = token;
     user.resetTokenExpiry = expiry;
@@ -116,72 +129,54 @@ app.post("/forgot-password", async (req, res) => {
     const resetURL = `${process.env.CLIENT_URL}/reset-password/${token}`;
 
     await transporter.sendMail({
-      from:    `"Your App" <${process.env.EMAIL_USER}>`,
-      to:      email,
+      from: `"Your App" <${process.env.EMAIL_USER}>`,
+      to: email,
       subject: "Password Reset Request",
-      html: `
-        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-          <h2 style="color: #0c2a4a;">Reset your password</h2>
-          <p style="color: #555;">Click the button below to set a new password. This link expires in <strong>1 hour</strong>.</p>
-          <a href="${resetURL}"
-             style="display:inline-block; margin-top:16px; padding:12px 28px;
-                    background:#0ea5e9; color:#fff; text-decoration:none;
-                    border-radius:8px; font-weight:500;">
-            Reset Password
-          </a>
-          <p style="margin-top:24px; font-size:12px; color:#999;">
-            If you didn't request this, you can safely ignore this email.
-          </p>
-        </div>
-      `,
+      html: `<p>Click here to reset your password: <a href="${resetURL}">${resetURL}</a></p>`,
     });
 
     return res.status(200).json({
       message: "If that email exists, a reset link has been sent.",
     });
   } catch (err) {
-    console.error("Forgot password error:", err);
-    return res.status(500).json({ message: "Server error. Please try again." });
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
-// ─────────────────────────────────────────────
-// POST /reset-password/:token
-// ─────────────────────────────────────────────
+// -----------------
+// Reset password
+// -----------------
 app.post("/reset-password/:token", async (req, res) => {
-  const { token }    = req.params;
+  const { token } = req.params;
   const { password } = req.body;
-
-  if (!password) {
-    return res.status(400).json({ message: "New password is required." });
-  }
+  if (!password) return res.status(400).json({ message: "New password required" });
 
   try {
     const user = await User.findOne({
-      resetToken:       token,
+      resetToken: token,
       resetTokenExpiry: { $gt: Date.now() },
     });
 
-    if (!user) {
-      return res.status(400).json({
-        message: "Reset link is invalid or has expired. Please request a new one.",
-      });
-    }
+    if (!user)
+      return res.status(400).json({ message: "Reset link invalid or expired" });
 
-    const hashed          = await bcrypt.hash(password, 12);
-    user.password         = hashed;
-    user.resetToken       = undefined;
+    const hashed = await bcrypt.hash(password, 12);
+    user.password = hashed;
+    user.resetToken = undefined;
     user.resetTokenExpiry = undefined;
     await user.save();
 
-    return res.status(200).json({ message: "Password reset successfully!" });
+    return res.status(200).json({ message: "Password reset successfully" });
   } catch (err) {
-    console.error("Reset password error:", err);
-    return res.status(500).json({ message: "Server error. Please try again." });
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
-// ── Start server ──
+// -----------------
+// Start server
+// -----------------
 app.listen(process.env.PORT || 5000, () => {
   console.log(`Server running on port ${process.env.PORT || 5000}`);
 });
