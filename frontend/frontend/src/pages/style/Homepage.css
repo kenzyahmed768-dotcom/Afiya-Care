@@ -45,21 +45,12 @@ nav {
   box-shadow: 0 2px 16px rgba(11, 31, 75, 0.06);
 }
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-}
-
 
 .logo-img {
   width: 75px;
   height: 75px;
   object-fit: contain;
 }
-
-
 
 
 .nav-links {
