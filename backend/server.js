@@ -2,7 +2,15 @@ require("dotenv").config();
 const express    = require("express");
 const mongoose   = require("mongoose");
 const cors       = require("cors");
-const bcrypt     = require("bcryptjs");
+const bcrypt = require("bcryptjs");
+
+async function hashPassword() {
+  const salt = await bcrypt.genSalt(10);
+  const hashed = await bcrypt.hash("123456", salt); // your desired password
+  console.log(hashed);
+}
+
+hashPassword();
 const nodemailer = require("nodemailer");
 const crypto     = require("crypto");
 
