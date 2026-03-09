@@ -19,7 +19,7 @@ connectDB();
 // -----------------
 // Import real User model
 // -----------------
-const User = require("./models/User"); // Make sure path is correct
+const User = require("./models/user"); // Make sure path is correct
 
 // -----------------
 // Nodemailer setup
