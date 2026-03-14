@@ -9,30 +9,40 @@ function Login() {
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    try {
-      const response = await fetch("http://localhost:5000/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+  try {
+    const response = await fetch("http://localhost:5000/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (response.ok) {
-        localStorage.setItem("userEmail", email);
-        navigate("/");
+    if (response.ok) {
+      // ✅ Save token and role
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("userEmail", email);
+
+      // ✅ Redirect based on role
+      if (data.role === "admin") {
+        navigate("/admin");
+      } else if (data.role === "doctor") {
+        navigate("/doctor");
       } else {
-        setError(data.message || "Invalid credentials");
+        navigate("/");
       }
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("Server error. Please try again.");
+    } else {
+      setError(data.message || "Invalid credentials");
     }
-  };
-
+  } catch (err) {
+    console.error("Login error:", err);
+    setError("Server error. Please try again.");
+  }
+};
   return (
     <div className="login-wrapper">
       <h2>Login</h2>

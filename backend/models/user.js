@@ -4,6 +4,11 @@ const userSchema = new mongoose.Schema({
   name: String,
   email: String,
   password: String,
+photo:      { type: String },
+bio:        { type: String },
+phone:      { type: String },
+resetToken: { type: String },
+resetTokenExpiry: { type: Date },
 
   role: {
     type: String,

@@ -1,24 +1,110 @@
 // src/pages/Homepage.jsx
-import "./style/Homepage.css"; // we’ll put your CSS here
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import "./style/Homepage.css";
 import Logo from "../images/logo.jpeg";
+
 function Homepage() {
+  const [user, setUser] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role  = localStorage.getItem("role");
+    const name  = localStorage.getItem("userName");
+    if (token && role) setUser({ role, name });
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target))
+        setDropdownOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleDashboard = () => {
+    setDropdownOpen(false);
+    if (user.role === "admin")   navigate("/admin");
+    else if (user.role === "doctor")  navigate("/doctor");
+    else navigate("/patient");
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userEmail");
+    setUser(null);
+    setDropdownOpen(false);
+  };
+
   return (
     <>
       {/* NAV */}
-<nav>
-  <a href="/" className="logo">
-    <img src={Logo} alt="AfiyaCare Logo" className="logo-img" />
-  </a>
-  <ul className="nav-links">
-    <li><a href="#">Home</a></li>
-    <li><a href="#">About us</a></li>
-    <li><a href="#">Join us</a></li>
-    <li><a href="#">Booking</a></li>
-    <li><a href="#">Services</a></li>
-    <li><a href="#">Blog</a></li>
-    <li><a href="#" className="btn-nav">Book An Appointment</a></li>
-  </ul>
-</nav>
+      <nav>
+        <a href="/" className="logo">
+          <img src={Logo} alt="AfiyaCare Logo" className="logo-img" />
+        </a>
+        <ul className="nav-links">
+          <li><a href="#">Home</a></li>
+          <li><a href="#">About us</a></li>
+          <li><a href="#">Join us</a></li>
+          <li><a href="#">Booking</a></li>
+          <li><a href="#">Services</a></li>
+          <li><a href="#">Blog</a></li>
+
+          {user ? (
+            /* ── Logged in: show profile icon ── */
+            <li className="profile-nav-item" ref={dropdownRef}>
+              <button
+                className="profile-icon-btn"
+                onClick={() => setDropdownOpen((o) => !o)}
+                title={user.name}
+              >
+                <div className="profile-icon-avatar">
+                  {user.name?.charAt(0).toUpperCase() || "U"}
+                </div>
+                <span className="profile-icon-name">{user.name?.split(" ")[0]}</span>
+                <svg className={`profile-chevron ${dropdownOpen ? "open" : ""}`} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+
+              {dropdownOpen && (
+                <div className="profile-dropdown">
+                  <div className="profile-dropdown-header">
+                    <div className="profile-dropdown-avatar">
+                      {user.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="profile-dropdown-name">{user.name}</div>
+                      <div className={`profile-dropdown-role ${user.role}`}>{user.role}</div>
+                    </div>
+                  </div>
+                  <div className="profile-dropdown-divider" />
+                  <button className="profile-dropdown-item" onClick={handleDashboard}>
+                    <span>🏠</span> My Dashboard
+                  </button>
+                  <div className="profile-dropdown-divider" />
+                  <button className="profile-dropdown-item logout" onClick={handleLogout}>
+                    <span>🚪</span> Logout
+                  </button>
+                </div>
+              )}
+            </li>
+          ) : (
+            /* ── Not logged in: show login button ── */
+            <li>
+              <a href="/login" className="btn-nav">Login</a>
+            </li>
+          )}
+        </ul>
+      </nav>
 
       {/* HERO */}
       <section className="hero">
@@ -137,8 +223,7 @@ function Homepage() {
             <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&q=80" alt="Exercises" />
             <div className="blog-card-body">
               <h3>5 Physiotherapy Exercises You Can Do at Home</h3>
-              <a href="#" className="blog-read">
-                Read more
+              <a href="#" className="blog-read">Read more
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
@@ -149,8 +234,7 @@ function Homepage() {
             <img src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600&q=80" alt="Neural" />
             <div className="blog-card-body">
               <h3>The Science Behind Physiotherapy and Neural Recovery</h3>
-              <a href="#" className="blog-read">
-                Read more
+              <a href="#" className="blog-read">Read more
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
@@ -161,8 +245,7 @@ function Homepage() {
             <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600&q=80" alt="Pain" />
             <div className="blog-card-body">
               <h3>Understanding Pain: When to See a Specialist</h3>
-              <a href="#" className="blog-read">
-                Read more
+              <a href="#" className="blog-read">Read more
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
@@ -181,7 +264,7 @@ function Homepage() {
               <div className="logo-icon footer-logo-icon">AC</div>
               <div className="logo-text footer-logo-text">AFIYA<span>CARE</span></div>
             </a>
-            <p>At Afiya Care, we provide expert physiotherapy services designed to restore movement, reduce pain, and support overall wellness. Our dedicated team combines personalized care with the latest techniques to help every patient achieve their recovery goals.</p>
+            <p>At Afiya Care, we provide expert physiotherapy services designed to restore movement, reduce pain, and support overall wellness.</p>
           </div>
           <div className="footer-col">
             <h5>Quick Links</h5>
@@ -198,8 +281,7 @@ function Homepage() {
             <h5>Services</h5>
             <ul>
               <li><a href="#">Orthopedic Physiotherapy</a></li>
-              <li><a href="#">Sports Injury</a></li>
-              <li><a href="#">Physiotherapy</a></li>
+              <li><a href="#">Sports Injury Physiotherapy</a></li>
               <li><a href="#">Surgical Rehabilitation</a></li>
               <li><a href="#">Cardiac Rehab</a></li>
               <li><a href="#">Elderly Care</a></li>
@@ -222,9 +304,7 @@ function Homepage() {
         </div>
         <div className="footer-bottom">
           <div className="social-links">
-            <a href="#">f</a>
-            <a href="#">t</a>
-            <a href="#">in</a>
+            <a href="#">f</a><a href="#">t</a><a href="#">in</a>
           </div>
           <p>©️ 2025 Afiya Care. All Rights Reserved.</p>
         </div>
