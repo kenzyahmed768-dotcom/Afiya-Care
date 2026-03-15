@@ -53,6 +53,7 @@ connectDB();
 const User        = require("./models/user");
 const Appointment = require("./models/appointment");
 const Message     = require("./models/message");
+const Application = require("./models/application");
 
 // -----------------
 // Nodemailer
@@ -103,8 +104,8 @@ app.post("/login", async (req, res) => {
     const user = await User.findOne({ email: email.trim().toLowerCase() });
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
     if (!await bcrypt.compare(password, user.password)) return res.status(400).json({ message: "Invalid credentials" });
-    if (user.role === "doctor" && user.status === "pending")   return res.status(403).json({ message: "Your account is pending admin approval" });
-    if (user.role === "doctor" && user.status === "rejected")  return res.status(403).json({ message: "Your account has been rejected" });
+    if (user.role === "doctor" && user.status === "pending")  return res.status(403).json({ message: "Your account is pending admin approval" });
+    if (user.role === "doctor" && user.status === "rejected") return res.status(403).json({ message: "Your account has been rejected" });
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1d" });
     res.json({ message: "Login successful", token, role: user.role, name: user.name });
   } catch (err) { console.error(err); res.status(500).json({ message: "Server error" }); }
@@ -167,7 +168,7 @@ app.get("/admin/overview", authMiddleware, adminMiddleware, async (req, res) => 
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 
-app.get("/admin/pending-doctors",   authMiddleware, adminMiddleware, async (req, res) => {
+app.get("/admin/pending-doctors", authMiddleware, adminMiddleware, async (req, res) => {
   try { res.json(await User.find({ role: "doctor", status: "pending" }).select("-password")); }
   catch (err) { res.status(500).json({ message: "Server error" }); }
 });
@@ -216,6 +217,44 @@ app.get("/admin/schedules/patients", authMiddleware, adminMiddleware, async (req
   try {
     res.json(await Appointment.find()
       .populate("patient", "name email").populate("doctor", "name email specialty").sort({ date: 1 }));
+  } catch (err) { res.status(500).json({ message: "Server error" }); }
+});
+
+// ======================
+// APPLICATION ROUTES
+// ======================
+app.post("/applications", async (req, res) => {
+  try {
+    const { firstName, lastName, email, phone, role, experience, message } = req.body;
+    if (!firstName || !lastName || !email || !role)
+      return res.status(400).json({ message: "Please fill in all required fields." });
+    const application = await new Application({ firstName, lastName, email, phone, role, experience, message }).save();
+    res.status(201).json({ message: "Application submitted successfully!", application });
+  } catch (err) { console.error(err); res.status(500).json({ message: "Server error" }); }
+});
+
+app.get("/admin/applications", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    res.json(await Application.find().sort({ createdAt: -1 }));
+  } catch (err) { res.status(500).json({ message: "Server error" }); }
+});
+
+app.patch("/admin/applications/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!["pending", "reviewed", "accepted", "rejected"].includes(status))
+      return res.status(400).json({ message: "Invalid status" });
+    const application = await Application.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    if (!application) return res.status(404).json({ message: "Application not found" });
+    res.json({ message: `Application marked as ${status}`, application });
+  } catch (err) { res.status(500).json({ message: "Server error" }); }
+});
+
+app.delete("/admin/applications/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const application = await Application.findByIdAndDelete(req.params.id);
+    if (!application) return res.status(404).json({ message: "Application not found" });
+    res.json({ message: "Application deleted" });
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 
@@ -304,6 +343,44 @@ app.get("/doctor/patients", authMiddleware, doctorMiddleware, async (req, res) =
       }
     }
     res.json(patients);
+  } catch (err) { res.status(500).json({ message: "Server error" }); }
+});
+// ======================
+// PATIENT ROUTES
+// Add these after your doctor routes in server.js
+// ======================
+
+app.get("/patient/profile", authMiddleware, async (req, res) => {
+  try {
+    const patient = await User.findById(req.user.id).select("-password");
+    if (!patient) return res.status(404).json({ message: "Not found" });
+    res.json(patient);
+  } catch (err) { res.status(500).json({ message: "Server error" }); }
+});
+
+app.patch("/patient/profile", authMiddleware, async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+    const patient = await User.findByIdAndUpdate(
+      req.user.id, { name, phone }, { new: true }
+    ).select("-password");
+    res.json({ message: "Profile updated", patient });
+  } catch (err) { res.status(500).json({ message: "Server error" }); }
+});
+
+app.post("/patient/profile/photo", authMiddleware, upload.single("photo"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+    const photoUrl = `/uploads/profiles/${req.file.filename}`;
+    const patient = await User.findByIdAndUpdate(req.user.id, { photo: photoUrl }, { new: true }).select("-password");
+    res.json({ message: "Photo updated", photo: patient.photo });
+  } catch (err) { res.status(500).json({ message: "Server error" }); }
+});
+
+app.get("/patient/appointments", authMiddleware, async (req, res) => {
+  try {
+    res.json(await Appointment.find({ patient: req.user.id })
+      .populate("doctor", "name specialty").sort({ date: -1 }));
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 

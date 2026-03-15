@@ -6,6 +6,8 @@ import ForgotPassword from "./pages/Forgetpassword";
 import ResetPassword from "./pages/Resetpassword";
 import AdminDashboard from "./pages/admindashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
+import JoinUs from "./pages/JoinUs";
+import PatientDashboard from "./pages/PatientDashboard";
 
 function App() {
   return (
@@ -18,6 +20,8 @@ function App() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/doctor" element={<DoctorDashboard />} />
+        <Route path="/join" element={<JoinUs />} />
+        <Route path="/patient" element={<PatientDashboard />} />
       </Routes>
     </Router>
   );

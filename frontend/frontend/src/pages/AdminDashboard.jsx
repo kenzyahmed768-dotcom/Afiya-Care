@@ -11,6 +11,7 @@ export default function AdminDashboard() {
   const [doctorSchedules, setDoctorSchedules] = useState([]);
   const [patientSchedules, setPatientSchedules] = useState([]);
   const [appointments, setAppointments] = useState([]);
+  const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
 
@@ -22,27 +23,36 @@ export default function AdminDashboard() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const get = async (path) => {
-    const res = await fetch(`${API}${path}`, { headers });
-    return res.json();
+  // safe fetch — never throws, returns null on failure
+  const safeFetch = async (path) => {
+    try {
+      const res = await fetch(`${API}${path}`, { headers });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
   };
 
   const fetchAll = async () => {
     try {
-      const [ov, pending, doctors, dSched, pSched, appts] = await Promise.all([
-        get("/admin/overview"),
-        get("/admin/pending-doctors"),
-        get("/admin/all-doctors"),
-        get("/admin/schedules/doctors"),
-        get("/admin/schedules/patients"),
-        get("/admin/appointments"),
+      const [ov, pending, doctors, dSched, pSched, appts, apps] = await Promise.all([
+        safeFetch("/admin/overview"),
+        safeFetch("/admin/pending-doctors"),
+        safeFetch("/admin/all-doctors"),
+        safeFetch("/admin/schedules/doctors"),
+        safeFetch("/admin/schedules/patients"),
+        safeFetch("/admin/appointments"),
+        safeFetch("/admin/applications"),
       ]);
-      setOverview(ov);
-      setPendingDoctors(Array.isArray(pending) ? pending : []);
-      setAllDoctors(Array.isArray(doctors) ? doctors : []);
-      setDoctorSchedules(Array.isArray(dSched) ? dSched : []);
-      setPatientSchedules(Array.isArray(pSched) ? pSched : []);
-      setAppointments(Array.isArray(appts) ? appts : []);
+
+      if (ov)     setOverview(ov);
+      setPendingDoctors(Array.isArray(pending)  ? pending  : []);
+      setAllDoctors(Array.isArray(doctors)      ? doctors  : []);
+      setDoctorSchedules(Array.isArray(dSched)  ? dSched   : []);
+      setPatientSchedules(Array.isArray(pSched) ? pSched   : []);
+      setAppointments(Array.isArray(appts)      ? appts    : []);
+      setApplications(Array.isArray(apps)       ? apps     : []);
     } catch {
       showToast("Failed to load data", "error");
     } finally {
@@ -55,8 +65,7 @@ export default function AdminDashboard() {
   const handleDoctorAction = async (id, status) => {
     try {
       const res = await fetch(`${API}/admin/doctor/${id}`, {
-        method: "PATCH", headers,
-        body: JSON.stringify({ status }),
+        method: "PATCH", headers, body: JSON.stringify({ status }),
       });
       const data = await res.json();
       if (res.ok) { showToast(`Doctor ${status}`); fetchAll(); }
@@ -67,13 +76,33 @@ export default function AdminDashboard() {
   const handleApptStatus = async (id, status) => {
     try {
       const res = await fetch(`${API}/admin/appointments/${id}`, {
-        method: "PATCH", headers,
-        body: JSON.stringify({ status }),
+        method: "PATCH", headers, body: JSON.stringify({ status }),
       });
       const data = await res.json();
       if (res.ok) { showToast("Appointment updated"); fetchAll(); }
       else showToast(data.message, "error");
     } catch { showToast("Action failed", "error"); }
+  };
+
+  const handleApplicationStatus = async (id, status) => {
+    try {
+      const res = await fetch(`${API}/admin/applications/${id}`, {
+        method: "PATCH", headers, body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (res.ok) { showToast(`Application marked as ${status}`); fetchAll(); }
+      else showToast(data.message, "error");
+    } catch { showToast("Action failed", "error"); }
+  };
+
+  const handleDeleteApplication = async (id) => {
+    if (!window.confirm("Delete this application?")) return;
+    try {
+      const res = await fetch(`${API}/admin/applications/${id}`, { method: "DELETE", headers });
+      const data = await res.json();
+      if (res.ok) { showToast("Application deleted"); fetchAll(); }
+      else showToast(data.message, "error");
+    } catch { showToast("Delete failed", "error"); }
   };
 
   const handleLogout = () => {
@@ -82,7 +111,9 @@ export default function AdminDashboard() {
     window.location.href = "/login";
   };
 
-  const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+  const fmtDate = (d) => d
+    ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : "—";
 
   if (loading) return (
     <div className="loader-screen">
@@ -91,20 +122,22 @@ export default function AdminDashboard() {
     </div>
   );
 
+  const pendingApplications = applications.filter(a => a.status === "pending").length;
+
   const navItems = [
-    { key: "overview",         icon: "📊", label: "Overview" },
-    { key: "pending",          icon: "⏳", label: "Pending Doctors", badge: pendingDoctors.length },
-    { key: "doctors",          icon: "👨‍⚕️", label: "All Doctors" },
-    { key: "appointments",     icon: "📅", label: "Appointments" },
-    { key: "doctor-schedules", icon: "🗓️", label: "Doctor Schedules" },
-    { key: "patient-schedules",icon: "🧑‍🦯", label: "Patient Schedules" },
+    { key: "overview",          icon: "📊", label: "Overview" },
+    { key: "pending",           icon: "⏳", label: "Pending Doctors",  badge: pendingDoctors.length },
+    { key: "doctors",           icon: "👨‍⚕️", label: "All Doctors" },
+    { key: "appointments",      icon: "📅", label: "Appointments" },
+    { key: "doctor-schedules",  icon: "🗓️", label: "Doctor Schedules" },
+    { key: "patient-schedules", icon: "🧑‍🦯", label: "Patient Schedules" },
+    { key: "applications",      icon: "📋", label: "Applications", badge: pendingApplications },
   ];
 
   const tabTitle = navItems.find(n => n.key === activeTab)?.label || "";
 
   return (
     <div className="admin-layout">
-      {/* ── SIDEBAR ── */}
       <aside className="sidebar">
         <div className="sidebar-top">
           <div className="sidebar-brand">
@@ -115,7 +148,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-
         <div className="sidebar-body">
           <span className="nav-section-label">Navigation</span>
           {navItems.map(({ key, icon, label, badge }) => (
@@ -130,7 +162,6 @@ export default function AdminDashboard() {
             </button>
           ))}
         </div>
-
         <div className="sidebar-footer">
           <button className="logout-btn" onClick={handleLogout}>
             <span className="nav-icon">🚪</span>
@@ -139,7 +170,6 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* ── MAIN ── */}
       <main className="main-content">
         <div className="topbar">
           <div className="topbar-left">
@@ -170,9 +200,7 @@ export default function AdminDashboard() {
                 <div><div className="stat-value">{overview.totalAppointments}</div><div className="stat-label">Total Appointments</div></div>
               </div>
             </div>
-
             <div className="overview-grid">
-              {/* Appointment breakdown */}
               <div className="section-card">
                 <div className="section-header">
                   <div>
@@ -188,8 +216,7 @@ export default function AdminDashboard() {
                     { label: "Cancelled", key: "cancelledAppointments", cls: "cancelled" },
                   ].map(({ label, key, cls }) => {
                     const count = overview[key] || 0;
-                    const pct = overview.totalAppointments > 0
-                      ? (count / overview.totalAppointments) * 100 : 0;
+                    const pct = overview.totalAppointments > 0 ? (count / overview.totalAppointments) * 100 : 0;
                     return (
                       <div className="appt-stat-row" key={key}>
                         <span className="appt-stat-label">{label}</span>
@@ -202,8 +229,6 @@ export default function AdminDashboard() {
                   })}
                 </div>
               </div>
-
-              {/* Recent registrations */}
               <div className="section-card">
                 <div className="section-header">
                   <div>
@@ -216,9 +241,7 @@ export default function AdminDashboard() {
                 ) : (
                   overview.recentRegistrations?.map((u) => (
                     <div className="reg-item" key={u._id}>
-                      <div className={`avatar ${u.role === "doctor" ? "" : "green"}`}>
-                        {u.name?.charAt(0).toUpperCase()}
-                      </div>
+                      <div className={`avatar ${u.role === "doctor" ? "" : "green"}`}>{u.name?.charAt(0).toUpperCase()}</div>
                       <div className="reg-info">
                         <div className="reg-name">{u.name}</div>
                         <div className="reg-email">{u.email}</div>
@@ -282,9 +305,7 @@ export default function AdminDashboard() {
             ) : (
               <table className="data-table">
                 <thead>
-                  <tr>
-                    <th>Name</th><th>Email</th><th>Specialty</th><th>Experience</th><th>Status</th><th>Actions</th>
-                  </tr>
+                  <tr><th>Name</th><th>Email</th><th>Specialty</th><th>Experience</th><th>Status</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                   {allDoctors.map((doc) => (
@@ -328,9 +349,7 @@ export default function AdminDashboard() {
             ) : (
               <table className="data-table">
                 <thead>
-                  <tr>
-                    <th>Patient</th><th>Doctor</th><th>Date</th><th>Time</th><th>Reason</th><th>Status</th><th>Update</th>
-                  </tr>
+                  <tr><th>Patient</th><th>Doctor</th><th>Date</th><th>Time</th><th>Reason</th><th>Status</th><th>Update</th></tr>
                 </thead>
                 <tbody>
                   {appointments.map((a) => (
@@ -342,11 +361,7 @@ export default function AdminDashboard() {
                       <td>{a.reason || "—"}</td>
                       <td><span className={`pill ${a.status}`}>{a.status}</span></td>
                       <td>
-                        <select
-                          className="status-select"
-                          value={a.status}
-                          onChange={(e) => handleApptStatus(a._id, e.target.value)}
-                        >
+                        <select className="status-select" value={a.status} onChange={(e) => handleApptStatus(a._id, e.target.value)}>
                           <option value="pending">Pending</option>
                           <option value="confirmed">Confirmed</option>
                           <option value="completed">Completed</option>
@@ -375,9 +390,7 @@ export default function AdminDashboard() {
             ) : (
               <table className="data-table">
                 <thead>
-                  <tr>
-                    <th>Doctor</th><th>Specialty</th><th>Patient</th><th>Date</th><th>Time</th><th>Status</th>
-                  </tr>
+                  <tr><th>Doctor</th><th>Specialty</th><th>Patient</th><th>Date</th><th>Time</th><th>Status</th></tr>
                 </thead>
                 <tbody>
                   {doctorSchedules.map((a) => (
@@ -410,9 +423,7 @@ export default function AdminDashboard() {
             ) : (
               <table className="data-table">
                 <thead>
-                  <tr>
-                    <th>Patient</th><th>Doctor</th><th>Specialty</th><th>Date</th><th>Time</th><th>Reason</th><th>Status</th>
-                  </tr>
+                  <tr><th>Patient</th><th>Doctor</th><th>Specialty</th><th>Date</th><th>Time</th><th>Reason</th><th>Status</th></tr>
                 </thead>
                 <tbody>
                   {patientSchedules.map((a) => (
@@ -424,6 +435,69 @@ export default function AdminDashboard() {
                       <td>{a.time || "—"}</td>
                       <td>{a.reason || "—"}</td>
                       <td><span className={`pill ${a.status}`}>{a.status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+        {/* ── APPLICATIONS ── */}
+        {activeTab === "applications" && (
+          <div className="section-card">
+            <div className="section-header">
+              <div>
+                <div className="section-title">Job Applications</div>
+                <div className="section-sub">{applications.length} total · {pendingApplications} pending</div>
+              </div>
+            </div>
+            {applications.length === 0 ? (
+              <div className="empty-state"><span className="empty-icon">📋</span><p>No applications submitted yet</p></div>
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Applicant</th><th>Email</th><th>Phone</th><th>Role</th>
+                    <th>Experience</th><th>Message</th><th>Applied</th><th>Status</th><th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {applications.map((app) => (
+                    <tr key={app._id}>
+                      <td>
+                        <div className="cell-name">
+                          <div className="avatar" style={{ background: "#6366f1" }}>
+                            {app.firstName?.charAt(0).toUpperCase()}
+                          </div>
+                          {app.firstName} {app.lastName}
+                        </div>
+                      </td>
+                      <td>{app.email}</td>
+                      <td>{app.phone || "—"}</td>
+                      <td>{app.role}</td>
+                      <td>{app.experience || "—"}</td>
+                      <td style={{ maxWidth: 200 }}>
+                        <span title={app.message} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 180 }}>
+                          {app.message || "—"}
+                        </span>
+                      </td>
+                      <td>{fmtDate(app.createdAt)}</td>
+                      <td><span className={`pill ${app.status}`}>{app.status}</span></td>
+                      <td>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                          {app.status === "pending" && (
+                            <button className="btn btn-blue btn-sm" onClick={() => handleApplicationStatus(app._id, "reviewed")}>Review</button>
+                          )}
+                          {app.status !== "accepted" && (
+                            <button className="btn btn-green btn-sm" onClick={() => handleApplicationStatus(app._id, "accepted")}>Accept</button>
+                          )}
+                          {app.status !== "rejected" && (
+                            <button className="btn btn-red btn-sm" onClick={() => handleApplicationStatus(app._id, "rejected")}>Reject</button>
+                          )}
+                          <button className="btn btn-gray btn-sm" onClick={() => handleDeleteApplication(app._id)}>🗑</button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

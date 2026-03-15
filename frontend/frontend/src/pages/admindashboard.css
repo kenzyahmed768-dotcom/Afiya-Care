@@ -477,3 +477,16 @@ body {
   .nav-section-label, .logout-btn span:last-child { display: none; }
   .main-content { margin-left: 64px; }
 }
+/* ---- APPLICATIONS TAB additions ---- */
+
+/* pill statuses for applications */
+.pill.accepted  { background: #dcfce7; color: #15803d; }
+.pill.reviewed  { background: #eff6ff; color: #1d4ed8; }
+
+/* btn-blue — Review button */
+.btn-blue { background: var(--primary); color: white; }
+.btn-blue:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+/* btn-gray — Delete button */
+.btn-gray { background: transparent; color: var(--text-mid); border: 1.5px solid var(--border); }
+.btn-gray:hover { background: #f1f5f9; color: var(--reject); border-color: var(--reject); transform: translateY(-1px); }

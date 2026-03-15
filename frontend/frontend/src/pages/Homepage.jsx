@@ -53,7 +53,7 @@ function Homepage() {
         <ul className="nav-links">
           <li><a href="#">Home</a></li>
           <li><a href="#">About us</a></li>
-          <li><a href="#">Join us</a></li>
+          <li><a href="join">Join us</a></li>
           <li><a href="#">Booking</a></li>
           <li><a href="#">Services</a></li>
           <li><a href="#">Blog</a></li>
