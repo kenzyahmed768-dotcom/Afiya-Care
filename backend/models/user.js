@@ -1,30 +1,26 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  password: String,
-photo:      { type: String },
-bio:        { type: String },
-phone:      { type: String },
-resetToken: { type: String },
-resetTokenExpiry: { type: Date },
+  name:             { type: String },
+  age:              { type: Number },
+  email:            { type: String },
+  password:         { type: String },
+  photo:            { type: String },
+  bio:              { type: String },
+  phone:            { type: String },
+  resetToken:       { type: String },
+  resetTokenExpiry: { type: Date },
 
   role: {
     type: String,
-    enum: ["patient", "doctor","admin"],
-    required: true
+    default: "patient",
   },
 
   status: {
     type: String,
-    enum: ["pending", "approved"],
-    default: "approved"
+    enum: ["pending", "approved", "rejected"],
+    default: "approved",
   },
-
-  specialty: String,
-  experience: Number,
-  certificate: String
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);

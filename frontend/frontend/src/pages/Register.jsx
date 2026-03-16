@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 import "./style/register.css";
 
 function Register() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("patient");
+  const [name, setName]           = useState("");
+  const [age, setAge]             = useState("");
+  const [email, setEmail]         = useState("");
+  const [password, setPassword]   = useState("");
+  const [role, setRole]           = useState("patient");
   const [specialty, setSpecialty] = useState("");
   const [experience, setExperience] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage]     = useState("");
 
   const navigate = useNavigate();
 
@@ -17,14 +19,7 @@ function Register() {
       const res = await fetch("http://localhost:5000/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-
-        body: JSON.stringify({
-          email,
-          password,
-          role,
-          specialty,
-          experience
-        }),
+        body: JSON.stringify({ name, age, email, password, role, specialty, experience }),
       });
 
       const data = await res.json();
@@ -33,7 +28,6 @@ function Register() {
       if (res.ok) {
         setTimeout(() => navigate("/login"), 1500);
       }
-
     } catch (err) {
       console.error(err);
       setMessage("Error connecting to backend");
@@ -50,6 +44,23 @@ function Register() {
       <div className="register-form">
 
         <input
+          placeholder="Full Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="register-input"
+        />
+
+        <input
+          type="number"
+          placeholder="Age"
+          value={age}
+          onChange={(e) => setAge(e.target.value)}
+          className="register-input"
+          min="1"
+          max="120"
+        />
+
+        <input
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -64,7 +75,6 @@ function Register() {
           className="register-input"
         />
 
-        {/* Role Selection */}
         <select
           value={role}
           onChange={(e) => setRole(e.target.value)}
@@ -74,7 +84,6 @@ function Register() {
           <option value="doctor">Register as Doctor</option>
         </select>
 
-        {/* Doctor Fields */}
         {role === "doctor" && (
           <>
             <input
@@ -83,7 +92,6 @@ function Register() {
               onChange={(e) => setSpecialty(e.target.value)}
               className="register-input"
             />
-
             <input
               type="number"
               placeholder="Years of Experience"
