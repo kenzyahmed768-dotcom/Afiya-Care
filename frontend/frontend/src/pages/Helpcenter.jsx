@@ -1,11 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { io } from "socket.io-client";
 import "./style/HelpCenter.css";
 import Logo from "../images/logo.jpeg";
-
-const API = "http://localhost:5000";
-let socket;
 
 /* ── FAQ DATA ─────────────────────────────────────────────── */
 const FAQ = {
@@ -35,7 +31,7 @@ const FAQ = {
 const CONTACT_CHANNELS = [
   { icon: "📞", label: "Phone Call",  value: "+20 12345677",          href: "tel:+2012345677",                     color: "#00b4a2" },
   { icon: "📧", label: "Email",       value: "afiyacare@gmail.com",   href: "mailto:afiyacare@gmail.com",           color: "#3b82f6" },
-  { icon: "💬", label: "WhatsApp",    value: "Chat on WhatsApp",      href: "https://wa.me/201014737320",             color: "#25d366" },
+  { icon: "💬", label: "WhatsApp",    value: "Chat on WhatsApp",      href: "https://wa.me/201014737320",           color: "#25d366" },
   { icon: "📘", label: "Facebook",    value: "AfiyaCare",             href: "https://facebook.com",                 color: "#1877f2" },
   { icon: "📸", label: "Instagram",   value: "@afiyacare",            href: "https://instagram.com",                color: "#e1306c" },
 ];
@@ -48,19 +44,8 @@ export default function HelpCenter() {
   const [user, setUser]                 = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Chat state
-  const [messages, setMessages]     = useState([]);
-  const [chatInput, setChatInput]   = useState("");
-  const [supportId, setSupportId]   = useState(null);
-  const [chatLoading, setChatLoading] = useState(false);
-  const [connected, setConnected]   = useState(false);
-
-  const dropdownRef  = useRef(null);
-  const messagesEnd  = useRef(null);
-  const navigate     = useNavigate();
-
-  const token   = localStorage.getItem("token");
-  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+  const dropdownRef = useRef(null);
+  const navigate    = useNavigate();
 
   /* ── Auth ── */
   useEffect(() => {
@@ -87,61 +72,6 @@ export default function HelpCenter() {
     ["token","role","userName","userEmail"].forEach(k => localStorage.removeItem(k));
     setUser(null); setDropdownOpen(false);
   };
-
-  /* ── Socket + Chat ── */
-  useEffect(() => {
-    if (activeTab !== "chat" || !token) return;
-
-    const userId = JSON.parse(atob(token.split(".")[1])).id;
-
-    // Fetch admin/support user id
-    const initChat = async () => {
-      setChatLoading(true);
-      try {
-        const res  = await fetch(`${API}/support/agent`, { headers });
-        const data = await res.json();
-        if (data?.agentId) {
-          setSupportId(data.agentId);
-          // Load existing messages
-          const msgRes = await fetch(`${API}/chat/${data.agentId}`, { headers });
-          const msgs   = await msgRes.json();
-          setMessages(Array.isArray(msgs) ? msgs : []);
-        }
-      } catch {}
-      finally { setChatLoading(false); }
-    };
-
-    initChat();
-
-    socket = io(API);
-    socket.emit("join", userId);
-    socket.on("connect", () => setConnected(true));
-    socket.on("disconnect", () => setConnected(false));
-
-    socket.on("receiveMessage", (msg) => {
-      setMessages(prev => [...prev, msg]);
-    });
-    socket.on("messageSent", (msg) => {
-      setMessages(prev => [...prev, msg]);
-    });
-
-    return () => { socket?.disconnect(); setConnected(false); };
-  }, [activeTab, token]);
-
-  useEffect(() => {
-    messagesEnd.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const sendMessage = () => {
-    if (!chatInput.trim() || !supportId || !socket) return;
-    const userId = JSON.parse(atob(token.split(".")[1])).id;
-    socket.emit("sendMessage", { senderId: userId, receiverId: supportId, content: chatInput.trim() });
-    setChatInput("");
-  };
-
-  const handleKey = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
-
-  const fmtTime = (d) => d ? new Date(d).toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit" }) : "";
 
   /* ── RENDER ── */
   return (
@@ -192,12 +122,11 @@ export default function HelpCenter() {
         <div className="hc-hero-content">
           <span className="hc-tag">✦ HELP CENTER</span>
           <h1>How Can We<br /><em>Help You?</em></h1>
-          <p>Find answers, get in touch, or chat with our support team — we're here for you.</p>
+          <p>Find answers, get in touch, or browse our FAQ — we're here for you.</p>
           <div className="hc-hero-tabs">
             {[
               { key:"faq",     icon:"❓", label:"FAQ" },
               { key:"contact", icon:"📬", label:"Contact Us" },
-              { key:"chat",    icon:"💬", label:"Live Support" },
             ].map(t => (
               <button
                 key={t.key}
@@ -235,8 +164,8 @@ export default function HelpCenter() {
               <div className="hc-still-stuck">
                 <h4>Still stuck?</h4>
                 <p>Can't find what you're looking for? Our team is ready to help.</p>
-                <button className="hc-btn hc-btn-primary" onClick={() => setActiveTab("chat")}>
-                  Chat with Us
+                <button className="hc-btn hc-btn-primary" onClick={() => setActiveTab("contact")}>
+                  Contact Us
                 </button>
               </div>
             </div>
@@ -298,105 +227,6 @@ export default function HelpCenter() {
           </section>
         )}
 
-        {/* ══ LIVE CHAT ════════════════════════════════════ */}
-        {activeTab === "chat" && (
-          <section className="hc-chat-section">
-            {!token ? (
-              <div className="hc-login-prompt">
-                <div className="hc-login-icon">💬</div>
-                <h3>Login to Access Live Support</h3>
-                <p>You need to be logged in to chat with our support team.</p>
-                <button className="hc-btn hc-btn-primary" onClick={() => navigate("/login")}>Login Now</button>
-              </div>
-            ) : (
-              <div className="hc-chat-wrap">
-                <div className="hc-chat-sidebar">
-                  <div className="hc-chat-agent">
-                    <div className="hc-agent-avatar">AC</div>
-                    <div>
-                      <div className="hc-agent-name">AfiyaCare Support</div>
-                      <div className={`hc-agent-status${connected ? " online" : ""}`}>
-                        <span className="hc-status-dot" />
-                        {connected ? "Online" : "Connecting..."}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="hc-chat-info">
-                    <h4>How we can help</h4>
-                    <ul>
-                      <li>🗓️ Booking issues</li>
-                      <li>💳 Payment queries</li>
-                      <li>👤 Account problems</li>
-                      <li>🔧 Technical support</li>
-                    </ul>
-                  </div>
-                  <div className="hc-chat-tip">
-                    <p>💡 <strong>Tip:</strong> Check our FAQ first — you might find your answer instantly!</p>
-                    <button className="hc-btn hc-btn-outline" onClick={() => setActiveTab("faq")}>View FAQ</button>
-                  </div>
-                </div>
-
-                <div className="hc-chat-main">
-                  <div className="hc-chat-topbar">
-                    <div className="hc-agent-avatar hc-agent-avatar-sm">AC</div>
-                    <div>
-                      <div className="hc-chat-title">AfiyaCare Support</div>
-                      <div className={`hc-agent-status${connected ? " online" : ""}`}>
-                        <span className="hc-status-dot" />{connected ? "Online" : "Connecting..."}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="hc-chat-messages">
-                    {chatLoading ? (
-                      <div className="hc-chat-loading"><div className="hc-spin" /><p>Connecting to support...</p></div>
-                    ) : (
-                      <>
-                        {/* Welcome bubble */}
-                        <div className="hc-msg hc-msg-received">
-                          <div className="hc-msg-bubble">
-                            👋 Hello! Welcome to AfiyaCare Support. How can we help you today?
-                          </div>
-                          <div className="hc-msg-time">AfiyaCare Support</div>
-                        </div>
-
-                        {messages.map((msg, i) => {
-                          const userId = JSON.parse(atob(token.split(".")[1])).id;
-                          const isSent = String(msg.sender?._id || msg.sender) === userId;
-                          return (
-                            <div key={i} className={`hc-msg${isSent ? " hc-msg-sent" : " hc-msg-received"}`}>
-                              <div className="hc-msg-bubble">{msg.content}</div>
-                              <div className="hc-msg-time">{fmtTime(msg.createdAt)}</div>
-                            </div>
-                          );
-                        })}
-                        <div ref={messagesEnd} />
-                      </>
-                    )}
-                  </div>
-
-                  <div className="hc-chat-input-bar">
-                    <input
-                      className="hc-chat-input"
-                      placeholder="Type your message..."
-                      value={chatInput}
-                      onChange={e => setChatInput(e.target.value)}
-                      onKeyDown={handleKey}
-                      disabled={!supportId || chatLoading}
-                    />
-                    <button
-                      className="hc-send-btn"
-                      onClick={sendMessage}
-                      disabled={!chatInput.trim() || !supportId}
-                    >
-                      ➤
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </section>
-        )}
       </div>
 
       {/* FOOTER */}
@@ -410,7 +240,7 @@ export default function HelpCenter() {
             <p>Expert physiotherapy services designed to restore movement, reduce pain, and support overall wellness.</p>
           </div>
           <div className="hc-footer-col"><h5>Quick Links</h5><ul>{["Home","About us","Join us","Booking","Services","Blog"].map(l => <li key={l}><a href="#">{l}</a></li>)}</ul></div>
-          <div className="hc-footer-col"><h5>Support</h5><ul>{["Help Center","FAQ","Contact Us","Live Chat"].map(l => <li key={l}><a href="#">{l}</a></li>)}</ul></div>
+          <div className="hc-footer-col"><h5>Support</h5><ul>{["Help Center","FAQ","Contact Us"].map(l => <li key={l}><a href="#">{l}</a></li>)}</ul></div>
           <div className="hc-footer-col">
             <h5>Contact us</h5>
             <ul><li><a href="#">afiyacare@gmail.com</a></li><li><a href="#">Facebook</a></li><li><a href="#">Instagram</a></li><li><a href="#">WhatsApp</a></li></ul>

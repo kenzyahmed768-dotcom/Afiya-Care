@@ -1,9 +1,7 @@
-import { useEffect, useState, useRef } from "react";
-import { io } from "socket.io-client";
+import { useEffect, useState } from "react";
 import "./admindashboard.css";
 
 const API = "http://localhost:5000";
-let socket;
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -17,17 +15,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
 
-  // ── Chat state ──────────────────────────────────
-  const [conversations, setConversations] = useState([]);
-  const [activeUser, setActiveUser]       = useState(null);
-  const [messages, setMessages]           = useState([]);
-  const [chatInput, setChatInput]         = useState("");
-  const [connected, setConnected]         = useState(false);
-  const [unreadCount, setUnreadCount]     = useState(0);
-  const messagesEnd = useRef(null);
-
   const token   = localStorage.getItem("token");
-  const adminId = token ? JSON.parse(atob(token.split(".")[1])).id : null;
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
   const showToast = (message, type = "success") => {
@@ -70,84 +58,6 @@ export default function AdminDashboard() {
 
   useEffect(() => { fetchAll(); }, []);
 
-  // ── Socket: connect once on mount ───────────────
-  useEffect(() => {
-    if (!token || !adminId) return;
-    socket = io(API);
-    socket.emit("join", adminId);
-    socket.on("connect",    () => setConnected(true));
-    socket.on("disconnect", () => setConnected(false));
-
-    socket.on("receiveMessage", (msg) => {
-      const senderId = String(msg.sender?._id || msg.sender);
-
-      // If that conversation is currently open → append message
-      setActiveUser(prev => {
-        if (prev && String(prev._id) === senderId) {
-          setMessages(m => [...m, msg]);
-        } else {
-          // Not viewing this convo → bump unread badge
-          setUnreadCount(c => c + 1);
-        }
-        return prev;
-      });
-
-      // Update or prepend conversation preview
-      setConversations(prev => {
-        const exists = prev.find(c => String(c.user._id) === senderId);
-        if (exists) {
-          return prev.map(c =>
-            String(c.user._id) === senderId
-              ? { ...c, lastMessage: msg.content, time: msg.createdAt }
-              : c
-          );
-        }
-        return [{ user: { _id: senderId, name: msg.sender?.name || "User" }, lastMessage: msg.content, time: msg.createdAt }, ...prev];
-      });
-    });
-
-    socket.on("messageSent", (msg) => {
-      setMessages(prev => [...prev, msg]);
-    });
-
-    return () => { socket?.disconnect(); };
-  }, [token, adminId]);
-
-  // ── Chat: load conversations when tab opens ──────
-  useEffect(() => {
-    if (activeTab !== "chat") return;
-    setUnreadCount(0);
-    safeFetch("/chat/admin/conversations").then(data => {
-      if (Array.isArray(data)) setConversations(data);
-    });
-  }, [activeTab]);
-
-  // ── Chat: load messages for selected user ────────
-  const openConversation = async (conv) => {
-    setActiveUser(conv.user);
-    const data = await safeFetch(`/chat/${conv.user._id}`);
-    setMessages(Array.isArray(data) ? data : []);
-  };
-
-  // ── Chat: auto-scroll ────────────────────────────
-  useEffect(() => {
-    messagesEnd.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  // ── Chat: send ───────────────────────────────────
-  const sendMessage = () => {
-    if (!chatInput.trim() || !activeUser || !socket) return;
-    socket.emit("sendMessage", { senderId: adminId, receiverId: activeUser._id, content: chatInput.trim() });
-    setChatInput("");
-  };
-
-  const handleChatKey = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-  };
-
-  const fmtTime = (d) => d ? new Date(d).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "";
-
-  // ── Existing handlers ────────────────────────────
   const handleDoctorAction = async (id, status) => {
     try {
       const res  = await fetch(`${API}/admin/doctor/${id}`, { method: "PATCH", headers, body: JSON.stringify({ status }) });
@@ -212,7 +122,6 @@ export default function AdminDashboard() {
     { key: "doctor-schedules",  icon: "🗓️", label: "Doctor Schedules" },
     { key: "patient-schedules", icon: "🧑‍🦯", label: "Patient Schedules" },
     { key: "applications",      icon: "📋", label: "Applications",     badge: pendingApplications },
-    { key: "chat",              icon: "💬", label: "Support Chat",     badge: unreadCount },
   ];
 
   const tabTitle = navItems.find(n => n.key === activeTab)?.label || "";
@@ -252,17 +161,13 @@ export default function AdminDashboard() {
       </aside>
 
       <main className="main-content">
-
-        {/* ── CHAT tab gets its own full-height layout, no topbar padding ── */}
-        {activeTab !== "chat" && (
-          <div className="topbar">
-            <div className="topbar-left">
-              <h1>{tabTitle}</h1>
-              <p>Afiya Care Admin Dashboard</p>
-            </div>
-            <div className="admin-pill">Admin</div>
+        <div className="topbar">
+          <div className="topbar-left">
+            <h1>{tabTitle}</h1>
+            <p>Afiya Care Admin Dashboard</p>
           </div>
-        )}
+          <div className="admin-pill">Admin</div>
+        </div>
 
         {/* ── OVERVIEW ── */}
         {activeTab === "overview" && overview && (
@@ -588,109 +493,6 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             )}
-          </div>
-        )}
-
-        {/* ── SUPPORT CHAT ── */}
-        {activeTab === "chat" && (
-          <div className="chat-shell">
-
-            {/* Left: conversation list */}
-            <div className="chat-inbox">
-              <div className="chat-inbox-header">
-                <div>
-                  <div className="section-title">Support Inbox</div>
-                  <div className="section-sub">{conversations.length} conversation{conversations.length !== 1 ? "s" : ""}</div>
-                </div>
-                <span className={`chat-status-dot ${connected ? "online" : ""}`} title={connected ? "Connected" : "Connecting..."} />
-              </div>
-
-              {conversations.length === 0 ? (
-                <div className="empty-state" style={{ padding: "40px 20px" }}>
-                  <span className="empty-icon">💬</span>
-                  <p>No messages yet</p>
-                </div>
-              ) : (
-                conversations.map(conv => (
-                  <div
-                    key={conv.user._id}
-                    className={`chat-conv-item ${activeUser?._id === conv.user._id ? "active" : ""}`}
-                    onClick={() => openConversation(conv)}
-                  >
-                    <div className="avatar green" style={{ flexShrink: 0 }}>
-                      {conv.user.name?.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="chat-conv-info">
-                      <div className="chat-conv-name">{conv.user.name}</div>
-                      <div className="chat-conv-preview">{conv.lastMessage}</div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Right: message area */}
-            <div className="chat-panel">
-              {!activeUser ? (
-                <div className="empty-state" style={{ height: "100%" }}>
-                  <span className="empty-icon">👈</span>
-                  <p>Select a conversation to start replying</p>
-                </div>
-              ) : (
-                <>
-                  {/* Topbar */}
-                  <div className="chat-panel-topbar">
-                    <div className="avatar green" style={{ flexShrink: 0 }}>
-                      {activeUser.name?.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="chat-conv-name">{activeUser.name}</div>
-                      {activeUser.email && <div className="section-sub">{activeUser.email}</div>}
-                    </div>
-                    <span className={`chat-online-pill ${connected ? "online" : ""}`}>
-                      {connected ? "● Online" : "● Connecting"}
-                    </span>
-                  </div>
-
-                  {/* Messages */}
-                  <div className="chat-messages">
-                    {messages.length === 0 && (
-                      <div style={{ textAlign: "center", color: "var(--text-light)", fontSize: 13, marginTop: 40 }}>
-                        No messages yet — say hello! 👋
-                      </div>
-                    )}
-                    {messages.map((msg, i) => {
-                      const isSent = String(msg.sender?._id || msg.sender) === adminId;
-                      return (
-                        <div key={i} className={`chat-msg ${isSent ? "sent" : "received"}`}>
-                          <div className="chat-bubble">{msg.content}</div>
-                          <div className="chat-time">{fmtTime(msg.createdAt)}</div>
-                        </div>
-                      );
-                    })}
-                    <div ref={messagesEnd} />
-                  </div>
-
-                  {/* Input */}
-                  <div className="chat-input-bar">
-                    <input
-                      className="chat-input"
-                      placeholder={`Reply to ${activeUser.name}…`}
-                      value={chatInput}
-                      onChange={e => setChatInput(e.target.value)}
-                      onKeyDown={handleChatKey}
-                    />
-                    <button
-                      className="chat-send-btn"
-                      onClick={sendMessage}
-                      disabled={!chatInput.trim()}
-                    >
-                      ➤
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
           </div>
         )}
 
