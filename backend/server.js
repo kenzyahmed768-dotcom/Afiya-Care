@@ -50,9 +50,9 @@ const upload = multer({
 // -----------------
 const connectDB = require("./config/db");
 connectDB();
-const User        = require("./models/user");        // patients only
-const Doctor      = require("./models/doctor");      // doctors only
-const Admin       = require("./models/admin");       // admins only
+const User        = require("./models/user");
+const Doctor      = require("./models/doctor");
+const Admin       = require("./models/admin");
 const Appointment = require("./models/appointment");
 const Message     = require("./models/message");
 const Application = require("./models/application");
@@ -89,7 +89,6 @@ app.post("/register", async (req, res) => {
     const { name, age, email, password, role, specialty, experience } = req.body;
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Check all 3 collections for duplicate email
     const [existingUser, existingDoctor, existingAdmin] = await Promise.all([
       User.findOne({ email: normalizedEmail }),
       Doctor.findOne({ email: normalizedEmail }),
@@ -127,18 +126,11 @@ app.post("/login", async (req, res) => {
     const { email, password } = req.body;
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Check all 3 collections
     let user = await User.findOne({ email: normalizedEmail });
     let role = "patient";
 
-    if (!user) {
-      user = await Doctor.findOne({ email: normalizedEmail });
-      role = "doctor";
-    }
-    if (!user) {
-      user = await Admin.findOne({ email: normalizedEmail });
-      role = "admin";
-    }
+    if (!user) { user = await Doctor.findOne({ email: normalizedEmail }); role = "doctor"; }
+    if (!user) { user = await Admin.findOne({ email: normalizedEmail });  role = "admin";  }
 
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
     if (!await bcrypt.compare(password, user.password))
@@ -281,6 +273,20 @@ app.get("/admin/schedules/patients", authMiddleware, adminMiddleware, async (req
 });
 
 // ======================
+// SUPPORT ROUTE
+// Returns first admin's ID + name for the Help Center live chat
+// ======================
+app.get("/support/agent", authMiddleware, async (req, res) => {
+  try {
+    const admin = await Admin.findOne().select("_id name");
+    if (!admin) return res.status(404).json({ message: "No support agent available" });
+    res.json({ agentId: admin._id, name: admin.name });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ======================
 // APPLICATION ROUTES
 // ======================
 app.post("/applications", async (req, res) => {
@@ -319,10 +325,7 @@ app.delete("/admin/applications/:id", authMiddleware, adminMiddleware, async (re
 
 // ======================
 // BOOKING ROUTES
-// Add these to server.js
 // ======================
-
-// GET /booking/doctors — public, returns all approved doctors
 app.get("/booking/doctors", async (req, res) => {
   try {
     const doctors = await Doctor.find({ status: "approved" })
@@ -332,16 +335,13 @@ app.get("/booking/doctors", async (req, res) => {
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 
-// GET /booking/slots — returns already-booked time slots for a doctor on a date
 app.get("/booking/slots", async (req, res) => {
   try {
     const { doctorId, date } = req.query;
     if (!doctorId || !date) return res.status(400).json({ message: "doctorId and date required" });
 
-    const start = new Date(date);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(date);
-    end.setHours(23, 59, 59, 999);
+    const start = new Date(date); start.setHours(0, 0, 0, 0);
+    const end   = new Date(date); end.setHours(23, 59, 59, 999);
 
     const appointments = await Appointment.find({
       doctor: doctorId,
@@ -353,19 +353,16 @@ app.get("/booking/slots", async (req, res) => {
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 
-// POST /booking/create — authenticated, creates appointment
 app.post("/booking/create", authMiddleware, async (req, res) => {
   try {
     const { doctorId, date, time, reason } = req.body;
     if (!doctorId || !date || !time)
       return res.status(400).json({ message: "Doctor, date and time are required" });
 
-    // Check doctor exists and is approved
     const doctor = await Doctor.findById(doctorId);
     if (!doctor || doctor.status !== "approved")
       return res.status(404).json({ message: "Doctor not found or not available" });
 
-    // Check slot is not already taken
     const start = new Date(date); start.setHours(0,0,0,0);
     const end   = new Date(date); end.setHours(23,59,59,999);
 
@@ -392,13 +389,11 @@ app.post("/booking/create", authMiddleware, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ message: "Server error" }); }
 });
 
-// POST /booking/init-chat — sends an automatic first message to start the chat
 app.post("/booking/init-chat", authMiddleware, async (req, res) => {
   try {
     const { receiverId, appointmentDate, appointmentTime } = req.body;
     const senderId = req.user.id;
 
-    // Check no messages already exist between them
     const existing = await Message.findOne({
       $or: [
         { sender: senderId, receiver: receiverId },
@@ -406,18 +401,24 @@ app.post("/booking/init-chat", authMiddleware, async (req, res) => {
       ],
     });
 
-    // Only send intro message if this is a brand new conversation
     if (!existing) {
       const formattedDate = new Date(appointmentDate).toLocaleDateString("en-US", {
         weekday: "long", month: "long", day: "numeric", year: "numeric",
       });
       const content = `Hello! I just booked an appointment with you on ${formattedDate} at ${appointmentTime}. Looking forward to my session!`;
-      await Message.create({ sender: senderId, receiver: receiverId, content });
+      await Message.create({
+        sender: senderId,
+        senderModel: req.user.role === "doctor" ? "Doctor" : "User",
+        receiver: receiverId,
+        receiverModel: "Doctor",
+        content,
+      });
     }
 
     res.json({ message: "Chat initialized" });
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
+
 // ======================
 // DOCTOR ROUTES
 // ======================
@@ -546,64 +547,144 @@ app.get("/patient/appointments", authMiddleware, async (req, res) => {
 // ======================
 // CHAT ROUTES
 // ======================
+
+// GET /chat/conversations/list — all conversations for the logged-in user
 app.get("/chat/conversations/list", authMiddleware, async (req, res) => {
   try {
     const messages = await Message.find({
       $or: [{ sender: req.user.id }, { receiver: req.user.id }],
-    }).populate("sender", "name photo role").populate("receiver", "name photo role").sort({ createdAt: -1 });
+    })
+      .populate("sender",   "name photo role")
+      .populate("receiver", "name photo role")
+      .sort({ createdAt: -1 });
 
-    const seen = new Set(); const conversations = [];
+    const seen = new Set();
+    const conversations = [];
+
     for (const msg of messages) {
-      const other = String(msg.sender._id) === req.user.id ? msg.receiver : msg.sender;
+      // Guard: skip if sender/receiver didn't populate (cross-model mismatch on old data)
+      if (!msg.sender || !msg.receiver) continue;
+
+      const other = String(msg.sender._id) === String(req.user.id) ? msg.receiver : msg.sender;
       if (!seen.has(String(other._id))) {
         seen.add(String(other._id));
         const unread = await Message.countDocuments({ sender: other._id, receiver: req.user.id, read: false });
         conversations.push({ user: other, lastMessage: msg.content, unread, updatedAt: msg.createdAt });
       }
     }
+
     res.json(conversations);
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 
+// GET /chat/admin/conversations — admin sees all support conversations (alias for convenience)
+app.get("/chat/admin/conversations", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const messages = await Message.find({ receiver: req.user.id })
+      .populate("sender", "name photo role")
+      .sort({ createdAt: -1 });
+
+    const seen = new Set();
+    const conversations = [];
+
+    for (const msg of messages) {
+      if (!msg.sender) continue;
+      const id = String(msg.sender._id);
+      if (!seen.has(id)) {
+        seen.add(id);
+        const unread = await Message.countDocuments({ sender: msg.sender._id, receiver: req.user.id, read: false });
+        conversations.push({ user: msg.sender, lastMessage: msg.content, unread, time: msg.createdAt });
+      }
+    }
+
+    res.json(conversations);
+  } catch (err) { res.status(500).json({ message: "Server error" }); }
+});
+
+// GET /chat/:userId — fetch conversation history + mark as read
 app.get("/chat/:userId", authMiddleware, async (req, res) => {
   try {
     const messages = await Message.find({
       $or: [
-        { sender: req.user.id, receiver: req.params.userId },
-        { sender: req.params.userId, receiver: req.user.id },
+        { sender: req.user.id,        receiver: req.params.userId },
+        { sender: req.params.userId,  receiver: req.user.id       },
       ],
     }).sort({ createdAt: 1 });
-    await Message.updateMany({ sender: req.params.userId, receiver: req.user.id, read: false }, { read: true });
+
+    // Mark received messages as read
+    await Message.updateMany(
+      { sender: req.params.userId, receiver: req.user.id, read: false },
+      { read: true }
+    );
+
     res.json(messages);
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 
 // ======================
 // SOCKET.IO
+// Uses socket.join(userId) so io.to(userId) always works,
+// even if the user reconnects with a new socket id.
 // ======================
-const onlineUsers = new Map();
+const onlineUsers = new Map(); // userId (string) → socketId
+
+// Helper: resolve which Mongoose model to use based on role string
+function modelForRole(role) {
+  if (role === "doctor") return "Doctor";
+  if (role === "admin")  return "Admin";
+  return "User";
+}
 
 io.on("connection", (socket) => {
+
+  // Register user — join a room named after their userId for targeted delivery
   socket.on("join", (userId) => {
-    onlineUsers.set(userId, socket.id);
-    socket.join(userId);
+    onlineUsers.set(String(userId), socket.id);
+    socket.join(String(userId));
   });
 
-  socket.on("sendMessage", async ({ senderId, receiverId, content }) => {
+  // Send a message between any two users/roles
+  socket.on("sendMessage", async ({ senderId, receiverId, content, senderModel, receiverModel }) => {
+    if (!senderId || !receiverId || !content?.trim()) return;
+
     try {
-      const message = await Message.create({ sender: senderId, receiver: receiverId, content });
-      const populated = await message.populate("sender", "name photo");
-      io.to(receiverId).emit("receiveMessage", populated);
-      socket.emit("messageSent", populated);
-    } catch {
+      const message = await Message.create({
+        sender:        senderId,
+        senderModel:   senderModel  || "User",   // default patient → User
+        receiver:      receiverId,
+        receiverModel: receiverModel || "Admin",  // default target  → Admin
+        content:       content.trim(),
+        read:          false,
+      });
+
+      // Populate sender name/photo for display
+      await message.populate("sender", "name photo role");
+
+      // Confirm to sender's socket
+      socket.emit("messageSent", message);
+
+      // Deliver to receiver's room (works even after reconnect)
+      io.to(String(receiverId)).emit("receiveMessage", message);
+
+    } catch (err) {
+      console.error("sendMessage error:", err);
       socket.emit("error", { message: "Failed to send message" });
     }
   });
 
+  // Mark messages as read
   socket.on("markRead", async ({ senderId, receiverId }) => {
-    await Message.updateMany({ sender: senderId, receiver: receiverId, read: false }, { read: true });
+    try {
+      await Message.updateMany(
+        { sender: senderId, receiver: receiverId, read: false },
+        { read: true }
+      );
+    } catch (err) {
+      console.error("markRead error:", err);
+    }
   });
 
+  // Clean up on disconnect
   socket.on("disconnect", () => {
     for (const [userId, socketId] of onlineUsers.entries()) {
       if (socketId === socket.id) { onlineUsers.delete(userId); break; }
