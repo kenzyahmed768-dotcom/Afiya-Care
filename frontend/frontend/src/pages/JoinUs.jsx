@@ -191,7 +191,7 @@ export default function JoinUs() {
           <div className="section-label">JOIN THE TEAM</div>
           <h1>Build Your Career<br /><em>With AfiyaCare</em></h1>
           <p>Be part of a passionate team dedicated to transforming lives through expert physiotherapy care.</p>
-          <a href="#apply" className="btn-primary">Apply Now</a>
+          <a href="#apply" className="btn-secondary">Apply Now</a>
         </div>
       </section>
 
@@ -221,7 +221,7 @@ export default function JoinUs() {
           <h2>Our mission is to help<br /><em>patients live better.</em></h2>
           <p>Our team of highly trained professionals uses the latest healing technologies to restore your health quickly and safely.</p>
           <p>Our mission is to improve the health of our community by providing high-quality, comprehensive care in a welcoming and compassionate environment.</p>
-          <a href="#apply" className="btn-primary" style={{ marginTop: "1rem", display: "inline-flex" }}>Join Our Mission</a>
+          <a href="#apply" className="btn-mission" style={{ marginTop: "1rem", display: "inline-flex" }}>Join Our Mission</a>
         </div>
         <div className="mission-image">
           <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=700&q=80" alt="AfiyaCare Mission" />
@@ -254,7 +254,7 @@ export default function JoinUs() {
               <ul>
                 {PERKS.map(p => <li key={p}><span className="perk-dot">✦</span>{p}</li>)}
               </ul>
-              <a href="#apply" className="btn-outline">Book an Appointment</a>
+              <a href="/booking" className="btn-outline">Book an Appointment</a>
             </div>
           </div>
         </div>
@@ -387,40 +387,60 @@ export default function JoinUs() {
       </section>
 
       {/* ══ FOOTER ═══════════════════════════════════════ */}
-      <footer>
-        <div className="footer-grid">
-          <div className="footer-brand">
-            <a href="#" className="logo">
-              <img src={Logo} alt="AfiyaCare Logo" className="logo-img" />
-              <div className="logo-icon footer-logo-icon">AC</div>
-              <div className="logo-text footer-logo-text">AFIYA<span>CARE</span></div>
-            </a>
-            <p>At Afiya Care, we provide expert physiotherapy services designed to restore movement, reduce pain, and support overall wellness.</p>
-          </div>
-          <div className="footer-col">
-            <h5>Quick Links</h5>
-            <ul>{["Home","About us","Join us","Booking","Services","Blog"].map(l => <li key={l}><a href="#">{l}</a></li>)}</ul>
-          </div>
-          <div className="footer-col">
-            <h5>Services</h5>
-            <ul>{["Orthopedic Physiotherapy","Sports Injury Physiotherapy","Surgical Rehabilitation","Cardiac Rehab","Elderly Care","Home lab tests"].map(s => <li key={s}><a href="#">{s}</a></li>)}</ul>
-          </div>
-          <div className="footer-col">
-            <h5>Contact us</h5>
-            <ul>{["afiyacare@gmail.com","Facebook","Instagram","WhatsApp"].map(c => <li key={c}><a href="#">{c}</a></li>)}</ul>
-            <div className="newsletter-row">
-              <input type="email" placeholder="Your email" />
-              <button>&#8594;</button>
-            </div>
-          </div>
-        </div>
-        <div className="footer-bottom">
-          <div className="social-links">
-            <a href="#">f</a><a href="#">t</a><a href="#">in</a>
-          </div>
-          <p>©️ 2025 Afiya Care. All Rights Reserved.</p>
-        </div>
-      </footer>
+     <footer>
+             <div className="footer-grid">
+               <div className="footer-brand">
+                 <a href="#" className="logo">
+                   <img src={Logo} alt="AfiyaCare Logo" className="logo-img" />
+                   <div className="logo-icon footer-logo-icon">AC</div>
+                  <span className="bk-brand-name">AFIYA<em>CARE</em></span>
+                 </a>
+                 <p>At Afiya Care, we provide expert physiotherapy services designed to restore movement, reduce pain, and support overall wellness.</p>
+               </div>
+               <div className="footer-col">
+                 <h5>Quick Links</h5>
+                 <ul>
+                   <li><a href="/Home">Home</a></li>
+                   <li><a href="/About us">About us</a></li>
+                   <li><a href="/join ">Join us</a></li>
+                   <li><a href="/Booking">Booking</a></li>
+                   <li><a href="/Services">Services</a></li>
+                   <li><a href="/Blog">Blog</a></li>
+                 </ul>
+               </div>
+               <div className="footer-col">
+                 <h5>Services</h5>
+                 <ul>
+                   <li><a href="#">Orthopedic Physiotherapy</a></li>
+                   <li><a href="#">Sports Injury Physiotherapy</a></li>
+                   <li><a href="#">Surgical Rehabilitation</a></li>
+                   <li><a href="#">Cardiac Rehab</a></li>
+                   <li><a href="#">Elderly Care</a></li>
+                   <li><a href="#">Home lab tests</a></li>
+                 </ul>
+               </div>
+               <div className="footer-col">
+                 <h5>Contact us</h5>
+                 <ul>
+                   <li><a href="#">afiyacare@gmail.com</a></li>
+                   <li><a href="#">Facebook</a></li>
+                   <li><a href="#">Instagram</a></li>
+                   <li><a href="#">WhatsApp</a></li>
+                   <li><a href="/help">Help center</a></li>
+                 </ul>
+                 <div className="newsletter-row">
+                   <input type="email" placeholder="Your email" />
+                   <button>&#8594;</button>
+                 </div>
+               </div>
+             </div>
+             <div className="footer-bottom">
+               <div className="social-links">
+                 <a href="#">f</a><a href="#">t</a><a href="#">in</a>
+               </div>
+               <p>©️ 2025 Afiya Care. All Rights Reserved.</p>
+             </div>
+           </footer>
     </>
   );
 }

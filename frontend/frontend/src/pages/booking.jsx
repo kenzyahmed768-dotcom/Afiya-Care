@@ -383,13 +383,21 @@ function BkFooter() {
             <img src={Logo} alt="AfiyaCare" className="logo-img" />
             <span className="bk-brand-name">AFIYA<em>CARE</em></span>
           </a>
-          <p>Expert physiotherapy services designed to restore movement, reduce pain, and support overall wellness.</p>
+          <p>At Afiya Care, we provide expert physiotherapy services designed to restore movement, reduce pain, and support overall wellness.</p>
         </div>
-        <div className="bk-footer-col"><h5>Quick Links</h5><ul>{["Home","About us","Join us","Booking","Services","Blog"].map(l => <li key={l}><a href="#">{l}</a></li>)}</ul></div>
+        <div className="bk-footer-col"><h5>Quick Links</h5><ul>
+              <li><a href="/">Home</a></li>
+              <li><a href="/About us">About us</a></li>
+              <li><a href="/join ">Join us</a></li>
+              <li><a href="/booking">Booking</a></li>
+              <li><a href="/Services">Services</a></li>
+              <li><a href="/Blog">Blog</a></li>
+            
+            </ul></div>
         <div className="bk-footer-col"><h5>Services</h5><ul>{["Orthopedic Physiotherapy","Sports Injury","Surgical Rehabilitation","Cardiac Rehab","Elderly Care","Home Lab Tests"].map(s => <li key={s}><a href="#">{s}</a></li>)}</ul></div>
         <div className="bk-footer-col">
           <h5>Contact us</h5>
-          <ul><li><a href="#">afiyacare@gmail.com</a></li><li><a href="#">Facebook</a></li><li><a href="#">Instagram</a></li><li><a href="#">WhatsApp</a></li></ul>
+          <ul><li><a href="#">afiyacare@gmail.com</a></li><li><a href="#">Facebook</a></li><li><a href="#">Instagram</a></li><li><a href="#">WhatsApp</a></li>  <li><a href="/help">Help center</a></li></ul> 
           <div className="bk-newsletter"><input type="email" placeholder="Your email" /><button>→</button></div>
         </div>
       </div>

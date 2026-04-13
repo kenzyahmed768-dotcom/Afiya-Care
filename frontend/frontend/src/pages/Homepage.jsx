@@ -51,12 +51,12 @@ function Homepage() {
           <img src={Logo} alt="AfiyaCare Logo" className="logo-img" />
         </a>
         <ul className="nav-links">
-          <li><a href="#">Home</a></li>
-          <li><a href="#">About us</a></li>
-          <li><a href="join">Join us</a></li>
-          <li><a href="booking">Booking</a></li>
-          <li><a href="#">Services</a></li>
-          <li><a href="#">Blog</a></li>
+          <li><a href="/" className="active">Home</a></li>
+          <li><a href="/About us">About us</a></li>
+          <li><a href="/join">Join us</a></li>
+          <li><a href="/booking">Booking</a></li>
+          <li><a href="/Services">Services</a></li>
+          <li><a href="/blog">Blog</a></li>
 
           {user ? (
             /* ── Logged in: show profile icon ── */
@@ -112,7 +112,7 @@ function Homepage() {
         <div className="hero-content">
           <h1>Welcome To Afiya Care—<br />Your Path To Better Health</h1>
           <p>Expert Physiotherapy Tailored To Your Recovery</p>
-          <a href="#" className="btn-primary">Book An Appointment</a>
+          <a href="/booking" className="btn-home">Book An Appointment</a>
         </div>
       </section>
 
@@ -160,7 +160,7 @@ function Homepage() {
       {/* WHY AFIYA CARE */}
       <section className="why-section">
         <div className="why-image">
-          <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80" alt="Physiotherapy session" />
+          <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&q=80" alt="Physiotherapy session" />
         </div>
         <div className="why-content">
           <h2>Why Afiya Care?</h2>
@@ -190,29 +190,30 @@ function Homepage() {
       </section>
 
       {/* CONTACT */}
-      <section className="contact-section">
-        <div className="contact-form-area">
-          <h3>Got a Question?</h3>
-          <h2>Get in Touch<br />Submit an inquiry and our<br />team will get back to you</h2>
-          <div className="form-row">
-            <div className="form-field"><input type="text" placeholder="Full Name*" /></div>
-            <div className="form-field"><input type="email" placeholder="Email*" /></div>
-          </div>
-          <div className="form-row">
-            <div className="form-field"><input type="tel" placeholder="Phone Number*" /></div>
-            <div className="form-field"><input type="text" placeholder="Inquiry*" /></div>
-          </div>
-          <button className="btn-submit">Submit Inquiry</button>
-        </div>
-        <div className="contact-image-area">
-          <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&q=80" alt="Medical team" />
-          <div className="testimonial-card">
-            <div className="stars">★★★★★</div>
-            <p>"Afiya Care's at-home sessions have made my recovery so much easier. The team is professional and really effective!"</p>
-            <div className="author">— Sara M., Cairo</div>
-          </div>
-        </div>
-      </section>
+     {/* CONTACT */}
+<section className="contact-section">
+  <div className="contact-form-area">
+    <h3>Got a Question?</h3>
+    <h2>Get in Touch<br />Submit an inquiry and our<br />team will get back to you</h2>
+    <div className="form-row">
+      <div className="form-field"><input type="text" placeholder="Full Name*" /></div>
+      <div className="form-field"><input type="email" placeholder="Email*" /></div>
+    </div>
+    <div className="form-row">
+      <div className="form-field"><input type="tel" placeholder="Phone Number*" /></div>
+      <div className="form-field"><input type="text" placeholder="Inquiry*" /></div>
+    </div>
+    <button className="btn-submit">Submit Inquiry</button>
+  </div>
+  <div className="contact-image-area">
+    <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&q=80" alt="Medical team" />
+    <div className="testimonial-card">
+      <div className="stars">★★★★★</div>
+      <p>"Afiya Care's at-home sessions have made my recovery so much easier. The team is professional and really effective!"</p>
+      <div className="author">— Sara M., Cairo</div>
+    </div>
+  </div>
+</section>
 
       {/* BLOG */}
       <section className="blog-section">
@@ -262,19 +263,19 @@ function Homepage() {
             <a href="#" className="logo">
               <img src={Logo} alt="AfiyaCare Logo" className="logo-img" />
               <div className="logo-icon footer-logo-icon">AC</div>
-              <div className="logo-text footer-logo-text">AFIYA<span>CARE</span></div>
+             <span className="bk-brand-name">AFIYA<em>CARE</em></span>
             </a>
             <p>At Afiya Care, we provide expert physiotherapy services designed to restore movement, reduce pain, and support overall wellness.</p>
           </div>
           <div className="footer-col">
             <h5>Quick Links</h5>
             <ul>
-              <li><a href="#">Home</a></li>
-              <li><a href="#">About us</a></li>
-              <li><a href="#">Join us</a></li>
-              <li><a href="#">Booking</a></li>
-              <li><a href="#">Services</a></li>
-              <li><a href="#">Blog</a></li>
+              <li><a href="/Home">Home</a></li>
+              <li><a href="/About us">About us</a></li>
+              <li><a href="/join ">Join us</a></li>
+              <li><a href="/Booking">Booking</a></li>
+              <li><a href="/Services">Services</a></li>
+              <li><a href="/Blog">Blog</a></li>
             </ul>
           </div>
           <div className="footer-col">
@@ -295,6 +296,7 @@ function Homepage() {
               <li><a href="#">Facebook</a></li>
               <li><a href="#">Instagram</a></li>
               <li><a href="#">WhatsApp</a></li>
+              <li><a href="/help">Help center</a></li>
             </ul>
             <div className="newsletter-row">
               <input type="email" placeholder="Your email" />

@@ -38,12 +38,12 @@ img { max-width: 100%; display: block; }
   position: sticky; top: 0; z-index: 100;
 }
 .logo { display: flex; align-items: center; gap: 10px; }
-.logo-img { height: 40px; width: 40px; object-fit: cover; border-radius: 8px; }
+.logo-img { height: 60px; width: 60px; object-fit: cover; border-radius: 8px; }
 .nav-links { display: flex; align-items: center; gap: 32px; }
 .nav-links a { font-size: .9rem; font-weight: 500; color: #444; transition: color .2s; }
 .nav-links a:hover, .nav-links a.active { color: var(--teal); }
-.btn-nav { background: var(--teal); color: #fff !important; padding: .5rem 1.4rem; border-radius: 50px; font-size: .85rem; font-weight: 600; transition: all .2s; }
-.btn-nav:hover { background: var(--teal-dark); transform: translateY(-1px); }
+.btn-nav { background: transparent; color: var(--teal) !important; padding: .5rem 1.4rem; border-radius: 50px; font-size: .85rem; font-weight: 600; transition: all .2s; }
+.btn-nav:hover { background: var(--accent); color:white !important; transform: translateY(-1px); }
 
 .profile-nav-item { position: relative; }
 .profile-icon-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 6px 10px; border-radius: 50px; transition: background .2s; }
