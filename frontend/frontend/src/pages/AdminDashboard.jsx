@@ -1,5 +1,9 @@
-import { useEffect, useState } from "react";
-import "./admindashboard.css";
+// pages/AdminDashboard.jsx
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import "../style/admindashboard.css";  // ← Fixed: removed the extra dot
+
+// ... rest of your code
 
 const API = "http://localhost:5000";
 

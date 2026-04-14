@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
-import "./DoctorDashboard.css";
+import "../style/DoctorDashboard.css";
 
 const API = "http://localhost:5000";
 let socket;

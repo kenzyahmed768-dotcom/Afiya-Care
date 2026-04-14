@@ -11,15 +11,18 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box
 }
 
 a {
   font-weight: 500;
   color: #020dd5;
   text-decoration: inherit;
+  box-sizing: border-box
 }
 a:hover {
   color: #535bf2;
+  box-sizing: border-box
 }
 
 body {
@@ -28,11 +31,13 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  box-sizing: border-box
 }
 
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  box-sizing: border-box
 }
 
 button {
@@ -45,24 +50,91 @@ button {
   background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
+  box-sizing: border-box
 }
 button:hover {
   border-color: #646cff;
+  box-sizing: border-box
 }
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+  box-sizing: border-box
 }
 
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
     background-color: #ffffff;
+    box-sizing: border-box
   }
   a:hover {
     color: #747bff;
+    box-sizing: border-box
   }
   button {
     background-color: #f9f9f9;
+
   }
+  /* ── GLOBAL RESET ── */
+:root {
+  --teal: #00b4a2;
+  --navy: #0a1628;
+  /* ... include your other variables here ... */
+}
+
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+body {
+  width: 100%;
+  overflow-x: hidden; /* Prevents side-scrolling on mobile */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── FLUID CONTAINERS ── */
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── RESPONSIVE GRID ── */
+/* Use this for any section with multiple items (Services, Team, etc.) */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+@media (max-width: 768px) {
+  .nav-links {
+    display: none; /* Hide standard links on mobile */
+  }
+
+  .mobile-menu-toggle {
+    display: flex; /* Show hamburger */
+  }
+
+  /* Style the mobile drawer that drops down */
+  .mobile-menu {
+    position: absolute;
+    top: 72px;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+}
+h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem); /* Minimum 2rem, scales with width, Max 3.5rem */
+}
+
+p {
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
+}
 }
