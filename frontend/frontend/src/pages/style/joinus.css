@@ -61,8 +61,8 @@ nav {
   font-size: 1.1rem;
 }
 .logo-img {
-  height: 40px;
-  width: 40px;
+  height: 75px;
+  width: 75px;
   object-fit: cover;
   border-radius: 8px;
 }
@@ -124,7 +124,7 @@ nav {
   margin-bottom: .75rem;
 }
 
-.btn-primary {
+.btn-secondary {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -139,17 +139,18 @@ nav {
   transition: background .2s, transform .2s, box-shadow .2s;
   text-decoration: none;
 }
-.btn-primary:hover {
-  background: var(--teal-dark);
+.btn-secondary:hover {
+  background: var(--accent);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0,180,162,.28);
+  color: white;
 }
 
 .btn-outline {
   display: inline-flex;
   align-items: center;
   padding: .7rem 1.8rem;
-  background: transparent;
+  background: var(--teal);
   color: #fff;
   border: 2px solid rgba(255,255,255,.5);
   border-radius: 50px;
@@ -159,7 +160,7 @@ nav {
   transition: all .2s;
   text-decoration: none;
 }
-.btn-outline:hover { background: rgba(255,255,255,.1); border-color: #fff; }
+.btn-outline:hover { background:var(--accent); color: white !important; border-color: #fff; }
 
 .btn-card {
   display: inline-flex;
@@ -292,7 +293,27 @@ nav {
 }
 .mission-content h2 em { color: var(--teal); font-style: italic; }
 .mission-content p { color: var(--text-mid); line-height: 1.75; margin-bottom: 1rem; }
-.mission-content .btn-primary { margin-top: 1rem; }
+.mission-content .btn-mission { margin-top: 1rem;  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: .75rem 2rem;
+  background: var(--teal);
+  color: #fff;
+  border-radius: 50px;
+  font-size: .9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background .2s, transform .2s, box-shadow .2s;
+  text-decoration: none;}
+
+  .mission-content .btn-mission:hover {
+    background: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,180,162,.28); 
+
+
+  }
 .mission-image {
   flex: 1;
   position: relative;
@@ -598,7 +619,7 @@ nav {
   transition: background .2s, transform .2s, box-shadow .2s;
 }
 .btn-submit:hover {
-  background: var(--teal-dark);
+  background: var(--accent);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0,180,162,.3);
 }
