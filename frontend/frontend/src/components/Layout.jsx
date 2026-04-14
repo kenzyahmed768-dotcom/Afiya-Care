@@ -183,7 +183,7 @@ function Layout() {
             <h5>Contact us</h5>
             <ul>
               <li><a href="mailto:afiyacare@gmail.com">afiyacare@gmail.com</a></li>
-              <li><a href="#">Facebook</a></li>
+              <li><a href="https://www.facebook.com/profile.php?id=61585057423569">Facebook</a></li>
               <li><a href="#">Instagram</a></li>
               <li><a href="#">WhatsApp</a></li>
             </ul>
@@ -195,7 +195,7 @@ function Layout() {
         </div>
         <div className="footer-bottom">
           <div className="social-links">
-            <a href="#" aria-label="Facebook">f</a>
+            <a href="https://www.facebook.com/profile.php?id=61585057423569" aria-label="Facebook">f</a>
             <a href="#" aria-label="Twitter">t</a>
             <a href="#" aria-label="LinkedIn">in</a>
           </div>

@@ -241,21 +241,21 @@ nav {
   text-transform: uppercase;
 }
 
-.services-header h2 { 
-  font-size: 32px; 
-  font-weight: 700; 
+.services-header h2 {
+  font-size: 32px;
+  font-weight: 700;
   color: var(--text);
   margin-bottom: 8px;
 }
 
-.services-header p { 
-  color: var(--muted); 
-  font-size: 15px; 
+.services-header p {
+  color: var(--muted);
+  font-size: 15px;
 }
 
-.nav-arrows { 
-  display: flex; 
-  gap: 8px; 
+.nav-arrows {
+  display: flex;
+  gap: 8px;
 }
 
 .arrow-btn {
@@ -265,23 +265,23 @@ nav {
   background: var(--white);
   cursor: pointer;
   font-size: 18px;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .arrow-btn:hover {
   border-color: var(--accent);
 }
 
-.arrow-btn.active { 
-  background: var(--accent); 
+.arrow-btn.active {
+  background: var(--accent);
   color: var(--white);
   border-color: var(--accent);
 }
 
-.services-grid {
+.services-carousel-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
   gap: 24px;
+  align-items: stretch;
 }
 
 .service-card {
@@ -291,36 +291,64 @@ nav {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   text-align: center;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
+  min-width: 0;
 }
 
-.service-card:hover { 
+.service-card:hover {
   transform: translateY(-8px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .service-img {
+  width: 100%;
   overflow: hidden;
 }
 
-.service-img img { 
-  width: 100%; 
-  height: 200px; 
+.service-img img {
+  width: 100%;
+  height: 220px;
   object-fit: cover;
-  transition: transform 0.3s;
+  display: block;
+  transition: transform 0.3s ease;
 }
 
 .service-card:hover .service-img img {
   transform: scale(1.05);
 }
 
-.service-label { 
-  font-size: 17px; 
-  font-weight: 600; 
-  margin: 16px 0; 
+.service-label {
+  font-size: 17px;
+  font-weight: 600;
   color: var(--text);
+  padding: 18px 16px 20px;
+  margin: 0;
 }
 
+.services-dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: #c9d7ea;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.dot:hover {
+  transform: scale(1.1);
+}
+
+.active-dot {
+  background: var(--accent);
+}
 /* ── WHY SECTION ── */
 .why-section {
   display: grid;
@@ -689,7 +717,27 @@ footer {
 }
 
 /* ── RESPONSIVE DESIGN ── */
+/*Services carousel*/
+@media (max-width: 900px) {
+  .services-carousel-grid {
+    gap: 20px;
+  }
+}
 
+@media (max-width: 640px) {
+  .services-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .services-header h2 {
+    font-size: 24px;
+  }
+
+  .service-img img {
+    height: 180px;
+  }
+}
 /* Large Tablets */
 @media (max-width: 1024px) {
   nav {
