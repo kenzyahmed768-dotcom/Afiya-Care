@@ -1,6 +1,5 @@
-// components/Layout.jsx
 import { useState, useEffect, useRef } from "react";
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import Logo from "../images/logo.jpeg";
 import "./Layout.css";
 
@@ -25,12 +24,12 @@ function Layout() {
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
-    document.body.style.overflow = !isMenuOpen ? 'hidden' : '';
+    document.body.style.overflow = !isMenuOpen ? "hidden" : "";
   };
 
   const closeMenu = () => {
     setIsMenuOpen(false);
-    document.body.style.overflow = '';
+    document.body.style.overflow = "";
   };
 
   const closeDropdown = () => {
@@ -63,7 +62,9 @@ function Layout() {
   };
 
   const handleLogout = () => {
-    ["token", "role", "userName", "userEmail"].forEach(k => localStorage.removeItem(k));
+    ["token", "role", "userName", "userEmail"].forEach((k) =>
+      localStorage.removeItem(k)
+    );
     setUser(null);
     setDropdownOpen(false);
     closeMenu();
@@ -78,8 +79,8 @@ function Layout() {
         </Link>
 
         {/* Hamburger Menu Button */}
-        <button 
-          className={`hamburger ${isMenuOpen ? 'active' : ''}`}
+        <button
+          className={`hamburger ${isMenuOpen ? "active" : ""}`}
           onClick={toggleMenu}
           aria-label="Menu"
         >
@@ -89,26 +90,66 @@ function Layout() {
         </button>
 
         {/* Navigation Links */}
-        <ul className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
-          <li><Link to="/" onClick={closeMenu}>Home</Link></li>
-          <li><Link to="/about" onClick={closeMenu}>About us</Link></li>
-          <li><Link to="/join" onClick={closeMenu}>Join us</Link></li>
-          <li><Link to="/booking" onClick={closeMenu}>Booking</Link></li>
-          <li><Link to="/services" onClick={closeMenu}>Services</Link></li>
-          <li><Link to="/blog" onClick={closeMenu}>Blog</Link></li>
-          <li><Link to="/help" onClick={closeMenu}>Help</Link></li>
-          
+        <ul
+          className={`nav-links ${isMenuOpen ? "active" : ""}`}
+          ref={mobileMenuRef}
+        >
+          <li>
+            <NavLink to="/" end onClick={closeMenu}>
+              Home
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/about" onClick={closeMenu}>
+              About us
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/join" onClick={closeMenu}>
+              Join us
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/booking" onClick={closeMenu}>
+              Booking
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/services" onClick={closeMenu}>
+              Services
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/blog" onClick={closeMenu}>
+              Blog
+            </NavLink>
+          </li>
+
           {user ? (
             <li className="profile-nav-item" ref={dropdownRef}>
-              <button className="profile-icon-btn" onClick={() => setDropdownOpen(o => !o)}>
+              <button
+                className="profile-icon-btn"
+                onClick={() => setDropdownOpen((o) => !o)}
+              >
                 <div className="profile-icon-avatar">
                   {user.name?.charAt(0).toUpperCase() || "U"}
                 </div>
-                <span className="profile-icon-name">{user.name?.split(" ")[0]}</span>
-                <svg className={`profile-chevron ${dropdownOpen ? "open" : ""}`} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M6 9l6 6 6-6"/>
+                <span className="profile-icon-name">
+                  {user.name?.split(" ")[0]}
+                </span>
+                <svg
+                  className={`profile-chevron ${dropdownOpen ? "open" : ""}`}
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <path d="M6 9l6 6 6-6" />
                 </svg>
               </button>
+
               {dropdownOpen && (
                 <div className="profile-dropdown">
                   <div className="profile-dropdown-header">
@@ -117,15 +158,23 @@ function Layout() {
                     </div>
                     <div>
                       <div className="profile-dropdown-name">{user.name}</div>
-                      <div className={`profile-dropdown-role ${user.role}`}>{user.role}</div>
+                      <div className={`profile-dropdown-role ${user.role}`}>
+                        {user.role}
+                      </div>
                     </div>
                   </div>
                   <div className="profile-dropdown-divider" />
-                  <button className="profile-dropdown-item" onClick={handleDashboard}>
+                  <button
+                    className="profile-dropdown-item"
+                    onClick={handleDashboard}
+                  >
                     <span>🏠</span> My Dashboard
                   </button>
                   <div className="profile-dropdown-divider" />
-                  <button className="profile-dropdown-item logout" onClick={handleLogout}>
+                  <button
+                    className="profile-dropdown-item logout"
+                    onClick={handleLogout}
+                  >
                     <span>🚪</span> Logout
                   </button>
                 </div>
@@ -133,8 +182,20 @@ function Layout() {
             </li>
           ) : (
             <>
-              <li><Link to="/login" className="btn-nav" onClick={closeMenu}>Login</Link></li>
-              <li><Link to="/register" className="btn-nav btn-nav-signup" onClick={closeMenu}>Sign Up</Link></li>
+              <li>
+                <Link to="/login" className="btn-nav" onClick={closeMenu}>
+                  Login
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/register"
+                  className="btn-nav btn-nav-signup"
+                  onClick={closeMenu}
+                >
+                  Sign Up
+                </Link>
+              </li>
             </>
           )}
         </ul>
@@ -153,7 +214,12 @@ function Layout() {
             <Link to="/" className="logo">
               <img src={Logo} alt="AfiyaCare Logo" className="logo-img" />
             </Link>
-            <p>At Afiya Care, we provide expert physiotherapy services designed to restore movement, reduce pain, and support overall wellness. Our dedicated team combines personalized care with the latest techniques to help every patient achieve their recovery goals.</p>
+            <p>
+              At Afiya Care, we provide expert physiotherapy services designed
+              to restore movement, reduce pain, and support overall wellness.
+              Our dedicated team combines personalized care with the latest
+              techniques to help every patient achieve their recovery goals.
+            </p>
           </div>
           <div className="footer-col">
             <h5>Quick Links</h5>
@@ -164,7 +230,6 @@ function Layout() {
               <li><Link to="/booking">Booking</Link></li>
               <li><Link to="/services">Services</Link></li>
               <li><Link to="/blog">Blog</Link></li>
-              <li><Link to="/help">Help Center</Link></li>
             </ul>
           </div>
           <div className="footer-col">
@@ -183,9 +248,14 @@ function Layout() {
             <h5>Contact us</h5>
             <ul>
               <li><a href="mailto:afiyacare@gmail.com">afiyacare@gmail.com</a></li>
-              <li><a href="https://www.facebook.com/profile.php?id=61585057423569">Facebook</a></li>
+              <li>
+                <a href="https://www.facebook.com/profile.php?id=61585057423569">
+                  Facebook
+                </a>
+              </li>
               <li><a href="#">Instagram</a></li>
               <li><a href="#">WhatsApp</a></li>
+              <li><Link to="/help">Help Center</Link></li>
             </ul>
             <div className="newsletter-row">
               <input type="email" placeholder="Your email" />
@@ -195,7 +265,12 @@ function Layout() {
         </div>
         <div className="footer-bottom">
           <div className="social-links">
-            <a href="https://www.facebook.com/profile.php?id=61585057423569" aria-label="Facebook">f</a>
+            <a
+              href="https://www.facebook.com/profile.php?id=61585057423569"
+              aria-label="Facebook"
+            >
+              f
+            </a>
             <a href="#" aria-label="Twitter">t</a>
             <a href="#" aria-label="LinkedIn">in</a>
           </div>

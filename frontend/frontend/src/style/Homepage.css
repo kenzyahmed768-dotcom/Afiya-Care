@@ -197,11 +197,11 @@ nav {
   letter-spacing: 0.5px;
 }
 
-.btn-primary {
+.btn-homepage {
   display: inline-block;
   padding: 14px 32px;
-  background: var(--white);
-  color: var(--blue);
+  background: var(--teal);
+  color: var(--white);
   border-radius: 8px;
   font-weight: 600;
   font-size: 15px;
@@ -211,8 +211,8 @@ nav {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
-.btn-primary:hover {
-  background: var(--navy);
+.btn-homepage:hover {
+  background: var(--accent);
   color: var(--white);
   transform: translateY(-2px);
 }
@@ -356,6 +356,7 @@ nav {
   align-items: center;
   gap: 60px;
   padding: 60px;
+  text-align: center;
 }
 
 .why-image img { 

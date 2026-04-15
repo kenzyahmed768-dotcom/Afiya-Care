@@ -221,28 +221,28 @@ export default function JoinUs() {
             src="https://images.unsplash.com/photo-1559757175-5700dde675bc?w=700&q=80"
             alt="AfiyaCare Team"
           />
-          <div className="story-badge">Est. 2012</div>
+          <div className="story-badge">Afiya Care</div>
         </div>
         <div className="story-content">
           <div className="section-label">OUR STORY</div>
           <h2>
-            We've been in business
+            Continue growing with
             <br />
-            <em>since 2012.</em>
+            <em>Afiya Care.</em>
           </h2>
           <p>
-            AfiyaCare has proudly served communities across the region since
-            2012, growing alongside our ever-expanding population.
+            At AfiyaCare we believe that providing world class patient care starts with taking world class care of our staff, as we have proudly served communities across the region 
+            , growing alongside our ever-expanding population and team.
           </p>
           <p>
             Our medical staffing includes highly qualified professionals and
-            specialists licensed across more than 100 convenient locations
+            specialists licensed a multitude of convenient locations
             nationwide.
           </p>
           <div className="story-highlights">
             {[
-              ["🌍", "100+ Locations"],
-              ["🩺", "20+ Specialties"],
+              ["🌍", "40+ Locations"],
+              ["🩺", "15+ Specialties"],
               ["⭐", "Award-Winning Care"],
             ].map(([icon, label]) => (
               <div className="story-highlight" key={label}>
@@ -562,10 +562,10 @@ export default function JoinUs() {
 
       <section className="stats-section">
         {[
-          ["👤", "1.5M+", "Patients Served"],
-          ["📅", "2M+", "Appointments Booked"],
-          ["🏆", "300K+", "Successful Treatments"],
-          ["🏥", "400+", "Hospitals & Clinics"],
+          ["👤", "10k+", "Patients Served"],
+          ["📅", "12k+", "Appointments Booked"],
+          ["🏆", "6k+", "Successful Treatments"],
+          ["🏥", "20+", "Hospitals & Clinics"],
         ].map(([icon, value, label]) => (
           <div className="stat-item" key={label}>
             <span className="stat-icon">{icon}</span>

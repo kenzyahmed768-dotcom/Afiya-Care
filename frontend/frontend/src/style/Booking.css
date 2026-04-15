@@ -119,8 +119,8 @@ img { max-width: 100%; display: block; }
   display: flex; align-items: center; gap: 8px;
 }
 .bk-hero-float span { font-size: 1rem; }
-.bk-hero-float-1 { bottom: 60px; left: 40px; }
-.bk-hero-float-2 { top: 60px; left: 40px; }
+.bk-hero-float-1 { bottom: 60px; right: 380px; }
+.bk-hero-float-2 { top: 60px; right: 380px; }
 
 /* ── STEPS ───────────────────────────────────────────────── */
 .bk-steps {

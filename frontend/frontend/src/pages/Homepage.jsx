@@ -97,7 +97,7 @@ function Homepage() {
             Your Path To Better Health
           </h1>
           <p>Expert Physiotherapy Tailored To Your Recovery</p>
-          <Link to="/booking" className="btn-primary">
+          <Link to="/booking" className="btn-homepage">
             Book An Appointment
           </Link>
         </div>

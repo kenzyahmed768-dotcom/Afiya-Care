@@ -113,7 +113,7 @@ export default function Booking() {
         </div>
         <div className="bk-hero-right">
           <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80" alt="Physiotherapy session" />
-          <div className="bk-hero-float bk-hero-float-1"><span>✓</span> 400+ Specialists</div>
+          <div className="bk-hero-float bk-hero-float-1"><span>✓</span> 30+ Specialists</div>
           <div className="bk-hero-float bk-hero-float-2"><span>⭐</span> 98% Satisfaction</div>
         </div>
       </section>
@@ -255,9 +255,9 @@ export default function Booking() {
             <div className="bk-contact-card">
               <h4>Opening Hours <span>🕐</span></h4>
               <div className="bk-hours">
-                <div><span>Sunday – Thursday</span><strong>8:00 AM – 6:00 PM</strong></div>
-                <div><span>Friday</span><strong>8:00 AM – 2:30 PM</strong></div>
-                <div><span>Saturday</span><strong>8:30 AM – 3:30 PM</strong></div>
+                <div><span>Sunday – Thursday</span><strong>10:00 AM – 10:00 PM</strong></div>
+                <div><span>Friday</span><strong>Closed</strong></div>
+                <div><span>Saturday</span><strong>12:00 PM – 10:00 PM</strong></div>
               </div>
             </div>
           </div>

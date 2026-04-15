@@ -118,6 +118,9 @@ nav {
 
 .nav-links a:hover { color: var(--teal); }
 
+.nav-links a.nav-links.active{
+  color: var(--teal);}
+
 .btn-nav {
   padding: 8px 20px;
   border: 2px solid var(--teal);

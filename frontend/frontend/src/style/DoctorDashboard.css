@@ -418,8 +418,8 @@ body {
   font-size: 12px; font-weight: 600; transition: all 0.18s ease;
 }
 
-.btn-primary { background: var(--primary); color: white; }
-.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+.btn-doctor{ background: var(--primary); color: white; }
+.btn-doctor:hover { background: var(--primary-dark); transform: translateY(-1px); }
 .btn-green  { background: var(--approve); color: white; }
 .btn-green:hover  { background: #16a34a; transform: translateY(-1px); }
 .btn-red    { background: transparent; color: var(--reject); border: 1.5px solid var(--reject); }
