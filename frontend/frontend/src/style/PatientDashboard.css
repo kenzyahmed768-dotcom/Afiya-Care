@@ -1,4 +1,4 @@
-/* PatientDashboard.css - Complete Updated Version */
+/* PatientDashboard.css - Complete Updated Version with Reviews */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
@@ -27,6 +27,7 @@
   --shadow: 0 2px 16px rgba(10,22,40,.08);
   --shadow-lg: 0 8px 32px rgba(10,22,40,.14);
   --sidebar-width: 260px;
+  --gold: #fbbf24;
 }
 
 *, *::before, *::after {
@@ -520,7 +521,7 @@ img { max-width: 100%; display: block; }
   align-items: center;
   justify-content: center;
   padding: 60px 24px;
-  gap: 12px;
+  gap: 16px;
   text-align: center;
 }
 
@@ -1000,6 +1001,198 @@ img { max-width: 100%; display: block; }
   transform: scale(1.05);
 }
 
+/* ── REVIEWS TAB ────────────────────────────────────────── */
+.pd-reviews-container {
+  width: 100%;
+}
+
+.pd-review-form-container {
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--off-white);
+}
+
+.pd-review-form h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 6px;
+}
+
+.pd-review-form > p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.pd-form-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text-dark);
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.2s;
+  cursor: pointer;
+}
+
+.pd-form-select:focus {
+  border-color: var(--teal);
+}
+
+.pd-form-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text-dark);
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.2s;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.pd-form-textarea:focus {
+  border-color: var(--teal);
+}
+
+.pd-rating-stars {
+  display: flex;
+  gap: 8px;
+}
+
+.pd-star-btn {
+  background: none;
+  border: none;
+  font-size: 32px;
+  color: #d1d5db;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.pd-star-btn:hover {
+  transform: scale(1.1);
+}
+
+.pd-star-btn.active {
+  color: var(--gold);
+}
+
+.pd-form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.pd-reviews-list {
+  padding: 0;
+}
+
+.pd-review-item {
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+
+.pd-review-item:last-child {
+  border-bottom: none;
+}
+
+.pd-review-item:hover {
+  background: var(--off-white);
+}
+
+.pd-review-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pd-reviewer-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pd-reviewer-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pd-reviewer-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 2px;
+}
+
+.pd-review-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.pd-review-rating {
+  display: flex;
+  align-items: center;
+}
+
+.pd-stars-display {
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: var(--gold);
+}
+
+.pd-review-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+}
+
+.pd-review-comment {
+  font-size: 14px;
+  color: var(--text-mid);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.pd-review-doctor {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--teal-pale);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--teal-dark);
+  font-weight: 500;
+}
+
+.pd-review-doctor span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* ── TOAST ──────────────────────────────────────────────── */
 .pd-toast {
   position: fixed;
@@ -1083,6 +1276,11 @@ img { max-width: 100%; display: block; }
   .pd-chat-sidebar {
     height: 250px;
   }
+  
+  .pd-review-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1112,6 +1310,14 @@ img { max-width: 100%; display: block; }
   
   .pd-form-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .pd-form-actions {
+    flex-direction: column;
+  }
+  
+  .pd-form-actions .pd-btn {
+    width: 100%;
   }
 }
 
@@ -1149,5 +1355,17 @@ img { max-width: 100%; display: block; }
   
   .pd-msg {
     max-width: 85%;
+  }
+  
+  .pd-review-item {
+    padding: 16px;
+  }
+  
+  .pd-rating-stars {
+    justify-content: center;
+  }
+  
+  .pd-star-btn {
+    font-size: 28px;
   }
 }

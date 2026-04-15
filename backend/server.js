@@ -56,6 +56,7 @@ const Admin       = require("./models/admin");
 const Appointment = require("./models/appointment");
 const Message     = require("./models/message");
 const Application = require("./models/application");
+const Review = require("./models/review");
 
 // -----------------
 // Nodemailer
@@ -543,6 +544,81 @@ app.get("/patient/appointments", authMiddleware, async (req, res) => {
       .populate("doctor", "name specialty").sort({ date: -1 }));
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
+// ======================
+// PATIENT REVIEW ROUTES (Submit & View Own Reviews)
+// ======================
+
+// Get patient's own reviews
+app.get("/patient/reviews", authMiddleware, async (req, res) => {
+  try {
+    const reviews = await Review.find({ patient: req.user.id })
+      .populate("doctor", "name specialty")
+      .sort({ createdAt: -1 });
+    res.json(reviews);
+  } catch (error) {
+    console.error("Error fetching patient reviews:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Submit a new review (patient only)
+app.post("/patient/reviews", authMiddleware, async (req, res) => {
+  try {
+    const { rating, title, comment, doctorId, appointmentId } = req.body;
+    
+    // Validate required fields
+    if (!rating || !comment) {
+      return res.status(400).json({ message: "Rating and comment are required" });
+    }
+    
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ message: "Rating must be between 1 and 5" });
+    }
+    
+    // Create the review (starts as pending)
+    const review = new Review({
+      patient: req.user.id,
+      doctor: doctorId || null,
+      appointment: appointmentId || null,
+      rating,
+      title: title || "",
+      comment: comment.trim(),
+      status: "pending",
+      isPublic: false
+    });
+    
+    await review.save();
+    
+    // Populate patient and doctor info for response
+    await review.populate("patient", "name email");
+    if (doctorId) {
+      await review.populate("doctor", "name specialty");
+    }
+    
+    res.status(201).json({ 
+      message: "Review submitted successfully! It will be visible after admin approval.", 
+      review 
+    });
+  } catch (error) {
+    console.error("Error submitting review:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get completed appointments (for review dropdown)
+app.get("/patient/appointments/completed", authMiddleware, async (req, res) => {
+  try {
+    const appointments = await Appointment.find({ 
+      patient: req.user.id,
+      status: "completed"
+    })
+      .populate("doctor", "name specialty")
+      .sort({ date: -1 });
+    res.json(appointments);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // ======================
 // CHAT ROUTES
@@ -620,7 +696,94 @@ app.get("/chat/:userId", authMiddleware, async (req, res) => {
     res.json(messages);
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
+// ======================
+// REVIEW ROUTES
+// ======================
 
+// Get all reviews (admin only) - with optional status filter
+app.get("/admin/reviews", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { status } = req.query;
+    const query = status ? { status } : {};
+    
+    const reviews = await Review.find(query)
+      .populate("patient", "name email")
+      .populate("doctor", "name specialty")
+      .sort({ createdAt: -1 });
+      
+    res.json(reviews);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get review stats (admin only)
+app.get("/admin/reviews/stats", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const stats = await Review.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+          avgRating: { $avg: "$rating" }
+        }
+      }
+    ]);
+    
+    const total = stats.reduce((sum, s) => sum + s.count, 0);
+    const pending = stats.find(s => s._id === "pending")?.count || 0;
+    const approved = stats.find(s => s._id === "approved")?.count || 0;
+    const rejected = stats.find(s => s._id === "rejected")?.count || 0;
+    
+    res.json({ total, pending, approved, rejected, stats });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Approve or reject a review (admin only)
+app.patch("/admin/reviews/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { status, adminNotes } = req.body;
+    
+    if (!["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+    
+    const review = await Review.findByIdAndUpdate(
+      req.params.id,
+      {
+        status,
+        isPublic: status === "approved",
+        adminNotes,
+        reviewedBy: req.user.id,
+        reviewedAt: new Date()
+      },
+      { new: true }
+    ).populate("patient", "name").populate("doctor", "name");
+    
+    if (!review) {
+      return res.status(404).json({ message: "Review not found" });
+    }
+    
+    res.json({ message: `Review ${status}`, review });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Delete a review (admin only)
+app.delete("/admin/reviews/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const review = await Review.findByIdAndDelete(req.params.id);
+    if (!review) {
+      return res.status(404).json({ message: "Review not found" });
+    }
+    res.json({ message: "Review deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 // ======================
 // SOCKET.IO
 // Uses socket.join(userId) so io.to(userId) always works,

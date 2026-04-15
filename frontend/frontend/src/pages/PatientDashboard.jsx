@@ -28,6 +28,19 @@ export default function PatientDashboard() {
     completedAppointments: 0 
   });
   
+  // Review states
+  const [reviews, setReviews] = useState([]);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    rating: 5,
+    title: "",
+    comment: "",
+    doctorId: "",
+    appointmentId: ""
+  });
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [completedAppointmentsList, setCompletedAppointmentsList] = useState([]);
+  
   const fileRef = useRef(null);
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
@@ -53,10 +66,11 @@ export default function PatientDashboard() {
 
   const fetchData = async () => {
     try {
-      const [profile, appts, convos] = await Promise.all([
+      const [profile, appts, convos, reviewsData] = await Promise.all([
         safeFetch("/patient/profile"),
         safeFetch("/patient/appointments"),
         safeFetch("/chat/conversations/list"),
+        safeFetch("/patient/reviews"),
       ]);
 
       if (profile) {
@@ -66,6 +80,10 @@ export default function PatientDashboard() {
 
       const apptsList = Array.isArray(appts) ? appts : [];
       setAppointments(apptsList);
+      
+      // Set completed appointments for review selection
+      const completed = apptsList.filter(a => a.status === 'completed');
+      setCompletedAppointmentsList(completed);
       
       const now = new Date();
       setStats({
@@ -77,6 +95,8 @@ export default function PatientDashboard() {
       const convoList = Array.isArray(convos) ? convos : [];
       setConversations(convoList);
       setUnreadCount(convoList.reduce((sum, c) => sum + (c.unread || 0), 0));
+      
+      setReviews(Array.isArray(reviewsData) ? reviewsData : []);
     } finally {
       setLoading(false);
     }
@@ -211,6 +231,49 @@ export default function PatientDashboard() {
     }
   };
 
+  // Submit review
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    
+    if (!reviewForm.rating || !reviewForm.comment) {
+      showToast("Please provide a rating and comment", "error");
+      return;
+    }
+    
+    setSubmittingReview(true);
+    
+    try {
+      const res = await fetch(`${API}/patient/reviews`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(reviewForm),
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        showToast("Thank you for your review!");
+        setReviews(prev => [data.review, ...prev]);
+        setShowReviewForm(false);
+        setReviewForm({
+          rating: 5,
+          title: "",
+          comment: "",
+          doctorId: "",
+          appointmentId: ""
+        });
+        // Refresh data
+        fetchData();
+      } else {
+        showToast(data.message || "Failed to submit review", "error");
+      }
+    } catch {
+      showToast("Could not connect to server", "error");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   const handleLogout = () => {
     ["token", "role", "userName", "userEmail"].forEach(k => localStorage.removeItem(k));
     navigate("/login");
@@ -224,14 +287,8 @@ export default function PatientDashboard() {
     ? new Date(d).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
     : "";
 
-  const statusColor = (s) => {
-    const colors = { 
-      pending: "status-pending", 
-      confirmed: "status-confirmed", 
-      completed: "status-completed", 
-      cancelled: "status-cancelled" 
-    };
-    return colors[s] || "";
+  const renderStars = (rating) => {
+    return "★".repeat(rating) + "☆".repeat(5 - rating);
   };
 
   if (loading) return (
@@ -244,9 +301,11 @@ export default function PatientDashboard() {
   const initials = patient?.name?.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) || "P";
 
   const navItems = [
+    { key: "home", icon: "🏠", label: "Home", path: "/" },
     { key: "overview", icon: "📊", label: "Overview" },
     { key: "appointments", icon: "📅", label: `Appointments (${appointments.length})` },
     { key: "chat", icon: "💬", label: `Messages${unreadCount > 0 ? ` (${unreadCount})` : ""}` },
+    { key: "reviews", icon: "⭐", label: "Reviews" },
     { key: "profile", icon: "👤", label: "Profile" },
   ];
 
@@ -254,7 +313,11 @@ export default function PatientDashboard() {
     <div className="pd-root">
       {/* SIDEBAR */}
       <aside className="pd-sidebar">
-        <div className="pd-sidebar-top">
+        <div 
+          className="pd-sidebar-top"
+          style={{ cursor: 'pointer' }}
+          onClick={() => navigate("/")}
+        >
           <div className="pd-sidebar-brand">
             <div className="pd-brand-icon">🏥</div>
             <div className="pd-brand-text">
@@ -269,7 +332,13 @@ export default function PatientDashboard() {
             <button
               key={key}
               className={`pd-nav-item ${activeTab === key ? "active" : ""}`}
-              onClick={() => setActiveTab(key)}
+              onClick={() => {
+                if (key === "home") {
+                  navigate("/");
+                } else {
+                  setActiveTab(key);
+                }
+              }}
             >
               <span className="pd-nav-icon">{icon}</span>
               <span className="pd-nav-text">{label}</span>
@@ -515,6 +584,174 @@ export default function PatientDashboard() {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* REVIEWS TAB */}
+        {activeTab === "reviews" && (
+          <div className="pd-reviews-container">
+            <div className="pd-section-card">
+              <div className="pd-section-header">
+                <div>
+                  <div className="pd-section-title">My Reviews</div>
+                  <div className="pd-section-sub">Share your experience with us</div>
+                </div>
+                {!showReviewForm && (
+                  <button 
+                    className="pd-btn pd-btn-primary" 
+                    onClick={() => setShowReviewForm(true)}
+                  >
+                    ✏️ Write a Review
+                  </button>
+                )}
+              </div>
+
+              {/* Review Form */}
+              {showReviewForm && (
+                <div className="pd-review-form-container">
+                  <form className="pd-review-form" onSubmit={handleSubmitReview}>
+                    <h3>Share Your Feedback</h3>
+                    <p>We'd love to hear about your experience!</p>
+                    
+                    <div className="pd-form-group">
+                      <label className="pd-form-label">Select Appointment (Optional)</label>
+                      <select 
+                        className="pd-form-select"
+                        value={reviewForm.appointmentId}
+                        onChange={(e) => {
+                          const appt = completedAppointmentsList.find(a => a._id === e.target.value);
+                          setReviewForm({
+                            ...reviewForm,
+                            appointmentId: e.target.value,
+                            doctorId: appt?.doctor?._id || ""
+                          });
+                        }}
+                      >
+                        <option value="">General Feedback</option>
+                        {completedAppointmentsList.map(a => (
+                          <option key={a._id} value={a._id}>
+                            {fmtDate(a.date)} with Dr. {a.doctor?.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="pd-form-group">
+                      <label className="pd-form-label">Rating *</label>
+                      <div className="pd-rating-stars">
+                        {[1, 2, 3, 4, 5].map(star => (
+                          <button
+                            key={star}
+                            type="button"
+                            className={`pd-star-btn ${reviewForm.rating >= star ? "active" : ""}`}
+                            onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pd-form-group">
+                      <label className="pd-form-label">Title (Optional)</label>
+                      <input
+                        type="text"
+                        className="pd-form-input"
+                        placeholder="e.g., Great experience!"
+                        value={reviewForm.title}
+                        onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="pd-form-group">
+                      <label className="pd-form-label">Your Review *</label>
+                      <textarea
+                        className="pd-form-textarea"
+                        rows={4}
+                        placeholder="Tell us about your experience with Afiya Care..."
+                        value={reviewForm.comment}
+                        onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div className="pd-form-actions">
+                      <button 
+                        type="button" 
+                        className="pd-btn pd-btn-outline"
+                        onClick={() => {
+                          setShowReviewForm(false);
+                          setReviewForm({
+                            rating: 5,
+                            title: "",
+                            comment: "",
+                            doctorId: "",
+                            appointmentId: ""
+                          });
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        type="submit" 
+                        className="pd-btn pd-btn-primary"
+                        disabled={submittingReview}
+                      >
+                        {submittingReview ? "Submitting..." : "Submit Review"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Reviews List */}
+              <div className="pd-reviews-list">
+                {reviews.length === 0 ? (
+                  <div className="pd-empty-state">
+                    <span className="pd-empty-icon">⭐</span>
+                    <p>No reviews yet</p>
+                    <button 
+                      className="pd-btn pd-btn-primary"
+                      onClick={() => setShowReviewForm(true)}
+                    >
+                      Write Your First Review
+                    </button>
+                  </div>
+                ) : (
+                  reviews.map((review, index) => (
+                    <div className="pd-review-item" key={review._id || index}>
+                      <div className="pd-review-header">
+                        <div className="pd-reviewer-info">
+                          <div className="pd-reviewer-avatar">
+                            {review.patient?.name?.charAt(0).toUpperCase() || initials}
+                          </div>
+                          <div>
+                            <div className="pd-reviewer-name">
+                              {review.patient?.name || patient?.name || "You"}
+                            </div>
+                            <div className="pd-review-date">
+                              {fmtDate(review.createdAt)}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="pd-review-rating">
+                          <span className="pd-stars-display">{renderStars(review.rating)}</span>
+                        </div>
+                      </div>
+                      {review.title && (
+                        <h4 className="pd-review-title">{review.title}</h4>
+                      )}
+                      <p className="pd-review-comment">{review.comment}</p>
+                      {review.doctor && (
+                        <div className="pd-review-doctor">
+                          <span>👨‍⚕️ Doctor: Dr. {review.doctor.name}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         )}
