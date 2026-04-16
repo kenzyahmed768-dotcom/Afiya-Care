@@ -150,7 +150,7 @@ function Homepage() {
       <section className="why-section">
         <div className="why-image">
           <img
-            src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80"
+            src="https://portlandwellnesscare.com/wp-content/uploads/2022/08/how-effective-is-physiotherapy.jpg"
             alt="Physiotherapy session"
           />
         </div>

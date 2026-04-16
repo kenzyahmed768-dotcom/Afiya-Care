@@ -218,7 +218,7 @@ export default function JoinUs() {
       <section className="story-section" id="story">
         <div className="story-image">
           <img
-            src="https://images.unsplash.com/photo-1559757175-5700dde675bc?w=700&q=80"
+            src="https://media.istockphoto.com/id/1324679923/photo/male-and-female-therapists-controlling-rehabilitation-of-man-in-exoskeleton.jpg?s=612x612&w=0&k=20&c=dzoPM5qN1QJJFfWrzwW2qwe460lV-9yHOWmzSe7GjfI="
             alt="AfiyaCare Team"
           />
           <div className="story-badge">Afiya Care</div>
@@ -281,7 +281,7 @@ export default function JoinUs() {
         </div>
         <div className="mission-image">
           <img
-            src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=700&q=80"
+            src="https://media.istockphoto.com/id/1766607642/photo/shoulder-pain-physical-therapy-and-chiropractor-with-patient-injury-and-healthcare-with-help.jpg?s=612x612&w=0&k=20&c=t9WI5-BaP_svAN6mROk8MZFQhD-57ZSwgSctF0UFmEc="
             alt="AfiyaCare Mission"
           />
           <div className="mission-ring" />

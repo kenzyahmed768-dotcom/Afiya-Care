@@ -112,7 +112,7 @@ export default function Booking() {
           <button className="bk-btn bk-btn-primary" onClick={scrollToBooking}>Book Now →</button>
         </div>
         <div className="bk-hero-right">
-          <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80" alt="Physiotherapy session" />
+          <img src="https://img.freepik.com/free-photo/team-young-nurses-learning-practice-from-doctor-expert-cabinet_482257-113728.jpg?semt=ais_hybrid&w=740&q=80" alt="Physiotherapy session" />
           <div className="bk-hero-float bk-hero-float-1"><span>✓</span> 30+ Specialists</div>
           <div className="bk-hero-float bk-hero-float-2"><span>⭐</span> 98% Satisfaction</div>
         </div>
@@ -140,7 +140,7 @@ export default function Booking() {
       {/* BOOKING FORM */}
       <section className="bk-booking" id="booking">
         <div className="bk-booking-img">
-          <img src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=700&q=80" alt="Booking" />
+          <img src="https://www.thomsonreuters.com/en-us/posts/wp-content/uploads/sites/20/2021/09/healthcare-professionals.jpg" alt="Booking" />
           <div className="bk-booking-overlay">
             <h3>Back to Comfort</h3>
             <p>Move Without Pain</p>
@@ -244,7 +244,7 @@ export default function Booking() {
         </div>
         <div className="bk-contact-grid">
           <div className="bk-contact-img">
-            <img src="https://images.unsplash.com/photo-1559757175-5700dde675bc?w=700&q=80" alt="Contact" />
+            <img src="https://www.shutterstock.com/image-photo/medical-worker-using-laptop-touching-600nw-2496055089.jpg" alt="Contact" />
           </div>
           <div className="bk-contact-cards">
             <div className="bk-contact-card">

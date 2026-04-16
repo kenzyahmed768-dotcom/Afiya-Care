@@ -12,8 +12,7 @@ import JoinUs from "./pages/JoinUs";
 import PatientDashboard from "./pages/PatientDashboard";
 import Booking from "./pages/booking";
 import HelpCenter from "./pages/Helpcenter";
-import About from "./pages/About";
-import Services from "./pages/Services";
+
 
 function App() {
   return (
@@ -25,8 +24,7 @@ function App() {
           <Route path="join" element={<JoinUs />} />
           <Route path="booking" element={<Booking />} />
           <Route path="help" element={<HelpCenter />} />
-          <Route path="/about" element={<About />} />
-          <Route path="services" element={<Services />} />
+         
         </Route>
 
         {/* Pages WITHOUT navigation and footer */}

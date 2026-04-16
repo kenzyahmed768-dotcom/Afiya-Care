@@ -163,7 +163,10 @@ nav {
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1400&q=80') center/cover no-repeat;
+  background-image: url('https://www.cdi.org.in/images/speciality/mobile/062f2352-7deb-4e01-bd28-0cf9adc1309f_1744351357.jpg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center 20%;
   opacity: 0.25;
 }
 
@@ -360,11 +363,12 @@ nav {
 }
 
 .why-image img { 
-  width: 100%; 
+  width: 98%;   
   border-radius: 20px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-}
+  margin-top: 80px;
 
+}
 .why-content h2 { 
   font-size: 32px; 
   font-weight: 700; 
