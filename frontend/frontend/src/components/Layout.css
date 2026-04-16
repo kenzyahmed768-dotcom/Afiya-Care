@@ -431,26 +431,7 @@ footer {
 .newsletter-row button:hover {
   background: var(--teal-dark);
 }
-.lang-toggle {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
 
-.lang-toggle button {
-  border: 1px solid rgba(255,255,255,0.3);
-  padding: 6px 14px;
-  border-radius: 20px;
-  cursor: pointer;
-  background: transparent;
-  color: white;
-  font-size: 13px;
-}
-
-.lang-toggle button.active {
-  background: var(--teal);
-  border-color: var(--teal);
-}
 
 /* ── RESPONSIVE DESIGN ── */
 
