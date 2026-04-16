@@ -23,9 +23,7 @@ app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
-// -----------------
-// Multer
-// -----------------
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = "uploads/profiles";
@@ -45,9 +43,7 @@ const upload = multer({
   },
 });
 
-// -----------------
-// DB & Models
-// -----------------
+
 const connectDB = require("./config/db");
 connectDB();
 const User        = require("./models/user");
@@ -58,17 +54,13 @@ const Message     = require("./models/message");
 const Application = require("./models/application");
 const Review = require("./models/review");
 
-// -----------------
-// Nodemailer
-// -----------------
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
 });
 
-// -----------------
-// Middleware
-// -----------------
+
 const authMiddleware = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "No token provided" });
@@ -82,9 +74,7 @@ const authMiddleware = (req, res, next) => {
 const adminMiddleware  = (req, res, next) => req.user.role === "admin"  ? next() : res.status(403).json({ message: "Access denied" });
 const doctorMiddleware = (req, res, next) => req.user.role === "doctor" ? next() : res.status(403).json({ message: "Access denied" });
 
-// ======================
-// AUTH
-// ======================
+
 app.post("/register", async (req, res) => {
   try {
     const { name, age, email, password, role, specialty, experience } = req.body;
@@ -189,9 +179,7 @@ app.post("/reset-password/:token", async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ message: "Server error" }); }
 });
 
-// ======================
-// ADMIN ROUTES
-// ======================
+
 app.get("/admin/overview", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const [totalDoctors, totalPatients, pendingDoctors, totalAppointments,
@@ -273,10 +261,7 @@ app.get("/admin/schedules/patients", authMiddleware, adminMiddleware, async (req
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 
-// ======================
-// SUPPORT ROUTE
-// Returns first admin's ID + name for the Help Center live chat
-// ======================
+
 app.get("/support/agent", authMiddleware, async (req, res) => {
   try {
     const admin = await Admin.findOne().select("_id name");
@@ -287,9 +272,7 @@ app.get("/support/agent", authMiddleware, async (req, res) => {
   }
 });
 
-// ======================
-// APPLICATION ROUTES
-// ======================
+
 app.post("/applications", async (req, res) => {
   try {
     const { firstName, lastName, email, phone, role, experience, message } = req.body;
@@ -324,9 +307,7 @@ app.delete("/admin/applications/:id", authMiddleware, adminMiddleware, async (re
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 
-// ======================
-// BOOKING ROUTES
-// ======================
+
 app.get("/booking/doctors", async (req, res) => {
   try {
     const doctors = await Doctor.find({ status: "approved" })
@@ -420,9 +401,7 @@ app.post("/booking/init-chat", authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 
-// ======================
-// DOCTOR ROUTES
-// ======================
+
 app.get("/doctor/profile", authMiddleware, doctorMiddleware, async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.user.id).select("-password");
@@ -508,9 +487,7 @@ app.get("/doctor/patients", authMiddleware, doctorMiddleware, async (req, res) =
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 
-// ======================
-// PATIENT ROUTES
-// ======================
+
 app.get("/patient/profile", authMiddleware, async (req, res) => {
   try {
     const patient = await User.findById(req.user.id).select("-password");
@@ -544,11 +521,9 @@ app.get("/patient/appointments", authMiddleware, async (req, res) => {
       .populate("doctor", "name specialty").sort({ date: -1 }));
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
-// ======================
-// PATIENT REVIEW ROUTES (Submit & View Own Reviews)
-// ======================
 
-// Get patient's own reviews
+
+
 app.get("/patient/reviews", authMiddleware, async (req, res) => {
   try {
     const reviews = await Review.find({ patient: req.user.id })
@@ -561,7 +536,7 @@ app.get("/patient/reviews", authMiddleware, async (req, res) => {
   }
 });
 
-// Submit a new review (patient only)
+
 app.post("/patient/reviews", authMiddleware, async (req, res) => {
   try {
     const { rating, title, comment, doctorId, appointmentId } = req.body;
@@ -589,7 +564,7 @@ app.post("/patient/reviews", authMiddleware, async (req, res) => {
     
     await review.save();
     
-    // Populate patient and doctor info for response
+   
     await review.populate("patient", "name email");
     if (doctorId) {
       await review.populate("doctor", "name specialty");
@@ -605,7 +580,7 @@ app.post("/patient/reviews", authMiddleware, async (req, res) => {
   }
 });
 
-// Get completed appointments (for review dropdown)
+
 app.get("/patient/appointments/completed", authMiddleware, async (req, res) => {
   try {
     const appointments = await Appointment.find({ 
@@ -620,11 +595,9 @@ app.get("/patient/appointments/completed", authMiddleware, async (req, res) => {
   }
 });
 
-// ======================
-// CHAT ROUTES
-// ======================
 
-// GET /chat/conversations/list — all conversations for the logged-in user
+
+
 app.get("/chat/conversations/list", authMiddleware, async (req, res) => {
   try {
     const messages = await Message.find({
@@ -638,7 +611,7 @@ app.get("/chat/conversations/list", authMiddleware, async (req, res) => {
     const conversations = [];
 
     for (const msg of messages) {
-      // Guard: skip if sender/receiver didn't populate (cross-model mismatch on old data)
+      
       if (!msg.sender || !msg.receiver) continue;
 
       const other = String(msg.sender._id) === String(req.user.id) ? msg.receiver : msg.sender;
@@ -653,7 +626,7 @@ app.get("/chat/conversations/list", authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 
-// GET /chat/admin/conversations — admin sees all support conversations (alias for convenience)
+
 app.get("/chat/admin/conversations", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const messages = await Message.find({ receiver: req.user.id })
@@ -677,7 +650,7 @@ app.get("/chat/admin/conversations", authMiddleware, adminMiddleware, async (req
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 
-// GET /chat/:userId — fetch conversation history + mark as read
+
 app.get("/chat/:userId", authMiddleware, async (req, res) => {
   try {
     const messages = await Message.find({
@@ -687,7 +660,7 @@ app.get("/chat/:userId", authMiddleware, async (req, res) => {
       ],
     }).sort({ createdAt: 1 });
 
-    // Mark received messages as read
+    
     await Message.updateMany(
       { sender: req.params.userId, receiver: req.user.id, read: false },
       { read: true }
@@ -696,11 +669,9 @@ app.get("/chat/:userId", authMiddleware, async (req, res) => {
     res.json(messages);
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
-// ======================
-// REVIEW ROUTES
-// ======================
 
-// Get all reviews (admin only) - with optional status filter
+
+
 app.get("/admin/reviews", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { status } = req.query;
@@ -717,7 +688,7 @@ app.get("/admin/reviews", authMiddleware, adminMiddleware, async (req, res) => {
   }
 });
 
-// Get review stats (admin only)
+
 app.get("/admin/reviews/stats", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const stats = await Review.aggregate([
@@ -741,7 +712,7 @@ app.get("/admin/reviews/stats", authMiddleware, adminMiddleware, async (req, res
   }
 });
 
-// Approve or reject a review (admin only)
+
 app.patch("/admin/reviews/:id", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { status, adminNotes } = req.body;
@@ -772,7 +743,7 @@ app.patch("/admin/reviews/:id", authMiddleware, adminMiddleware, async (req, res
   }
 });
 
-// Delete a review (admin only)
+
 app.delete("/admin/reviews/:id", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const review = await Review.findByIdAndDelete(req.params.id);
@@ -784,14 +755,11 @@ app.delete("/admin/reviews/:id", authMiddleware, adminMiddleware, async (req, re
     res.status(500).json({ message: "Server error" });
   }
 });
-// ======================
-// SOCKET.IO
-// Uses socket.join(userId) so io.to(userId) always works,
-// even if the user reconnects with a new socket id.
-// ======================
-const onlineUsers = new Map(); // userId (string) → socketId
 
-// Helper: resolve which Mongoose model to use based on role string
+
+const onlineUsers = new Map(); 
+
+
 function modelForRole(role) {
   if (role === "doctor") return "Doctor";
   if (role === "admin")  return "Admin";
@@ -800,33 +768,33 @@ function modelForRole(role) {
 
 io.on("connection", (socket) => {
 
-  // Register user — join a room named after their userId for targeted delivery
+ 
   socket.on("join", (userId) => {
     onlineUsers.set(String(userId), socket.id);
     socket.join(String(userId));
   });
 
-  // Send a message between any two users/roles
+ 
   socket.on("sendMessage", async ({ senderId, receiverId, content, senderModel, receiverModel }) => {
     if (!senderId || !receiverId || !content?.trim()) return;
 
     try {
       const message = await Message.create({
         sender:        senderId,
-        senderModel:   senderModel  || "User",   // default patient → User
+        senderModel:   senderModel  || "User",   
         receiver:      receiverId,
-        receiverModel: receiverModel || "Admin",  // default target  → Admin
+        receiverModel: receiverModel || "Admin",  
         content:       content.trim(),
         read:          false,
       });
 
-      // Populate sender name/photo for display
+      
       await message.populate("sender", "name photo role");
 
-      // Confirm to sender's socket
+      
       socket.emit("messageSent", message);
 
-      // Deliver to receiver's room (works even after reconnect)
+      
       io.to(String(receiverId)).emit("receiveMessage", message);
 
     } catch (err) {
@@ -835,7 +803,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Mark messages as read
+  
   socket.on("markRead", async ({ senderId, receiverId }) => {
     try {
       await Message.updateMany(
@@ -847,7 +815,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Clean up on disconnect
+  
   socket.on("disconnect", () => {
     for (const [userId, socketId] of onlineUsers.entries()) {
       if (socketId === socket.id) { onlineUsers.delete(userId); break; }
@@ -855,8 +823,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// ======================
-// START
-// ======================
+
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
