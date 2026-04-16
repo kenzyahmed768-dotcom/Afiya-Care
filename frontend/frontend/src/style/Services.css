@@ -18,84 +18,6 @@
 }
 
 
-/* ── NAV ── */
-.sv-nav {
-  position: fixed;
-  top: 0; width: 100%; z-index: 100;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 40px; height: 68px;
-  background: rgba(255,255,255,0.98);
-  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
-  font-family: 'DM Sans', sans-serif;
-}
-.sv-logo { display: flex; align-items: center; text-decoration: none; }
-.sv-logo-img { width: 52px; height: 52px; object-fit: contain; }
-.sv-nav-links {
-  display: flex; gap: 28px; list-style: none; margin: 0; padding: 0;
-}
-.sv-nav-links a {
-  text-decoration: none; color: var(--sv-muted);
-  font-size: 0.88rem; font-weight: 500; transition: color 0.2s;
-}
-.sv-nav-links a:hover { color: var(--sv-navy); }
-.sv-nav-links a.sv-active {
-  color: var(--sv-navy); font-weight: 600;
-  border-bottom: 2px solid var(--sv-teal); padding-bottom: 2px;
-}
-.sv-nav-right { display: flex; align-items: center; gap: 14px; }
-.sv-phone-btn {
-  background: var(--sv-navy); color: white;
-  border: none; border-radius: 20px;
-  padding: 8px 18px; font-size: 0.82rem; font-weight: 600;
-  cursor: pointer; text-decoration: none;
-  font-family: 'DM Sans', sans-serif; transition: background 0.2s;
-  white-space: nowrap;
-}
-.sv-phone-btn:hover { background: var(--sv-teal); }
-.sv-profile-icon-btn {
-  width: 36px; height: 36px; border-radius: 50%;
-  border: 1.5px solid #d8e4f0; background: white;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: var(--sv-navy); text-decoration: none;
-  transition: border-color 0.2s;
-}
-.sv-profile-icon-btn:hover { border-color: var(--sv-teal); }
-.sv-profile-wrap { position: relative; }
-.sv-profile-btn {
-  width: 36px; height: 36px; border-radius: 50%;
-  border: 1.5px solid #d8e4f0; background: white;
-  display: flex; align-items: center; justify-content: center; cursor: pointer;
-}
-.sv-profile-avatar {
-  width: 30px; height: 30px; border-radius: 50%;
-  background: var(--sv-navy); color: white;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 0.85rem;
-}
-.sv-dropdown {
-  position: absolute; top: calc(100% + 8px); right: 0;
-  background: white; border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.13);
-  min-width: 200px; z-index: 999; overflow: hidden;
-}
-.sv-dropdown-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; }
-.sv-dropdown-avatar {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: var(--sv-navy); color: white;
-  display: flex; align-items: center; justify-content: center; font-weight: 700;
-}
-.sv-dropdown-name { font-weight: 600; font-size: 0.9rem; color: var(--sv-navy); }
-.sv-dropdown-role { font-size: 0.75rem; color: var(--sv-muted); text-transform: capitalize; }
-.sv-dropdown-divider { height: 1px; background: #f0f0f0; }
-.sv-dropdown-item {
-  display: flex; align-items: center; gap: 10px;
-  width: 100%; padding: 12px 16px;
-  background: none; border: none; cursor: pointer;
-  font-size: 0.88rem; color: var(--sv-text);
-  font-family: 'DM Sans', sans-serif; transition: background 0.15s;
-}
-.sv-dropdown-item:hover { background: #f8f9fa; }
-.sv-dropdown-item.sv-logout { color: #e53e3e; }
 
 /* --- HERO SECTION --- */
 .sv-hero {
@@ -156,14 +78,14 @@
 }
 /* ── PROCESS SECTION ── */
 .sv-process {
-  /* --- THE ROUNDED TOP FIX --- */
+  
   border-top-left-radius: 80px; 
   border-top-right-radius: 80px;
   
-  /* Pull it up to meet the Hero's curve */
   
   
-  /* Standard styles */
+  
+  
   background: #ffffff;
   padding: 120px 60px 100px;
   display: grid;
@@ -171,16 +93,16 @@
   gap: 60px;
   align-items: center;
   position: relative;
-  z-index: 2; /* Ensures it sits above any hero shadows */
-  box-shadow: 0 -15px 35px rgba(0, 0, 0, 0.05); /* Soft shadow 'lifting' the process section */
+  z-index: 2; 
+  box-shadow: 0 -15px 35px rgba(0, 0, 0, 0.05); 
 
   border-top-left-radius: 80px; 
   border-top-right-radius: 80px;
   
-  /* This pulls the white section UP into the navy section */
+  
   margin-top: -10px; 
   
-  /* Ensure this is pure white to cover the hero's navy */
+  
   background-color: #ffffff; 
   z-index: 2;
   position: relative;
@@ -190,7 +112,7 @@
 .sv-process-steps {
   position: relative;
   padding-left: 35px;
-  padding-top: 20px; /* Extra breathing room for the curve */
+  padding-top: 20px; 
 }
 
 .sv-process-steps::before {
@@ -293,7 +215,7 @@
   background: var(--sv-navy);
   color: white;
   border: none;
-  border-radius: 50px; /* Modern Pill Shape */
+  border-radius: 50px; 
   padding: 18px 40px;
   font-size: 0.95rem;
   font-weight: 700;
@@ -325,7 +247,7 @@
 .sv-row-3 { grid-template-columns: repeat(3, 1fr); }
 .sv-row-2 {
   grid-template-columns: repeat(2, 1fr);
-  max-width: 66.6%; /* match width of 2 out of 3 columns */
+  max-width: 66.6%; 
 }
 
 .sv-card {
@@ -429,63 +351,7 @@
   line-height: 1.4;
 }
 
-/* ── FOOTER ── */
-.sv-footer {
-  background: var(--sv-navy-dark);
-  color: rgba(255,255,255,0.5);
-  padding: 50px 60px 28px;
-  font-family: 'DM Sans', sans-serif;
-}
-.sv-footer-grid {
-  display: grid;
-  grid-template-columns: 1.8fr 1fr 1.2fr 1.2fr;
-  gap: 40px; margin-bottom: 30px;
-}
-.sv-footer-logo {
-  display: flex; align-items: center; gap: 8px;
-  text-decoration: none; margin-bottom: 12px;
-}
-.sv-footer-brand-name {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.1rem; color: white; font-weight: 700;
-}
-.sv-footer-brand-name em { color: var(--sv-teal); font-style: normal; }
-.sv-footer-brand p {
-  font-size: 0.85rem; line-height: 1.75; color: rgba(255,255,255,0.48);
-}
-.sv-footer-col h5 {
-  color: white; font-size: 0.82rem; font-weight: 700;
-  margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1.2px;
-}
-.sv-footer-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 9px; }
-.sv-footer-col ul li a {
-  color: rgba(255,255,255,0.48); text-decoration: none;
-  font-size: 0.84rem; transition: color 0.2s;
-}
-.sv-footer-col ul li a:hover { color: white; }
-.sv-newsletter {
-  display: flex; margin-top: 16px;
-  border-radius: 6px; overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.15);
-}
-.sv-newsletter input {
-  flex: 1; padding: 8px 12px;
-  background: rgba(255,255,255,0.07);
-  border: none; color: white;
-  font-size: 0.82rem; font-family: 'DM Sans', sans-serif; outline: none;
-}
-.sv-newsletter input::placeholder { color: rgba(255,255,255,0.35); }
-.sv-newsletter button {
-  padding: 8px 14px; background: var(--sv-teal);
-  border: none; color: white; cursor: pointer;
-  font-size: 1rem; transition: background 0.2s;
-}
-.sv-newsletter button:hover { background: #3a9aab; }
-.sv-footer-bottom {
-  border-top: 1px solid rgba(255,255,255,0.08);
-  padding-top: 20px; text-align: center;
-  font-size: 0.8rem; color: rgba(255,255,255,0.3);
-}
+
 
 /* ── SCROLL REVEAL ── */
 @keyframes sv-fadeDown {
@@ -669,8 +535,8 @@
 }
 
 .sv-hero {
-  margin-top: 0; /* Since we aren't focusing on the nav bar position */
-  height: 80vh; /* Increase height for more impact */
+  margin-top: 0; 
+  height: 80vh; 
   display: flex;
   align-items: center;
   justify-content: center;
@@ -682,21 +548,21 @@
   position: absolute;
   inset: 0;
   background: url('https://images.unsplash.com/photo-1573377378599-f14e90f4f0da?w=1600&q=80') center/cover no-repeat;
-  background-attachment: fixed; /* Parallax Effect */
-  transform: scale(1.1); /* Slight scale to prevent edge flickering */
+  background-attachment: fixed; 
+  transform: scale(1.1);
 }
 
 .sv-hero-overlay {
   position: absolute;
   inset: 0;
-  /* Dark navy to transparent gradient + a touch of the brand teal */
+  
   background: linear-gradient(135deg, rgba(15, 29, 53, 0.8) 0%, rgba(15, 29, 53, 0.4) 100%),
               radial-gradient(circle at top right, rgba(42, 127, 143, 0.3), transparent 50%);
 }
 
 .sv-hero-content h1 {
   font-family: 'Playfair Display', serif;
-  font-size: 4.5rem; /* Larger, more cinematic font */
+  font-size: 4.5rem;
   font-weight: 800;
   letter-spacing: -1px;
   text-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -875,7 +741,7 @@
 .sv-sc-tab.active::before {
   content: "";
   position: absolute;
-  left: -27px; /* Align with the border */
+  left: -27px; 
   top: 50%;
   transform: translateY(-50%);
   width: 12px;

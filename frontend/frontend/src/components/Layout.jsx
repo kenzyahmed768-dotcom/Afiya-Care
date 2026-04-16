@@ -3,6 +3,7 @@ import { Outlet, Link, NavLink, useLocation, useNavigate } from "react-router-do
 import Logo from "../images/logo.jpeg";
 import "./Layout.css";
 
+
 function Layout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -276,6 +277,7 @@ function Layout() {
           </div>
           <p>© 2025 Afiya Care. All Rights Reserved.</p>
         </div>
+        
       </footer>
     </>
   );

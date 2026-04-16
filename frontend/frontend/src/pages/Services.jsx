@@ -1,18 +1,16 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../style/Homepage.css";
 import "../style/Services.css";
-import Logo from "../images/logo.jpeg";
-
 
 const BODY_ZONES = [
-  { id: "shoulder", label: "Shoulder",     cx: 82,  cy: 148, service: "Orthopedic Rehabilitation",   desc: "Rotator cuff repairs, frozen shoulder, impingement syndrome & post-surgical shoulder recovery." },
-  { id: "spine",    label: "Spine",        cx: 120, cy: 185, service: "Back Pain Management",         desc: "Targeted spinal mobilisation, core stabilisation & postural correction for lasting relief." },
-  { id: "hip",      label: "Hip",          cx: 120, cy: 252, service: "Pelvic Rehabilitation",        desc: "Hip replacement rehab, pelvic floor therapy & sacroiliac joint dysfunction treatment." },
-  { id: "knee",     label: "Knee",         cx: 103, cy: 315, service: "Sports Rehabilitation",        desc: "ACL/meniscus recovery, runner's knee, patellofemoral syndrome & post-arthroscopy rehab." },
-  { id: "foot",     label: "Ankle & Foot", cx: 103, cy: 378, service: "Sports Rehabilitation",        desc: "Ankle sprains, plantar fasciitis, Achilles tendinopathy & biomechanical footwear advice." },
-  { id: "neck",     label: "Neck",         cx: 120, cy: 115, service: "Occupational Physiotherapy",   desc: "Cervical strain, whiplash, tech-neck syndrome & ergonomic workplace assessment." },
-  { id: "elbow",    label: "Elbow & Wrist",cx: 62,  cy: 220, service: "Occupational Physiotherapy",   desc: "Tennis/golfer's elbow, carpal tunnel, repetitive strain injuries & post-fracture rehab." },
+  { id: "shoulder", label: "Shoulder", cx: 82, cy: 148, service: "Orthopedic Rehabilitation", desc: "Rotator cuff repairs, frozen shoulder, impingement syndrome & post-surgical shoulder recovery." },
+  { id: "spine", label: "Spine", cx: 120, cy: 185, service: "Back Pain Management", desc: "Targeted spinal mobilisation, core stabilisation & postural correction for lasting relief." },
+  { id: "hip", label: "Hip", cx: 120, cy: 252, service: "Pelvic Rehabilitation", desc: "Hip replacement rehab, pelvic floor therapy & sacroiliac joint dysfunction treatment." },
+  { id: "knee", label: "Knee", cx: 103, cy: 315, service: "Sports Rehabilitation", desc: "ACL/meniscus recovery, runner's knee, patellofemoral syndrome & post-arthroscopy rehab." },
+  { id: "foot", label: "Ankle & Foot", cx: 103, cy: 378, service: "Sports Rehabilitation", desc: "Ankle sprains, plantar fasciitis, Achilles tendinopathy & biomechanical footwear advice." },
+  { id: "neck", label: "Neck", cx: 120, cy: 115, service: "Occupational Physiotherapy", desc: "Cervical strain, whiplash, tech-neck syndrome & ergonomic workplace assessment." },
+  { id: "elbow", label: "Elbow & Wrist", cx: 62, cy: 220, service: "Occupational Physiotherapy", desc: "Tennis/golfer's elbow, carpal tunnel, repetitive strain injuries & post-fracture rehab." },
 ];
 
 function BodyMap() {
@@ -23,7 +21,6 @@ function BodyMap() {
     <div className="ab-bodymap-wrap">
       <div className="ab-bodymap-left">
         <svg viewBox="0 0 240 420" className="ab-body-svg" xmlns="http://www.w3.org/2000/svg">
-          {/* ── Silhouette ── */}
           <g className="ab-body-silhouette">
             <ellipse cx="120" cy="60" rx="28" ry="34" />
             <rect x="111" y="90" width="18" height="22" rx="6" />
@@ -42,16 +39,18 @@ function BodyMap() {
             <ellipse cx="162" cy="410" rx="14" ry="8" />
           </g>
 
-          {/* ── Hotspots ── */}
           {BODY_ZONES.map((z) => (
-            <g key={z.id} className={`ab-zone ${active === z.id ? "ab-zone-active" : ""}`}
-               onClick={() => setActive(active === z.id ? null : z.id)}>
+            <g
+              key={z.id}
+              className={`ab-zone ${active === z.id ? "ab-zone-active" : ""}`}
+              onClick={() => setActive(active === z.id ? null : z.id)}
+            >
               <circle cx={z.cx} cy={z.cy} r="13" className="ab-zone-ring" />
-              <circle cx={z.cx} cy={z.cy} r="7"  className="ab-zone-dot" />
+              <circle cx={z.cx} cy={z.cy} r="7" className="ab-zone-dot" />
               {["shoulder", "elbow"].includes(z.id) && (
                 <g onClick={(e) => { e.stopPropagation(); setActive(active === z.id ? null : z.id); }}>
                   <circle cx={240 - z.cx} cy={z.cy} r="13" className="ab-zone-ring" />
-                  <circle cx={240 - z.cx} cy={z.cy} r="7"  className="ab-zone-dot" />
+                  <circle cx={240 - z.cx} cy={z.cy} r="7" className="ab-zone-dot" />
                 </g>
               )}
             </g>
@@ -93,17 +92,39 @@ function BodyMap() {
   );
 }
 
-
-
 const SERVICES = [
-  { label: "Post surgery rehab",          img: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80" },
-  { label: "Sports injury rehab",         img: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80" },
-  { label: "Speech therapy",              img: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&q=80" },
-  { label: "Muscle and joint diseases",   img: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600&q=80" },
-  { label: "Post cardiovascular diseases",img: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&q=80" },
-  { label: "Nursing and elderly care",    img: "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80" },
-  { label: "In-clinic physiotherapy",     img: "https://images.unsplash.com/photo-1573377378599-f14e90f4f0da?w=600&q=80" },
-  { label: "At home lab tests",           img: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600&q=80" },
+  {
+    label: "Post surgery rehab",
+    img: "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?w=900&q=80"
+  },
+  {
+    label: "Sports injury rehab",
+    img: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=900&q=80"
+  },
+  {
+    label: "Speech therapy",
+    img: "https://images.unsplash.com/photo-1584515933487-779824d29309?w=900&q=80"
+  },
+  {
+    label: "Muscle and joint diseases",
+    img: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=900&q=80"
+  },
+  {
+    label: "Post cardiovascular diseases",
+    img: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=900&q=80"
+  },
+  {
+    label: "Nursing and elderly care",
+    img: "https://images.unsplash.com/photo-1584516150909-c43483ee7938?w=900&q=80"
+  },
+  {
+    label: "In-clinic physiotherapy",
+    img: "https://images.unsplash.com/photo-1573377378599-f14e90f4f0da?w=900&q=80"
+  },
+  {
+    label: "At home lab tests",
+    img: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80"
+  },
 ];
 
 const SMART_CARE = [
@@ -123,7 +144,7 @@ const SMART_CARE = [
     id: "elderly",
     title: "Elderly Home Monitoring",
     desc: "Designed specifically to keep senior patients safe and independent. Features include fall detection integration, daily mobility tracking, and instant emergency response alerts.",
-    img: "https://images.openai.com/static-rsc-4/LzsK0rbQuSUChpXwRvsx6k9q3xnQwqcw6V-Rpm18X9FzQVpwIIa7rehnZVAD4XnwJ7I4bevyAGqVti5YBHFXM8udC-QHbCiPBzAlMxtQZUgyVc0voghPtvo8WRoxCTXbY73cVqKVOGqKivaCdOJ42w65mzQN8_R_TglJ36M8GEgxn88anJiNvXO8FRBF-M-g?purpose=fullsize"
+    img: "https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b?w=800&q=80"
   }
 ];
 
@@ -135,132 +156,36 @@ const EXCELLENCE = [
   { label: "community involvement", svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="32" height="32"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg> },
 ];
 
-const REVIEWS = [
-  { name: "Chris W.", role: "Professional Athlete", img: "https://randomuser.me/api/portraits/men/32.jpg", text: "After my knee surgery, the team at Physiocare helped me regain my mobility. The personalised treatment plan was incredible." },
-  { name: "Tom H.",   role: "Marathon Runner",      img: "https://randomuser.me/api/portraits/men/36.jpg", text: "The therapists here are amazing! I was dealing with chronic back pain, and after just a few sessions the difference was unbelievable." },
-];
-
 export default function Services() {
-  const [user, setUser] = useState(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const [activeSmartTab, setActiveSmartTab] = useState("telehealth");
-  const activeSmartData = SMART_CARE.find(t => t.id === activeSmartTab);
+  const activeSmartData = SMART_CARE.find((t) => t.id === activeSmartTab);
 
-  // ── Auth ──
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const role  = localStorage.getItem("role");
-    const name  = localStorage.getItem("userName");
-    if (token && role) setUser({ role, name });
-  }, []);
-
-  // ── Close dropdown on outside click ──
-  useEffect(() => {
-    const handler = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target))
-        setDropdownOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  // ── Scroll reveal ──
   useEffect(() => {
     const reveals = document.querySelectorAll(".sv-reveal");
     const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add("sv-visible"); }),
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) e.target.classList.add("sv-visible");
+      }),
       { threshold: 0.08 }
     );
+
     reveals.forEach((el) => obs.observe(el));
     return () => obs.disconnect();
   }, []);
 
-  const handleDashboard = () => {
-    setDropdownOpen(false);
-    if (user.role === "admin")       navigate("/admin");
-    else if (user.role === "doctor") navigate("/doctor");
-    else                             navigate("/patient");
-  };
-  const handleLogout = () => {
-    ["token","role","userName","userEmail"].forEach((k) => localStorage.removeItem(k));
-    setUser(null);
-    setDropdownOpen(false);
-  };
-
   return (
     <>
-      {/* ══ NAV ══ */}
-      <nav>
-        <a href="/" className="logo">
-          <img src={Logo} alt="AfiyaCare Logo" className="logo-img" />
-        </a>
-        <ul className="nav-links">
-          <li><a href="/">Home</a></li>
-          <li><a href="/about">About us</a></li>
-          <li><a href="/join">Join us</a></li>
-          <li><a href="/booking">Booking</a></li>
-          <li><a href="/services">Services</a></li>
-          <li><a href="/blog">Blog</a></li>
-
-          {user ? (
-            <li className="profile-nav-item" ref={dropdownRef}>
-              <button
-                className="profile-icon-btn"
-                onClick={() => setDropdownOpen((o) => !o)}
-                title={user.name}
-              >
-                <div className="profile-icon-avatar">
-                  {user.name?.charAt(0).toUpperCase() || "U"}
-                </div>
-                <span className="profile-icon-name">{user.name?.split(" ")[0]}</span>
-                <svg className={`profile-chevron ${dropdownOpen ? "open" : ""}`} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </button>
-              {dropdownOpen && (
-                <div className="profile-dropdown">
-                  <div className="profile-dropdown-header">
-                    <div className="profile-dropdown-avatar">
-                      {user.name?.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="profile-dropdown-name">{user.name}</div>
-                      <div className={`profile-dropdown-role ${user.role}`}>{user.role}</div>
-                    </div>
-                  </div>
-                  <div className="profile-dropdown-divider" />
-                  <button className="profile-dropdown-item" onClick={handleDashboard}>
-                    <span>🏠</span> My Dashboard
-                  </button>
-                  <div className="profile-dropdown-divider" />
-                  <button className="profile-dropdown-item logout" onClick={handleLogout}>
-                    <span>🚪</span> Logout
-                  </button>
-                </div>
-              )}
-            </li>
-          ) : (
-            <li><a href="/login" className="btn-nav">Login</a></li>
-          )}
-        </ul>
-      </nav>
-
-      {/* ══ HERO ══ */}
       <section className="sv-hero">
         <div className="sv-hero-bg"></div>
         <div className="sv-hero-overlay"></div>
         <div className="sv-hero-content">
-          {/* This small tag breaks the "empty" grey feeling */}
           <span className="sv-hero-tag">AfiyaCare Excellence</span>
           <h1>Services List</h1>
         </div>
       </section>
 
-      {/* ══ PROCESS SECTION ══ */}
       <section className="sv-process">
-        {/* Left: steps */}
         <div className="sv-process-steps sv-reveal">
           <div className="sv-step">
             <h3>Initial Contact</h3>
@@ -276,24 +201,22 @@ export default function Services() {
           </div>
         </div>
 
-        {/* Middle: photo */}
         <div className="sv-process-img sv-reveal">
           <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=500&q=80" alt="Service process" />
         </div>
 
-        {/* Right: description */}
         <div className="sv-process-desc sv-reveal">
           <h2>The complete service process</h2>
           <p>We understand that injuries and acute pain can happen unexpectedly. Our emergency physiotherapy services are designed to provide prompt and effective care to help you manage.</p>
-          <button className="sv-appt-btn" onClick={() => navigate("/booking")}>Make an Appointment</button>
+          <button className="sv-appt-btn" onClick={() => navigate("/booking")}>
+            Make an Appointment
+          </button>
         </div>
       </section>
 
-      {/* ══ SERVICES GRID ══ */}
       <section className="sv-services sv-reveal">
         <h2 className="sv-services-title">Services</h2>
 
-        {/* Row 1 — 3 cards */}
         <div className="sv-grid-row sv-row-3">
           {SERVICES.slice(0, 3).map((s) => (
             <div className="sv-card" key={s.label}>
@@ -310,7 +233,6 @@ export default function Services() {
           ))}
         </div>
 
-        {/* Row 2 — 3 cards */}
         <div className="sv-grid-row sv-row-3">
           {SERVICES.slice(3, 6).map((s) => (
             <div className="sv-card" key={s.label}>
@@ -327,7 +249,6 @@ export default function Services() {
           ))}
         </div>
 
-        {/* Row 3 — 2 cards centered */}
         <div className="sv-grid-row sv-row-2">
           {SERVICES.slice(6, 8).map((s) => (
             <div className="sv-card" key={s.label}>
@@ -345,18 +266,16 @@ export default function Services() {
         </div>
       </section>
 
-      {/* ══ SMART HOME CARE SECTION ══ */}
       <section className="sv-smart-care sv-reveal">
         <div className="sv-sc-glass-card">
           <div className="sv-sc-left">
             <span className="sv-hero-tag">Intelligent Rehab</span>
-            <h2>Smart Home Care <br/>& Tele-Rehab</h2>
-            
-            {/* Interactive Tabs */}
+            <h2>Smart Home Care <br />& Tele-Rehab</h2>
+
             <div className="sv-sc-tabs">
               {SMART_CARE.map((tab) => (
-                <button 
-                  key={tab.id} 
+                <button
+                  key={tab.id}
                   className={`sv-sc-tab ${activeSmartTab === tab.id ? "active" : ""}`}
                   onClick={() => setActiveSmartTab(tab.id)}
                 >
@@ -365,7 +284,6 @@ export default function Services() {
               ))}
             </div>
 
-            {/* Dynamic Content: The 'key' forces the fade animation to replay */}
             <div className="sv-sc-content" key={activeSmartData.id}>
               <p>{activeSmartData.desc}</p>
               <button className="sv-sc-btn" onClick={() => navigate("/booking")}>
@@ -374,7 +292,6 @@ export default function Services() {
             </div>
           </div>
 
-          {/* Dynamic Image */}
           <div className="sv-sc-right">
             <div className="sv-sc-img-wrap" key={`img-${activeSmartData.id}`}>
               <img src={activeSmartData.img} alt={activeSmartData.title} />
@@ -391,7 +308,6 @@ export default function Services() {
         <BodyMap />
       </section>
 
-      {/* ══ EXCELLENCE ══ */}
       <section className="sv-excellence sv-reveal">
         <h2>Excellence in care<br />and rehabilitation</h2>
         <div className="sv-excellence-cards">
@@ -403,58 +319,6 @@ export default function Services() {
           ))}
         </div>
       </section>
-
-      {/* ══ FOOTER ══ */}
-      <footer className="sv-footer">
-        <div className="sv-footer-grid">
-          <div className="sv-footer-brand">
-            <a href="/" className="sv-footer-logo">
-              <img src={Logo} alt="AfiyaCare" className="sv-logo-img" />
-              <span className="sv-footer-brand-name">AFIYA<em>CARE</em></span>
-            </a>
-            <p>At Afiya Care, we provide expert physiotherapy services designed to restore movement, reduce pain, and support overall wellness.</p>
-          </div>
-          <div className="sv-footer-col">
-            <h5>Quick Links</h5>
-            <ul>
-              <li><a href="/">Home</a></li>
-              <li><a href="/about">About us</a></li>
-              <li><a href="/join">Join us</a></li>
-              <li><a href="/booking">Booking</a></li>
-              <li><a href="/services">Services</a></li>
-              <li><a href="/blog">Blog</a></li>
-            </ul>
-          </div>
-          <div className="sv-footer-col">
-            <h5>Services</h5>
-            <ul>
-              <li><a href="#">Orthopedic Physiotherapy</a></li>
-              <li><a href="#">Sports Injury Physiotherapy</a></li>
-              <li><a href="#">Surgical Rehabilitation</a></li>
-              <li><a href="#">Cardiac Rehab</a></li>
-              <li><a href="#">Elderly Care</a></li>
-              <li><a href="#">Home lab tests</a></li>
-            </ul>
-          </div>
-          <div className="sv-footer-col">
-            <h5>Contact us</h5>
-            <ul>
-              <li><a href="#">afiyacare@gmail.com</a></li>
-              <li><a href="#">Facebook</a></li>
-              <li><a href="#">Instagram</a></li>
-              <li><a href="#">WhatsApp</a></li>
-              <li><a href="/help">Help center</a></li>
-            </ul>
-            <div className="sv-newsletter">
-              <input type="email" placeholder="Your email" />
-              <button>&#8594;</button>
-            </div>
-          </div>
-        </div>
-        <div className="sv-footer-bottom">
-          <p>© 2025 Afiya Care. All Rights Reserved.</p>
-        </div>
-      </footer>
     </>
   );
 }

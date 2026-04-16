@@ -274,61 +274,7 @@ export default function About() {
 
   return (
     <>
-      {/* ══ NAV ══ */}
-      <nav>
-        <a href="/" className="logo">
-          <img src={Logo} alt="AfiyaCare Logo" className="logo-img" />
-        </a>
-        <ul className="nav-links">
-          <li><a href="/">Home</a></li>
-          <li><a href="/about">About us</a></li>
-          <li><a href="/join">Join us</a></li>
-          <li><a href="/booking">Booking</a></li>
-          <li><a href="/services">Services</a></li>
-          <li><a href="/blog">Blog</a></li>
-
-          {user ? (
-            <li className="profile-nav-item" ref={dropdownRef}>
-              <button
-                className="profile-icon-btn"
-                onClick={() => setDropdownOpen((o) => !o)}
-                title={user.name}
-              >
-                <div className="profile-icon-avatar">
-                  {user.name?.charAt(0).toUpperCase() || "U"}
-                </div>
-                <span className="profile-icon-name">{user.name?.split(" ")[0]}</span>
-                <svg className={`profile-chevron ${dropdownOpen ? "open" : ""}`} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </button>
-              {dropdownOpen && (
-                <div className="profile-dropdown">
-                  <div className="profile-dropdown-header">
-                    <div className="profile-dropdown-avatar">
-                      {user.name?.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="profile-dropdown-name">{user.name}</div>
-                      <div className={`profile-dropdown-role ${user.role}`}>{user.role}</div>
-                    </div>
-                  </div>
-                  <div className="profile-dropdown-divider" />
-                  <button className="profile-dropdown-item" onClick={handleDashboard}>
-                    <span>🏠</span> My Dashboard
-                  </button>
-                  <div className="profile-dropdown-divider" />
-                  <button className="profile-dropdown-item logout" onClick={handleLogout}>
-                    <span>🚪</span> Logout
-                  </button>
-                </div>
-              )}
-            </li>
-          ) : (
-            <li><a href="/login" className="btn-nav">Login</a></li>
-          )}
-        </ul>
-      </nav>
+      
 
       {/* ══ HERO ══ */}
       <section className="ab-hero">
@@ -507,24 +453,7 @@ export default function About() {
           </div>
         </section>
 
-      {/* ══ TEAM SECTION ══ */}
-      <section className="ab-team">
-        <h2 className="ab-section-title ab-reveal">Our Experienced Therapist Team</h2>
-        <div className="ab-team-grid">
-          {[
-            { name: "DR. Mahmoud El Esely",  role: "Senior Physiotherapy",  img: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&q=80", d: "" },
-            { name: "DR. Mohamed El Gebely", role: "Pediatric Therapist",   img: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&q=80", d: "ab-reveal-delay" },
-            { name: "DR. Hoda EL Azeby",     role: "Neurologics Therapist", img: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&q=80", d: "ab-reveal-delay2" },
-          ].map((doc) => (
-            <div className={`ab-team-card ab-reveal ${doc.d}`} key={doc.name}>
-              <img src={doc.img} alt={doc.name} />
-              <h4>{doc.name}</h4>
-              <span>{doc.role}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
+      
       {/* ══ REVIEWS ══ */}
       <section className="ab-reviews">
         <div className="ab-reviews-inner">
@@ -564,60 +493,7 @@ export default function About() {
         </div>
       </section>
 
-      {/* ══ FOOTER ══ */}
-      <footer className="ab-footer">
-        <div className="ab-footer-grid">
-          <div className="ab-footer-brand">
-            <a href="/" className="ab-footer-logo">
-              <img src={Logo} alt="AfiyaCare" className="ab-logo-img" />
-              <span className="ab-footer-brand-name">AFIYA<em>CARE</em></span>
-            </a>
-            <p>At Afiya Care, we provide expert physiotherapy services designed to restore movement, reduce pain, and support overall wellness.</p>
-          </div>
-          <div className="ab-footer-col">
-            <h5>Quick Links</h5>
-            <ul>
-              <li><a href="/">Home</a></li>
-              <li><a href="/about">About us</a></li>
-              <li><a href="/join">Join us</a></li>
-              <li><a href="/booking">Booking</a></li>
-              <li><a href="/services">Services</a></li>
-              <li><a href="/blog">Blog</a></li>
-            </ul>
-          </div>
-          <div className="ab-footer-col">
-            <h5>Services</h5>
-            <ul>
-              <li><a href="#">Orthopedic Physiotherapy</a></li>
-              <li><a href="#">Sports Injury Physiotherapy</a></li>
-              <li><a href="#">Surgical Rehabilitation</a></li>
-              <li><a href="#">Cardiac Rehab</a></li>
-              <li><a href="#">Elderly Care</a></li>
-              <li><a href="#">Home lab tests</a></li>
-            </ul>
-          </div>
-          <div className="ab-footer-col">
-            <h5>Contact us</h5>
-            <ul>
-              <li><a href="#">afiyacare@gmail.com</a></li>
-              <li><a href="#">Facebook</a></li>
-              <li><a href="#">Instagram</a></li>
-              <li><a href="#">WhatsApp</a></li>
-              <li><a href="/help">Help center</a></li>
-            </ul>
-            <div className="ab-newsletter">
-              <input type="email" placeholder="Your email" />
-              <button>&#8594;</button>
-            </div>
-          </div>
-        </div>
-        <div className="ab-footer-bottom">
-          <div className="ab-social">
-            <a href="#">f</a><a href="#">t</a><a href="#">in</a>
-          </div>
-          <p>©️ 2025 Afiya Care. All Rights Reserved.</p>
-        </div>
-      </footer>
+      
     </>
   );
 }
