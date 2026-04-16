@@ -13,7 +13,7 @@ function Layout() {
   const dropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
 
-  // Check auth status
+  
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -37,13 +37,13 @@ function Layout() {
     setDropdownOpen(false);
   };
 
-  // Close menu when route changes
+  
   useEffect(() => {
     closeMenu();
     closeDropdown();
   }, [location]);
 
-  // Close dropdowns on outside click
+ 
   useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -79,7 +79,7 @@ function Layout() {
           <img src={Logo} alt="AfiyaCare Logo" className="logo-img" />
         </Link>
 
-        {/* Hamburger Menu Button */}
+        
         <button
           className={`hamburger ${isMenuOpen ? "active" : ""}`}
           onClick={toggleMenu}
@@ -90,7 +90,7 @@ function Layout() {
           <span></span>
         </button>
 
-        {/* Navigation Links */}
+        
         <ul
           className={`nav-links ${isMenuOpen ? "active" : ""}`}
           ref={mobileMenuRef}
@@ -201,7 +201,7 @@ function Layout() {
           )}
         </ul>
 
-        {/* Overlay for mobile menu */}
+     
         {isMenuOpen && <div className="menu-overlay" onClick={closeMenu}></div>}
       </nav>
 
@@ -250,11 +250,23 @@ function Layout() {
             <ul>
               <li><a href="mailto:afiyacare@gmail.com">afiyacare@gmail.com</a></li>
               <li>
-                <a href="https://www.facebook.com/profile.php?id=61585057423569">
+                <a 
+                  href="https://www.facebook.com/profile.php?id=61585057423569"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Facebook
                 </a>
               </li>
-              <li><a href="#">Instagram</a></li>
+              <li>
+                <a 
+                  href="https://www.instagram.com/afiyacare_1/?hl=en"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Instagram
+                </a>
+              </li>
               <li><a href="#">WhatsApp</a></li>
               <li><Link to="/help">Help Center</Link></li>
             </ul>
@@ -268,11 +280,20 @@ function Layout() {
           <div className="social-links">
             <a
               href="https://www.facebook.com/profile.php?id=61585057423569"
+              target="_blank"
+              rel="noopener noreferrer"
               aria-label="Facebook"
             >
               f
             </a>
-            <a href="#" aria-label="Twitter">t</a>
+            <a 
+              href="https://www.instagram.com/afiyacare_1/?hl=en"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+            >
+              i
+            </a>
             <a href="#" aria-label="LinkedIn">in</a>
           </div>
           <p>© 2025 Afiya Care. All Rights Reserved.</p>

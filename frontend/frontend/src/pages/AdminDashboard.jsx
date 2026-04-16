@@ -1,4 +1,4 @@
-// pages/AdminDashboard.jsx
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../style/admindashboard.css";
@@ -11,7 +11,7 @@ export default function AdminDashboard() {
   const [toast, setToast] = useState(null);
   const navigate = useNavigate();
   
-  // Overview stats
+  
   const [stats, setStats] = useState({
     totalDoctors: 0,
     totalPatients: 0,
@@ -24,19 +24,19 @@ export default function AdminDashboard() {
     recentRegistrations: []
   });
   
-  // Pending doctors
+  
   const [pendingDoctors, setPendingDoctors] = useState([]);
   
-  // All doctors
+  
   const [allDoctors, setAllDoctors] = useState([]);
   
-  // Appointments
+  
   const [appointments, setAppointments] = useState([]);
   
-  // Applications
+ 
   const [applications, setApplications] = useState([]);
   
-  // Reviews
+ 
   const [reviews, setReviews] = useState([]);
   const [reviewStats, setReviewStats] = useState({ pending: 0, approved: 0, rejected: 0, total: 0 });
   const [reviewFilter, setReviewFilter] = useState("pending");
@@ -54,7 +54,7 @@ export default function AdminDashboard() {
     navigate("/login");
   };
 
-  // Fetch overview data
+ 
   const fetchOverview = async () => {
     try {
       const res = await fetch(`${API}/admin/overview`, { headers });
@@ -65,7 +65,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Fetch pending doctors
+  
   const fetchPendingDoctors = async () => {
     try {
       const res = await fetch(`${API}/admin/pending-doctors`, { headers });
@@ -76,7 +76,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Fetch all doctors
+ 
   const fetchAllDoctors = async () => {
     try {
       const res = await fetch(`${API}/admin/all-doctors`, { headers });
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Fetch appointments
+  
   const fetchAppointments = async () => {
     try {
       const res = await fetch(`${API}/admin/appointments`, { headers });
@@ -98,7 +98,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Fetch applications
+ 
   const fetchApplications = async () => {
     try {
       const res = await fetch(`${API}/admin/applications`, { headers });
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Fetch reviews
+  
   const fetchReviews = async (status = reviewFilter) => {
     try {
       const res = await fetch(`${API}/admin/reviews?status=${status}`, { headers });
@@ -120,7 +120,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Fetch review stats
+ 
   const fetchReviewStats = async () => {
     try {
       const res = await fetch(`${API}/admin/reviews/stats`, { headers });
@@ -131,7 +131,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Handle doctor approval/rejection
+ 
   const handleDoctorAction = async (id, status) => {
     try {
       const res = await fetch(`${API}/admin/doctor/${id}`, {
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Handle appointment status update
+  
   const handleAppointmentStatus = async (id, status) => {
     try {
       const res = await fetch(`${API}/admin/appointments/${id}`, {
@@ -171,7 +171,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Handle application status update
+  
   const handleApplicationStatus = async (id, status) => {
     try {
       const res = await fetch(`${API}/admin/applications/${id}`, {
@@ -188,7 +188,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Handle application delete
+  
   const handleApplicationDelete = async (id) => {
     if (!window.confirm("Delete this application?")) return;
     try {
@@ -205,7 +205,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Handle review action (approve/reject)
+  
   const handleReviewAction = async (id, status) => {
     try {
       const res = await fetch(`${API}/admin/reviews/${id}`, {
@@ -226,7 +226,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Handle review delete
+  
   const handleReviewDelete = async (id) => {
     if (!window.confirm("Delete this review permanently?")) return;
     try {
@@ -244,7 +244,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Initial data fetch
+  
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -269,7 +269,7 @@ export default function AdminDashboard() {
     loadData();
   }, [navigate]);
 
-  // Refetch reviews when filter changes
+ 
   useEffect(() => {
     if (!loading) {
       fetchReviews(reviewFilter);
@@ -315,7 +315,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-layout">
-      {/* SIDEBAR */}
+      
       <aside className="sidebar">
         <div className="sidebar-top">
           <div className="sidebar-brand">
@@ -349,7 +349,7 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
+    
       <main className="main-content">
         <div className="topbar">
           <div className="topbar-left">
@@ -359,7 +359,7 @@ export default function AdminDashboard() {
           <div className="admin-pill">Admin</div>
         </div>
 
-        {/* OVERVIEW TAB */}
+       
         {activeTab === "overview" && (
           <>
             <div className="stats-grid">
@@ -465,7 +465,7 @@ export default function AdminDashboard() {
           </>
         )}
 
-        {/* PENDING DOCTORS TAB */}
+       
         {activeTab === "pendingDoctors" && (
           <div className="section-card">
             <div className="section-header">
@@ -507,7 +507,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ALL DOCTORS TAB */}
+     
         {activeTab === "allDoctors" && (
           <div className="section-card">
             <div className="section-header">
@@ -555,7 +555,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* APPOINTMENTS TAB */}
+        
         {activeTab === "appointments" && (
           <div className="section-card">
             <div className="section-header">
@@ -616,7 +616,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* REVIEWS TAB */}
+      
         {activeTab === "reviews" && (
           <div className="section-card">
             <div className="section-header">
@@ -725,7 +725,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* APPLICATIONS TAB */}
+
         {activeTab === "applications" && (
           <div className="section-card">
             <div className="section-header">
