@@ -1,0 +1,211 @@
+.doctor-profile-page {
+  background: #f8fafb;
+  color: #0a1628;
+}
+
+.doctor-hero {
+  padding: 70px 60px 40px;
+  background: linear-gradient(135deg, #e6f9f7, #ffffff);
+}
+
+.doctor-card {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 24px;
+  padding: 32px;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 36px;
+  box-shadow: 0 8px 40px rgba(10, 22, 40, 0.12);
+}
+
+.doctor-photo {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+  border-radius: 20px;
+}
+
+.doctor-tag {
+  display: inline-block;
+  background: #e6f9f7;
+  color: #00b4a2;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.doctor-main-info h1 {
+  font-size: 38px;
+  margin-bottom: 6px;
+}
+
+.doctor-title {
+  color: #6b7c93;
+  margin-bottom: 18px;
+}
+
+.doctor-meta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.doctor-meta span {
+  background: #f8fafb;
+  border: 1px solid #dde8ef;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.doctor-about {
+  max-width: 700px;
+  line-height: 1.7;
+  color: #3a4a5c;
+  margin-bottom: 24px;
+}
+
+.doctor-book-btn,
+.side-book-btn {
+  display: inline-block;
+  background: #00b4a2;
+  color: white;
+  padding: 13px 24px;
+  border-radius: 999px;
+  font-weight: 700;
+  transition: 0.2s;
+}
+
+.doctor-book-btn:hover,
+.side-book-btn:hover {
+  background: #008b7c;
+  transform: translateY(-2px);
+}
+
+.doctor-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 60px 80px;
+  display: grid;
+  grid-template-columns: 1fr 330px;
+  gap: 28px;
+}
+
+.profile-section,
+.booking-box {
+  background: white;
+  border: 1px solid #dde8ef;
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 18px rgba(10, 22, 40, 0.06);
+}
+
+.profile-section h2,
+.booking-box h3 {
+  margin-bottom: 14px;
+  font-size: 22px;
+}
+
+.profile-section p,
+.profile-section li,
+.booking-box p {
+  color: #3a4a5c;
+  line-height: 1.7;
+}
+
+.profile-section ul {
+  padding-left: 20px;
+}
+
+.specialty-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.specialty-tags span {
+  background: #e6f9f7;
+  color: #008b7c;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.fee {
+  font-size: 32px;
+  font-weight: 800;
+  color: #00b4a2;
+  margin-bottom: 4px;
+}
+
+.fee-note {
+  color: #6b7c93;
+  font-size: 13px;
+}
+
+.time-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.time-grid button {
+  border: 1px solid #00b4a2;
+  background: white;
+  color: #008b7c;
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.time-grid button:hover {
+  background: #00b4a2;
+  color: white;
+}
+
+.side-book-btn {
+  display: block;
+  text-align: center;
+}
+
+.review-card {
+  border-top: 1px solid #dde8ef;
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.review-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.review-top span {
+  color: #f0b429;
+}
+
+@media (max-width: 900px) {
+  .doctor-card,
+  .doctor-content {
+    grid-template-columns: 1fr;
+  }
+
+  .doctor-hero,
+  .doctor-content {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .doctor-photo {
+    height: 280px;
+  }
+}

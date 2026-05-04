@@ -1,11 +1,13 @@
 // pages/JoinUs.jsx
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import "../style/joinus.css";
 
 const API = "http://localhost:5000";
 
 const SPECIALISTS = [
   {
+    id:"amara-osei",
     name: "Dr. Amara Osei",
     title: "Physiotherapist",
     image:
@@ -15,6 +17,7 @@ const SPECIALISTS = [
     reviews: 312,
   },
   {
+    id:"fatima-noor",
     name: "Dr. Fatima Noor",
     title: "Sports Rehab Specialist",
     image:
@@ -24,6 +27,7 @@ const SPECIALISTS = [
     reviews: 278,
   },
   {
+    id:"kwame-ansah",
     name: "Dr. Kwame Ansah",
     title: "Elderly Care Specialist",
     image:
@@ -33,6 +37,7 @@ const SPECIALISTS = [
     reviews: 196,
   },
   {
+    id:"lena-boateng",
     name: "Dr. Lena Boateng",
     title: "Pediatrician",
     image:
@@ -42,6 +47,7 @@ const SPECIALISTS = [
     reviews: 401,
   },
   {
+    id:"yusuf-musa",
     name: "Dr. Yusuf Musa",
     title: "Orthopedic Surgeon",
     image:
@@ -51,6 +57,7 @@ const SPECIALISTS = [
     reviews: 223,
   },
   {
+    id:"aisha-diallo",
     name: "Dr. Aisha Diallo",
     title: "Physiotherapist",
     image:
@@ -366,9 +373,9 @@ export default function JoinUs() {
                 <h4>{s.name}</h4>
                 <p>{s.title}</p>
                 <p className="specialist-reviews">{s.reviews} patient reviews</p>
-                <a href="#apply" className="btn-card">
-                  View Profile →
-                </a>
+                <Link to={`/doctor-profile/${s.id}`} className="btn-card">
+  View Profile →
+</Link>
               </div>
             ))}
           </div>

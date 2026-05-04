@@ -116,7 +116,7 @@ function Layout() {
             </NavLink>
           </li>
           <li>
-            <NavLink to="/services" onClick={closeMenu}>
+            <NavLink to="/service" onClick={closeMenu}>
               Services
             </NavLink>
           </li>
