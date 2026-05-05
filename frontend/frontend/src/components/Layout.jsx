@@ -39,9 +39,13 @@ function Layout() {
 
   
   useEffect(() => {
-    closeMenu();
-    closeDropdown();
-  }, [location]);
+  closeMenu();
+  closeDropdown();
+
+  
+  window.scrollTo(0, 0);
+
+}, [location]);
 
  
   useEffect(() => {
