@@ -1,4 +1,3 @@
-// pages/booking.jsx
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "../style/Booking.css";
@@ -24,6 +23,20 @@ const PACKAGES = [
   { name: "Athlete", tag: "Best Value", price: "4,000 EGP", features: ["12 sessions","Injury prevention & return-to-sport","Advanced rehab & conditioning","Maximum savings"] },
 ];
 
+// Helper to format doctor name from email or name
+const formatDoctorName = (doctor) => {
+  if (doctor.name && doctor.name !== doctor.email?.split('@')[0]) {
+    return doctor.name;
+  }
+  
+  // Extract from email and format nicely
+  const emailName = doctor.email?.split('@')[0] || "Doctor";
+  return emailName
+    .split(/[._-]/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 export default function Booking() {
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
@@ -31,6 +44,7 @@ export default function Booking() {
   const [selectedTime, setSelectedTime] = useState("");
   const [bookedSlots, setBookedSlots] = useState([]);
   const [form, setForm] = useState({ name:"", email:"", phone:"", location:"at-clinic", notes:"" });
+  const [paymentMethod, setPaymentMethod] = useState("cash");
   const [loadingDoctors, setLoadingDoctors] = useState(true);
   const [booking, setBooking] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -43,7 +57,11 @@ export default function Booking() {
   useEffect(() => {
     fetch(`${API}/booking/doctors`)
       .then(r => r.json())
-      .then(d => { setDoctors(Array.isArray(d) ? d : []); setLoadingDoctors(false); })
+      .then(d => { 
+        console.log("Doctors from backend:", d);
+        setDoctors(Array.isArray(d) ? d : []); 
+        setLoadingDoctors(false); 
+      })
       .catch(() => setLoadingDoctors(false));
   }, []);
 
@@ -60,11 +78,34 @@ export default function Booking() {
     if (!token) { navigate("/login"); return; }
     if (!selectedDoctor || !selectedDate || !selectedTime) { setError("Please select a doctor, date and time slot."); return; }
     if (!form.name || !form.email || !form.phone) { setError("Please fill in your name, email and phone."); return; }
+    
+    // If Visa selected, redirect to payment page with booking details
+    if (paymentMethod === "visa") {
+      const bookingData = {
+        doctorId: selectedDoctor._id,
+        doctorName: formatDoctorName(selectedDoctor),
+        specialty: selectedDoctor.specialty,
+        date: selectedDate,
+        time: selectedTime,
+        location: form.location,
+        notes: form.notes,
+        patientName: form.name,
+        patientEmail: form.email,
+        patientPhone: form.phone,
+        amount: 500,
+      };
+      // Store booking data in sessionStorage to retrieve on payment page
+      sessionStorage.setItem("pendingBooking", JSON.stringify(bookingData));
+      navigate("/payment");
+      return;
+    }
+
+    // Cash payment - proceed directly
     setBooking(true); setError("");
     try {
       const res = await fetch(`${API}/booking/create`, {
         method:"POST", headers,
-        body: JSON.stringify({ doctorId: selectedDoctor._id, date: selectedDate, time: selectedTime, reason: form.notes }),
+        body: JSON.stringify({ doctorId: selectedDoctor._id, date: selectedDate, time: selectedTime, reason: form.notes, paymentMethod: "cash" }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.message || "Booking failed."); return; }
@@ -90,11 +131,11 @@ export default function Booking() {
         <div className="bk-success-card">
           <div className="bk-success-icon">🎉</div>
           <h2>Appointment Booked!</h2>
-          <p>Your appointment with <strong>{selectedDoctor?.name}</strong> on <strong>{new Date(selectedDate).toDateString()}</strong> at <strong>{selectedTime}</strong> is confirmed.</p>
+          <p>Your appointment with <strong>{formatDoctorName(selectedDoctor)}</strong> on <strong>{new Date(selectedDate).toDateString()}</strong> at <strong>{selectedTime}</strong> is confirmed.</p>
           <p className="bk-success-chat">💬 A chat has been started with your doctor — check your dashboard.</p>
           <div className="bk-success-btns">
             <button className="bk-btn bk-btn-primary" onClick={() => navigate("/patient")}>Go to Dashboard</button>
-            <button className="bk-btn bk-btn-ghost" onClick={() => { setSuccess(false); setSelectedDoctor(null); setSelectedDate(""); setSelectedTime(""); setForm({ name:"",email:"",phone:"",location:"at-clinic",notes:"" }); }}>Book Another</button>
+            <button className="bk-btn bk-btn-ghost" onClick={() => { setSuccess(false); setSelectedDoctor(null); setSelectedDate(""); setSelectedTime(""); setPaymentMethod("cash"); setForm({ name:"",email:"",phone:"",location:"at-clinic",notes:"" }); }}>Book Another</button>
           </div>
         </div>
       </div>
@@ -103,7 +144,7 @@ export default function Booking() {
 
   return (
     <div className="bk-root">
-      {/* HERO */}
+      
       <section className="bk-hero">
         <div className="bk-hero-left">
           <span className="bk-tag">Your Healing Path</span>
@@ -118,7 +159,7 @@ export default function Booking() {
         </div>
       </section>
 
-      {/* STEPS */}
+      
       <section className="bk-steps">
         <div className="bk-steps-left">
           <span className="bk-tag bk-tag-dark">Our Healing Path</span>
@@ -137,7 +178,7 @@ export default function Booking() {
         </div>
       </section>
 
-      {/* BOOKING FORM */}
+      
       <section className="bk-booking" id="booking">
         <div className="bk-booking-img">
           <img src="https://www.thomsonreuters.com/en-us/posts/wp-content/uploads/sites/20/2021/09/healthcare-professionals.jpg" alt="Booking" />
@@ -154,11 +195,15 @@ export default function Booking() {
           <div className="bk-field">
             <label>Choose Your Doctor *</label>
             {loadingDoctors ? (
-              <div className="bk-mini-load"><div className="bk-spin" /><span>Loading...</span></div>
+              <div className="bk-mini-load"><div className="bk-spin" /><span>Loading doctors...</span></div>
             ) : (
               <select className="bk-input" value={selectedDoctor?._id || ""} onChange={e => { const d = doctors.find(x => x._id === e.target.value); setSelectedDoctor(d || null); setSelectedDate(""); setSelectedTime(""); }}>
                 <option value="">Select a doctor...</option>
-                {doctors.map(d => <option key={d._id} value={d._id}>{d.name}{d.specialty ? ` — ${d.specialty}` : ""}</option>)}
+                {doctors.map(d => (
+                  <option key={d._id} value={d._id}>
+                    Dr. {formatDoctorName(d)}{d.specialty ? ` — ${d.specialty}` : ""}
+                  </option>
+                ))}
               </select>
             )}
           </div>
@@ -208,9 +253,19 @@ export default function Booking() {
             <label>Describe the injury or the issue</label>
             <textarea className="bk-input bk-textarea" rows={3} placeholder="Tell us about your symptoms..." value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
           </div>
+          
+          {/* Payment Method Dropdown */}
+          <div className="bk-field">
+            <label>Payment Method *</label>
+            <select className="bk-input" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}>
+              <option value="cash">💵 Cash — Pay at the clinic</option>
+              <option value="visa">💳 Visa Card — Pay online</option>
+            </select>
+          </div>
+
           {error && <div className="bk-error">{error}</div>}
           <button className="bk-btn bk-btn-primary bk-btn-full" onClick={handleBook} disabled={booking}>
-            {booking ? "Booking..." : "Book Now!"}
+            {booking ? "Booking..." : paymentMethod === "visa" ? "Proceed to Payment →" : "Book Now!"}
           </button>
           <p className="bk-chat-note">💬 A chat with your doctor starts automatically after booking.</p>
         </div>
@@ -236,7 +291,7 @@ export default function Booking() {
         </div>
       </section>
 
-      {/* CONTACT */}
+      
       <section className="bk-contact">
         <div className="bk-contact-tag">
           <span className="bk-tag bk-tag-dark">We're Here When You Need Us</span>

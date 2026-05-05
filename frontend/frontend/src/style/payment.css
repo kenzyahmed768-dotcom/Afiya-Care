@@ -1,0 +1,329 @@
+/* Payment.css */
+
+.payment-root {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding: 40px 20px;
+}
+
+.payment-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.payment-back {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 24px;
+  padding: 0;
+  transition: color 0.3s;
+}
+
+.payment-back:hover {
+  color: #4CAF50;
+}
+
+/* Summary Card */
+.payment-summary {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.payment-summary h2 {
+  font-size: 22px;
+  color: #1a1a1a;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.payment-booking-info {
+  margin-bottom: 20px;
+}
+
+.payment-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.payment-info-row:last-child {
+  border-bottom: none;
+}
+
+.payment-info-row span {
+  color: #666;
+  font-size: 14px;
+}
+
+.payment-info-row strong {
+  color: #333;
+  font-size: 14px;
+  text-align: right;
+}
+
+.payment-amount {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 2px solid #4CAF50;
+  margin-top: 8px;
+}
+
+.payment-amount span {
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+}
+
+.payment-amount strong {
+  font-size: 24px;
+  color: #4CAF50;
+  font-weight: 700;
+}
+
+/* Payment Form */
+.payment-form {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.payment-form h3 {
+  font-size: 18px;
+  color: #1a1a1a;
+  margin-bottom: 24px;
+}
+
+.payment-field {
+  margin-bottom: 20px;
+}
+
+.payment-field label {
+  display: block;
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.payment-field input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #333;
+  transition: all 0.3s;
+  box-sizing: border-box;
+}
+
+.payment-field input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.payment-field input::placeholder {
+  color: #aaa;
+}
+
+.payment-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Button */
+.payment-btn {
+  width: 100%;
+  padding: 16px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 8px;
+}
+
+.payment-btn:hover {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.payment-btn:disabled {
+  background: #bdbdbd;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.payment-secure {
+  text-align: center;
+  margin-top: 16px;
+  color: #999;
+  font-size: 13px;
+}
+
+.payment-secure span {
+  margin-right: 4px;
+}
+
+/* Error */
+.payment-error {
+  background: #fff0f0;
+  color: #e74c3c;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-bottom: 16px;
+  border: 1px solid #fcc;
+}
+
+/* Error Card (no booking found) */
+.payment-error-card {
+  max-width: 400px;
+  margin: 80px auto;
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.payment-error-card h2 {
+  font-size: 22px;
+  color: #e74c3c;
+  margin-bottom: 12px;
+}
+
+.payment-error-card p {
+  color: #666;
+  margin-bottom: 24px;
+  font-size: 15px;
+}
+
+.payment-error-card button {
+  padding: 12px 32px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.payment-error-card button:hover {
+  background: #45a049;
+}
+
+/* Success Card */
+.payment-success-card {
+  max-width: 500px;
+  margin: 60px auto;
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.payment-success-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+
+.payment-success-card h2 {
+  font-size: 26px;
+  color: #4CAF50;
+  margin-bottom: 12px;
+}
+
+.payment-success-card p {
+  color: #666;
+  font-size: 15px;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.payment-success-card strong {
+  color: #333;
+}
+
+.payment-chat-note {
+  color: #888 !important;
+  font-size: 14px !important;
+  background: #f9f9f9;
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin: 16px 0 !important;
+}
+
+.payment-success-btns {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.payment-success-btns button {
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: none;
+  font-weight: 500;
+}
+
+.payment-success-btns button:first-child {
+  background: #4CAF50;
+  color: white;
+}
+
+.payment-success-btns button:first-child:hover {
+  background: #45a049;
+}
+
+.payment-success-btns button:last-child {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.payment-success-btns button:last-child:hover {
+  background: #e0e0e0;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  .payment-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .payment-form {
+    padding: 20px;
+  }
+  
+  .payment-summary {
+    padding: 20px;
+  }
+  
+  .payment-success-btns {
+    flex-direction: column;
+  }
+}
