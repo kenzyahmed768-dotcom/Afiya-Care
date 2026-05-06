@@ -15,6 +15,11 @@ import HelpCenter from "./pages/Helpcenter";
 import Payment from "./pages/Payment";
 import About from "./pages/About";
 import Services from "./pages/Services";
+<<<<<<< Updated upstream
+=======
+import DoctorProfile from "./pages/DoctorProfile";
+import Blog from "./pages/Blog";
+>>>>>>> Stashed changes
 
 function App() {
   return (
@@ -27,10 +32,17 @@ function App() {
           <Route path="join" element={<JoinUs />} />
           <Route path="booking" element={<Booking />} />
           <Route path="help" element={<HelpCenter />} />
+<<<<<<< Updated upstream
           <Route path="payment" element={<Payment />} />
           <Route path="about" element={<About />} />
           <Route path="service" element={<Services />} />
           <Route path="blog" element={<div>Blog Page</div>} />
+=======
+         <Route path="/about" element={<About />} />
+<Route path="/service" element={<Services />} />
+<Route path="doctor-profile/:id" element={<DoctorProfile />} />
+<Route path="blog" element={<Blog />} />
+>>>>>>> Stashed changes
         </Route>
 
         {/* Auth & Dashboards */}
