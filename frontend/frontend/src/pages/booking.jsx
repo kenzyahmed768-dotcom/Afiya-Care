@@ -382,7 +382,19 @@ export default function Booking() {
               </select>
             </div>
           )}
-
+{/* Address for Home Lab Tests */}
+{isHomeLab && (
+  <div className="bk-field">
+    <label>Home Address *</label>
+    <textarea
+      className="bk-input bk-textarea"
+      rows={2}
+      placeholder="Enter your full address for the lab visit..."
+      value={form.address}
+      onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
+    />
+  </div>
+)}
           {/* Address for at-home physiotherapy */}
           {!isHomeLab && !isConsultation && form.location === "at-home" && (
             <div className="bk-field">
