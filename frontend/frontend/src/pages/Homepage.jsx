@@ -44,6 +44,16 @@ function Homepage() {
       image:
         "https://plus.unsplash.com/premium_photo-1661721529633-db1a51e1d9bc?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NDl8fHBhaW4lMjBtYW5hZ2VtZW50JTIwcGh5c2lvdGhlcmFweXxlbnwwfHwwfHx8MA%3D%3D",
     },
+    {
+      title: "Nursing & Wound Care",
+      image:
+        "https://images.unsplash.com/photo-1584516150909-c43483ee7938?w=900&q=80",
+    },
+    {
+      title: "At Home Lab Tests",
+      image:
+        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80",
+    },
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
