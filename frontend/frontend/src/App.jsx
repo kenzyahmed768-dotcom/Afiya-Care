@@ -16,6 +16,7 @@ import Payment from "./pages/Payment";
 import About from "./pages/About";
 import Services from "./pages/Services";
 import Blog from "./pages/Blog";
+import PatientCommunity from "./pages/PatientCommunity";
 
 function App() {
   return (
@@ -32,6 +33,8 @@ function App() {
           <Route path="about" element={<About />} />
           <Route path="service" element={<Services />} />
           <Route path="blog" element={<Blog />} />
+          <Route path="Patient-Community" element={<PatientCommunity />} />
+
         </Route>
 
         {/* Auth & Dashboards */}

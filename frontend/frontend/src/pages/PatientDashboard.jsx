@@ -1,4 +1,3 @@
-// pages/PatientDashboard.jsx
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
@@ -21,11 +20,15 @@ export default function PatientDashboard() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [toast, setToast] = useState(null);
   const [form, setForm] = useState({ name: "", phone: "" });
+
   const [stats, setStats] = useState({
     totalAppointments: 0,
     upcomingAppointments: 0,
     completedAppointments: 0,
   });
+
+  const [cancelModal, setCancelModal] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
 
   const [reviews, setReviews] = useState([]);
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -38,6 +41,11 @@ export default function PatientDashboard() {
   });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [completedAppointmentsList, setCompletedAppointmentsList] = useState([]);
+
+  const [medicalFiles, setMedicalFiles] = useState([]);
+  const [selectedMedicalFile, setSelectedMedicalFile] = useState(null);
+  const [medicalFileNote, setMedicalFileNote] = useState("");
+  const [uploadingMedicalFile, setUploadingMedicalFile] = useState(false);
 
   const fileRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -78,11 +86,12 @@ export default function PatientDashboard() {
 
   const fetchData = async () => {
     try {
-      const [profile, appts, convos, reviewsData] = await Promise.all([
+      const [profile, appts, convos, reviewsData, filesData] = await Promise.all([
         safeFetch("/patient/profile"),
         safeFetch("/patient/appointments"),
         safeFetch("/chat/conversations/list"),
         safeFetch("/patient/reviews"),
+        safeFetch("/patient/medical-files"),
       ]);
 
       if (profile) {
@@ -114,6 +123,7 @@ export default function PatientDashboard() {
       setUnreadCount(convoList.reduce((sum, c) => sum + (c.unread || 0), 0));
 
       setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+      setMedicalFiles(Array.isArray(filesData) ? filesData : []);
     } finally {
       setLoading(false);
     }
@@ -295,6 +305,72 @@ export default function PatientDashboard() {
     }
   };
 
+  const CANCEL_FEE_HOURS = 24;
+
+  const getAppointmentDateTime = (appointment) => {
+    const apptDate = new Date(appointment.date);
+
+    if (appointment.time) {
+      const [timePart, meridiem] = appointment.time.split(" ");
+      let [hours, minutes] = timePart.split(":").map(Number);
+
+      if (meridiem === "PM" && hours !== 12) hours += 12;
+      if (meridiem === "AM" && hours === 12) hours = 0;
+
+      apptDate.setHours(hours || 0, minutes || 0, 0, 0);
+    }
+
+    return apptDate;
+  };
+
+  const isNearAppointment = (appointment) => {
+    if (!appointment) return false;
+
+    const apptDate = getAppointmentDateTime(appointment);
+    const hoursUntil = (apptDate.getTime() - Date.now()) / (1000 * 60 * 60);
+
+    return hoursUntil > 0 && hoursUntil <= CANCEL_FEE_HOURS;
+  };
+
+  const handleCancelAppointment = async () => {
+    if (!cancelModal) return;
+
+    setCancelling(true);
+
+    try {
+      const res = await fetch(`${API}/patient/appointments/${cancelModal._id}/cancel`, {
+        method: "PATCH",
+        headers,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast(data.message || "Failed to cancel appointment", "error");
+        return;
+      }
+
+      setAppointments((prev) =>
+        prev.map((a) =>
+          a._id === cancelModal._id ? { ...a, status: "cancelled" } : a
+        )
+      );
+
+      setStats((prev) => ({
+        ...prev,
+        upcomingAppointments: Math.max(0, prev.upcomingAppointments - 1),
+      }));
+
+      showToast("Appointment cancelled successfully");
+      setCancelModal(null);
+      fetchData();
+    } catch {
+      showToast("Could not connect to server", "error");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
 
@@ -352,6 +428,47 @@ export default function PatientDashboard() {
       showToast("Upload failed", "error");
     } finally {
       setUploadingPhoto(false);
+    }
+  };
+
+  const handleMedicalFileUpload = async (e) => {
+    e.preventDefault();
+
+    if (!selectedMedicalFile) {
+      showToast("Please select a file first", "error");
+      return;
+    }
+
+    setUploadingMedicalFile(true);
+
+    const formData = new FormData();
+    formData.append("file", selectedMedicalFile);
+    formData.append("note", medicalFileNote);
+
+    try {
+      const res = await fetch(`${API}/patient/medical-files`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        showToast("Medical file uploaded successfully");
+        setMedicalFiles((prev) => [data.file, ...prev]);
+        setSelectedMedicalFile(null);
+        setMedicalFileNote("");
+        e.target.reset();
+      } else {
+        showToast(data.message || "Upload failed", "error");
+      }
+    } catch {
+      showToast("Could not upload file", "error");
+    } finally {
+      setUploadingMedicalFile(false);
     }
   };
 
@@ -451,6 +568,7 @@ export default function PatientDashboard() {
       icon: "💬",
       label: `Messages${unreadCount > 0 ? ` (${unreadCount})` : ""}`,
     },
+    { key: "medicalFiles", icon: "📁", label: `Medical Files (${medicalFiles.length})` },
     { key: "reviews", icon: "⭐", label: "Reviews" },
     { key: "profile", icon: "👤", label: "Profile" },
   ];
@@ -638,7 +756,7 @@ export default function PatientDashboard() {
                     <th>Time</th>
                     <th>Reason</th>
                     <th>Status</th>
-                    <th>Action</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
 
@@ -657,20 +775,32 @@ export default function PatientDashboard() {
                       <td>{fmtDate(a.date)}</td>
                       <td>{a.time || "---"}</td>
                       <td>{a.reason || "---"}</td>
+
                       <td>
                         <span className={`pd-pill ${a.status}`}>{a.status}</span>
                       </td>
 
                       <td>
-                        {(a.status === "confirmed" || a.status === "completed") &&
-                          a.doctor && (
+                        <div className="pd-appt-actions">
+                          {(a.status === "confirmed" || a.status === "completed") &&
+                            a.doctor && (
+                              <button
+                                className="pd-btn pd-btn-primary pd-btn-sm"
+                                onClick={() => openDoctorChat(a.doctor)}
+                              >
+                                💬 Message
+                              </button>
+                            )}
+
+                          {(a.status === "pending" || a.status === "confirmed") && (
                             <button
-                              className="pd-btn pd-btn-primary pd-btn-sm"
-                              onClick={() => openDoctorChat(a.doctor)}
+                              className="pd-btn pd-btn-cancel pd-btn-sm"
+                              onClick={() => setCancelModal(a)}
                             >
-                              💬 Message
+                              ✕ Cancel
                             </button>
                           )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -793,6 +923,174 @@ export default function PatientDashboard() {
                 </>
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === "medicalFiles" && (
+          <div className="pd-medical-wrapper">
+            <div className="pd-medical-banner">
+              <div className="pd-medical-banner-left">
+                <div className="pd-medical-banner-icon">📁</div>
+                <div>
+                  <h2>Medical Files</h2>
+                  <p>
+                    Upload and manage your scans, reports, prescriptions, and lab results
+                    so your doctor always has the full picture.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pd-medical-banner-stats">
+                <div className="pd-medical-banner-stat">
+                  <span className="pd-medical-banner-stat-val">
+                    {medicalFiles.length}
+                  </span>
+                  <span className="pd-medical-banner-stat-label">
+                    Files Uploaded
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pd-medical-upload-card">
+              <div className="pd-medical-upload-card-header">
+                <span className="pd-medical-upload-card-icon">⬆️</span>
+                <div>
+                  <div className="pd-medical-upload-card-title">
+                    Upload a New Document
+                  </div>
+                  <div className="pd-medical-upload-card-sub">
+                    Accepted: images, PDF, DOC, DOCX
+                  </div>
+                </div>
+              </div>
+
+              <form
+                className="pd-medical-upload-form"
+                onSubmit={handleMedicalFileUpload}
+              >
+                <div className="pd-medical-upload-fields">
+                  <div className="pd-medical-field">
+                    <label className="pd-medical-field-label">
+                      Choose File <span className="pd-medical-required">*</span>
+                    </label>
+
+                    <label className="pd-medical-file-drop">
+                      <input
+                        type="file"
+                        accept="image/*,.pdf,.doc,.docx"
+                        className="pd-medical-file-hidden"
+                        onChange={(e) =>
+                          setSelectedMedicalFile(e.target.files[0])
+                        }
+                      />
+                      <span className="pd-medical-file-drop-icon">📎</span>
+                      <span className="pd-medical-file-drop-text">
+                        {selectedMedicalFile
+                          ? selectedMedicalFile.name
+                          : "Click to browse or drag & drop"}
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="pd-medical-field">
+                    <label className="pd-medical-field-label">
+                      Note <span className="pd-medical-optional">Optional</span>
+                    </label>
+
+                    <textarea
+                      className="pd-medical-note-input"
+                      rows={3}
+                      placeholder="e.g. Knee MRI — May 2025, blood test from last visit..."
+                      value={medicalFileNote}
+                      onChange={(e) => setMedicalFileNote(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="pd-medical-upload-footer">
+                  <button
+                    type="submit"
+                    className="pd-medical-upload-btn"
+                    disabled={uploadingMedicalFile}
+                  >
+                    {uploadingMedicalFile ? "Uploading..." : "⬆️ Upload File"}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {medicalFiles.length === 0 ? (
+              <div className="pd-medical-empty-card">
+                <div className="pd-medical-empty-emoji">🗂️</div>
+                <h3>No files yet</h3>
+                <p>Upload your first medical document above to get started.</p>
+              </div>
+            ) : (
+              <div className="pd-medical-files-card">
+                <div className="pd-medical-files-card-header">
+                  <span className="pd-medical-files-card-title">
+                    Uploaded Documents
+                  </span>
+                  <span className="pd-medical-files-count">
+                    {medicalFiles.length} file
+                    {medicalFiles.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                <div className="pd-medical-files-grid">
+                  {medicalFiles.map((file) => {
+                    const ext = (file.originalName || file.filename || "")
+                      .split(".")
+                      .pop()
+                      .toLowerCase();
+
+                    const icon =
+                      ext === "pdf"
+                        ? "📑"
+                        : ["jpg", "jpeg", "png", "gif", "webp"].includes(ext)
+                        ? "🖼️"
+                        : ["doc", "docx"].includes(ext)
+                        ? "📝"
+                        : "📄";
+
+                    return (
+                      <div className="pd-medical-file-tile" key={file._id}>
+                        <div className="pd-medical-file-tile-top">
+                          <div className="pd-medical-file-tile-icon">{icon}</div>
+
+                          <div className="pd-medical-file-tile-meta">
+                            <div className="pd-medical-file-tile-name">
+                              {file.originalName || file.filename || "Medical File"}
+                            </div>
+                            <div className="pd-medical-file-tile-date">
+                              📅 {fmtDate(file.createdAt)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {file.note && (
+                          <div className="pd-medical-file-tile-note">
+                            {file.note}
+                          </div>
+                        )}
+
+                        {file.fileUrl && (
+                          <a
+                            className="pd-medical-file-view-btn"
+                            href={`${API}${file.fileUrl}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            View File
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1096,6 +1394,79 @@ export default function PatientDashboard() {
       </main>
 
       {toast && <div className={`pd-toast ${toast.type}`}>{toast.message}</div>}
+
+      {cancelModal && (
+        <div
+          className="pd-modal-overlay"
+          onClick={() => !cancelling && setCancelModal(null)}
+        >
+          <div className="pd-modal" onClick={(e) => e.stopPropagation()}>
+            {isNearAppointment(cancelModal) && (
+              <div className="pd-modal-fee-banner">
+                <span className="pd-modal-fee-icon">⚠️</span>
+                <div>
+                  <div className="pd-modal-fee-title">
+                    Late Cancellation Fee Applies
+                  </div>
+                  <div className="pd-modal-fee-sub">
+                    This appointment is within {CANCEL_FEE_HOURS} hours. Cancelling
+                    now may incur a cancellation fee as per our policy.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="pd-modal-body">
+              <div className="pd-modal-icon">
+                {isNearAppointment(cancelModal) ? "🚨" : "📅"}
+              </div>
+
+              <h2 className="pd-modal-title">Cancel Appointment?</h2>
+
+              <p className="pd-modal-sub">
+                You are about to cancel your appointment with{" "}
+                <strong>Dr. {cancelModal.doctor?.name}</strong> on{" "}
+                <strong>{fmtDate(cancelModal.date)}</strong>
+                {cancelModal.time ? ` at ${cancelModal.time}` : ""}.
+              </p>
+
+              <div className="pd-modal-detail-row">
+                <span>📋 Reason</span>
+                <span>{cancelModal.reason || "General Consultation"}</span>
+              </div>
+
+              <div className="pd-modal-detail-row">
+                <span>🏥 Status</span>
+                <span className={`pd-pill ${cancelModal.status}`}>
+                  {cancelModal.status}
+                </span>
+              </div>
+
+              <p className="pd-modal-notice">
+                The doctor and clinic admin will be notified immediately.
+              </p>
+            </div>
+
+            <div className="pd-modal-footer">
+              <button
+                className="pd-btn pd-btn-outline"
+                onClick={() => setCancelModal(null)}
+                disabled={cancelling}
+              >
+                Keep Appointment
+              </button>
+
+              <button
+                className="pd-btn pd-btn-danger"
+                onClick={handleCancelAppointment}
+                disabled={cancelling}
+              >
+                {cancelling ? "Cancelling..." : "Yes, Cancel It"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

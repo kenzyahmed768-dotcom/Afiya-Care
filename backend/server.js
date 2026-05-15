@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 const express = require("express");
 const http = require("http");
@@ -20,6 +19,9 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: "http://localhost:5173", methods: ["GET", "POST"] },
 });
+
+// Make io accessible inside route handlers
+app.set("io", io);
 
 app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
@@ -579,21 +581,27 @@ app.post("/booking/init-chat", authMiddleware, async (req, res) => {
 
 app.patch("/patient/appointments/:id/cancel", authMiddleware, async (req, res) => {
   try {
-    const appointment = await Appointment.findOne({ _id: req.params.id, patient: req.user.id });
-    if (!appointment) return res.status(404).json({ message: "Appointment not found" });
+    const appointment = await Appointment.findOne({
+      _id: req.params.id,
+      patient: req.user.id,
+    }).populate("doctor", "name email");
+
+    if (!appointment)
+      return res.status(404).json({ message: "Appointment not found" });
+
     if (!["pending", "confirmed"].includes(appointment.status))
       return res.status(400).json({ message: "Only pending or confirmed appointments can be cancelled" });
 
     appointment.status = "cancelled";
     await appointment.save();
 
-    // Send cancellation email
+    // ── Send cancellation email to patient ──────────────────────
     const emailTo = appointment.patientEmail;
     if (emailTo) {
+      const isLab = appointment.serviceType === "home-lab";
       let providerName = appointment.labName || "Unknown";
-      if (appointment.doctor) {
-        const doc = await Doctor.findById(appointment.doctor).select("name email");
-        providerName = doc ? (doc.name || doc.email.split("@")[0]) : "Doctor";
+      if (!isLab && appointment.doctor) {
+        providerName = appointment.doctor.name || appointment.doctor.email?.split("@")[0] || "Doctor";
       }
 
       const cancelHtml = buildCancellationEmail({
@@ -601,7 +609,7 @@ app.patch("/patient/appointments/:id/cancel", authMiddleware, async (req, res) =
         providerName,
         date: appointment.date,
         time: appointment.time,
-        isLab: appointment.serviceType === "home-lab",
+        isLab,
       });
 
       transporter.sendMail({
@@ -612,8 +620,31 @@ app.patch("/patient/appointments/:id/cancel", authMiddleware, async (req, res) =
       }).catch(err => console.error("Cancellation email error:", err));
     }
 
+    // ── Socket: notify doctor and all admins ────────────────────
+    const notificationPayload = {
+      type: "appointment_cancelled",
+      appointmentId: appointment._id,
+      patientName: appointment.patientName || req.user.name || "A patient",
+      doctorName: appointment.doctor?.name || "Unknown",
+      date: appointment.date,
+      time: appointment.time,
+      reason: appointment.reason || "General Consultation",
+      message: `${appointment.patientName || "A patient"} cancelled their appointment on ${new Date(appointment.date).toDateString()}${appointment.time ? " at " + appointment.time : ""}.`,
+    };
+
+    // Notify the doctor (they join their userId room on connect)
+    if (appointment.doctor?._id) {
+      io.to(String(appointment.doctor._id)).emit("appointmentCancelled", notificationPayload);
+    }
+
+    // Notify all admins (admins join "admins" room via joinAsAdmin socket event)
+    io.to("admins").emit("appointmentCancelled", notificationPayload);
+
     res.json({ message: "Appointment cancelled", appointment });
-  } catch (err) { console.error(err); res.status(500).json({ message: "Server error" }); }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 /* ─────────────────────────────────────────────
@@ -853,9 +884,6 @@ app.delete("/admin/reviews/:id", authMiddleware, adminMiddleware, async (req, re
 
 /* ─────────────────────────────────────────────
    REMINDER CRON — runs every hour
-   Finds appointments in the next 24 hrs that
-   haven't been reminded yet, sends email + 
-   socket notification
 ───────────────────────────────────────────── */
 
 cron.schedule("0 * * * *", async () => {
@@ -881,7 +909,6 @@ cron.schedule("0 * * * *", async () => {
       const patientName  = appt.patientName || "Patient";
       const isLab = appt.serviceType === "home-lab";
 
-      // Send reminder email
       if (patientEmail) {
         const reminderHtml = buildReminderEmail({ patientName, providerName, date: appt.date, time: appt.time, serviceType: appt.serviceType, isLab });
         transporter.sendMail({
@@ -892,7 +919,6 @@ cron.schedule("0 * * * *", async () => {
         }).catch(err => console.error("Reminder email error:", err));
       }
 
-      // Send in-app socket notification
       if (appt.patient) {
         io.to(String(appt.patient)).emit("reminder", {
           message: `Reminder: Your ${appt.serviceType?.replace("-"," ")} appointment with ${providerName} is tomorrow at ${appt.time}.`,
@@ -903,7 +929,6 @@ cron.schedule("0 * * * *", async () => {
         });
       }
 
-      // Mark as reminded
       appt.reminded = true;
       await appt.save();
     }
@@ -921,9 +946,28 @@ cron.schedule("0 * * * *", async () => {
 const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
+
+  // Patients and doctors join by their userId
   socket.on("join", (userId) => {
     onlineUsers.set(String(userId), socket.id);
     socket.join(String(userId));
+  });
+
+  // Admins join the shared "admins" room so they receive
+  // appointmentCancelled broadcasts from the cancel route
+  socket.on("joinAsAdmin", () => {
+    socket.join("admins");
+    console.log("Admin joined admins room:", socket.id);
+  });
+
+  // Relay for any client-side appointmentCancelled emit
+  // (acts as a fallback — the REST route handles it server-side too)
+  socket.on("appointmentCancelled", (data) => {
+    const { doctorId, ...rest } = data;
+    if (doctorId) {
+      io.to(String(doctorId)).emit("appointmentCancelled", rest);
+    }
+    io.to("admins").emit("appointmentCancelled", rest);
   });
 
   socket.on("sendMessage", async ({ senderId, receiverId, content, senderModel, receiverModel }) => {
@@ -958,4 +1002,3 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-

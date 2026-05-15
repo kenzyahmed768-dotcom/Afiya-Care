@@ -493,3 +493,44 @@ body {
   .main-content { margin-left: 64px; }
   .form-grid { grid-template-columns: 1fr; }
 }
+/* Bigger Progress & Plans layout */
+.progress-page {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 28px;
+  align-items: start;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.progress-page .section-card,
+.progress-page .profile-form-card {
+  width: 100%;
+}
+
+.progress-page .schedule-item {
+  min-height: 76px;
+  padding: 18px 20px;
+}
+
+.progress-page .schedule-patient {
+  min-width: 0;
+  flex: 1;
+}
+
+.progress-page .schedule-name,
+.progress-page .schedule-reason {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: break-word;
+}
+
+.progress-page .form-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.progress-page .profile-form-card {
+  padding: 28px;
+}

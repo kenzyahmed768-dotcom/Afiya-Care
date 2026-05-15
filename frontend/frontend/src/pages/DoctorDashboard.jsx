@@ -689,7 +689,7 @@ export default function DoctorDashboard() {
         )}
 
         {activeTab === "progress" && (
-          <div className="profile-layout">
+          <div className="profile-layout progress-page">
             <div className="section-card">
               <div className="section-header">
                 <div>
