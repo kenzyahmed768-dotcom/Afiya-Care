@@ -20,13 +20,13 @@ const io = new Server(server, {
   cors: { origin: "http://localhost:5173", methods: ["GET", "POST"] },
 });
 
-// Make io accessible inside route handlers
 app.set("io", io);
 
 app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
+/* ── Profile photo storage ── */
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = "uploads/profiles";
@@ -46,6 +46,28 @@ const upload = multer({
   },
 });
 
+/* ── Medical file storage ── */
+const medicalStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = "uploads/medical";
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${req.user.id}-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+  },
+});
+const uploadMedical = multer({
+  storage: medicalStorage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase().replace(".", "");
+    if (/jpeg|jpg|png|webp|pdf|doc|docx|txt/.test(ext)) cb(null, true);
+    else cb(new Error("File type not allowed"));
+  },
+});
+
 const connectDB = require("./config/db");
 connectDB();
 const User        = require("./models/user");
@@ -55,6 +77,7 @@ const Appointment = require("./models/appointment");
 const Message     = require("./models/message");
 const Application = require("./models/application");
 const Review      = require("./models/review");
+const MedicalFile = require("./models/medicalFile");
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -74,6 +97,18 @@ const authMiddleware = (req, res, next) => {
 const adminMiddleware  = (req, res, next) => req.user.role === "admin"  ? next() : res.status(403).json({ message: "Access denied" });
 const doctorMiddleware = (req, res, next) => req.user.role === "doctor" ? next() : res.status(403).json({ message: "Access denied" });
 
+/* ─────────────────────────────────────────────
+   HELPER: resolve senderModel from userId
+   Looks up which collection the user belongs to.
+   Returns "User" | "Doctor" | "Admin"
+───────────────────────────────────────────── */
+async function resolveModel(userId) {
+  if (!userId) return "User";
+  const id = String(userId);
+  if (await Doctor.exists({ _id: id })) return "Doctor";
+  if (await Admin.exists({ _id: id }))  return "Admin";
+  return "User";
+}
 
 /* ─────────────────────────────────────────────
    EMAIL HELPERS
@@ -92,24 +127,16 @@ function buildInvoiceEmail({ patientName, bookingId, serviceType, providerName, 
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 0;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08);">
-        
-        <!-- Header -->
         <tr><td style="background:#0a1628;padding:32px 40px;">
           <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:-.5px;">Afiya<span style="color:#00b4a2;">Care</span></h1>
           <p style="margin:6px 0 0;color:rgba(255,255,255,.6);font-size:13px;">Your health, our priority</p>
         </td></tr>
-
-        <!-- Success banner -->
         <tr><td style="background:#00b4a2;padding:20px 40px;">
           <p style="margin:0;color:#fff;font-size:18px;font-weight:600;">✓ Booking Confirmed</p>
           <p style="margin:4px 0 0;color:rgba(255,255,255,.85);font-size:13px;">Booking ID: <strong>#${bookingId}</strong></p>
         </td></tr>
-
-        <!-- Body -->
         <tr><td style="padding:32px 40px;">
           <p style="margin:0 0 24px;color:#3a4a5c;font-size:15px;">Hi <strong>${patientName}</strong>, your appointment has been confirmed. Here are your details:</p>
-
-          <!-- Details table -->
           <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #dde8ef;border-radius:8px;overflow:hidden;margin-bottom:24px;">
             <tr style="background:#f8fafb;">
               <td style="padding:12px 16px;font-size:12px;font-weight:600;color:#6b7c93;text-transform:uppercase;letter-spacing:.08em;width:40%;">Service</td>
@@ -145,17 +172,13 @@ function buildInvoiceEmail({ patientName, bookingId, serviceType, providerName, 
               <td style="padding:12px 16px;font-size:14px;color:#0a1628;border-top:1px solid #dde8ef;">${paymentMethod === "visa" ? "💳 Visa Card (Paid Online)" : "💵 Cash (Pay on arrival)"}</td>
             </tr>
           </table>
-
-          <p style="margin:0 0 8px;color:#3a4a5c;font-size:14px;">Need to cancel? Log into your <strong>patient dashboard</strong> and tap <strong>Cancel</strong> on the appointment. You can also reply to this email.</p>
+          <p style="margin:0 0 8px;color:#3a4a5c;font-size:14px;">Need to cancel? Log into your <strong>patient dashboard</strong> and tap <strong>Cancel</strong> on the appointment.</p>
           <p style="margin:0;color:#3a4a5c;font-size:14px;">You will receive a reminder email 24 hours before your appointment.</p>
         </td></tr>
-
-        <!-- Footer -->
         <tr><td style="background:#f8fafb;padding:20px 40px;border-top:1px solid #dde8ef;">
           <p style="margin:0;color:#6b7c93;font-size:12px;">AfiyaCare · Alexandria, Egypt · afiyacare@gmail.com · +20 12345677</p>
           <p style="margin:4px 0 0;color:#6b7c93;font-size:11px;">This is an automated email. Please do not reply directly to this address.</p>
         </td></tr>
-
       </table>
     </td></tr>
   </table>
@@ -526,7 +549,6 @@ app.post("/booking/create", authMiddleware, async (req, res) => {
 
     const appointment = await new Appointment(appointmentData).save();
 
-    // Send confirmation email with invoice
     if (patientEmail) {
       let providerName = labName || "Unknown";
       if (!isLab) {
@@ -567,9 +589,11 @@ app.post("/booking/init-chat", authMiddleware, async (req, res) => {
     const senderId = req.user.id;
     const existing = await Message.findOne({ $or: [{ sender: senderId, receiver: receiverId }, { sender: receiverId, receiver: senderId }] });
     if (!existing) {
+      const senderModel = await resolveModel(senderId);
+      const receiverModel = await resolveModel(receiverId);
       const formattedDate = new Date(appointmentDate).toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
       const content = `Hello! I just booked an appointment with you on ${formattedDate} at ${appointmentTime}. Looking forward to my session!`;
-      await Message.create({ sender: senderId, senderModel: req.user.role === "doctor" ? "Doctor" : "User", receiver: receiverId, receiverModel: "Doctor", content });
+      await Message.create({ sender: senderId, senderModel, receiver: receiverId, receiverModel, content });
     }
     res.json({ message: "Chat initialized" });
   } catch (err) { res.status(500).json({ message: "Server error" }); }
@@ -595,7 +619,6 @@ app.patch("/patient/appointments/:id/cancel", authMiddleware, async (req, res) =
     appointment.status = "cancelled";
     await appointment.save();
 
-    // ── Send cancellation email to patient ──────────────────────
     const emailTo = appointment.patientEmail;
     if (emailTo) {
       const isLab = appointment.serviceType === "home-lab";
@@ -620,7 +643,6 @@ app.patch("/patient/appointments/:id/cancel", authMiddleware, async (req, res) =
       }).catch(err => console.error("Cancellation email error:", err));
     }
 
-    // ── Socket: notify doctor and all admins ────────────────────
     const notificationPayload = {
       type: "appointment_cancelled",
       appointmentId: appointment._id,
@@ -632,12 +654,9 @@ app.patch("/patient/appointments/:id/cancel", authMiddleware, async (req, res) =
       message: `${appointment.patientName || "A patient"} cancelled their appointment on ${new Date(appointment.date).toDateString()}${appointment.time ? " at " + appointment.time : ""}.`,
     };
 
-    // Notify the doctor (they join their userId room on connect)
     if (appointment.doctor?._id) {
       io.to(String(appointment.doctor._id)).emit("appointmentCancelled", notificationPayload);
     }
-
-    // Notify all admins (admins join "admins" room via joinAsAdmin socket event)
     io.to("admins").emit("appointmentCancelled", notificationPayload);
 
     res.json({ message: "Appointment cancelled", appointment });
@@ -729,6 +748,15 @@ app.get("/doctor/patients", authMiddleware, doctorMiddleware, async (req, res) =
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 
+app.get("/doctor/patients/:patientId/files", authMiddleware, doctorMiddleware, async (req, res) => {
+  try {
+    const linked = await Appointment.exists({ doctor: req.user.id, patient: req.params.patientId });
+    if (!linked) return res.status(403).json({ message: "This patient is not in your list" });
+    const files = await MedicalFile.find({ patient: req.params.patientId }).sort({ createdAt: -1 });
+    res.json(files);
+  } catch (err) { res.status(500).json({ message: "Server error" }); }
+});
+
 /* ─────────────────────────────────────────────
    PATIENT ROUTES
 ───────────────────────────────────────────── */
@@ -793,6 +821,46 @@ app.get("/patient/appointments/completed", authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 
+app.post("/patient/files", authMiddleware, uploadMedical.array("files", 10), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0)
+      return res.status(400).json({ message: "No files uploaded" });
+    const labels = req.body.labels ? JSON.parse(req.body.labels) : [];
+    const saved = await Promise.all(
+      req.files.map((f, i) =>
+        new MedicalFile({
+          patient:    req.user.id,
+          filename:   f.originalname,
+          storedName: f.filename,
+          url:        `/uploads/medical/${f.filename}`,
+          mimetype:   f.mimetype,
+          size:       f.size,
+          label:      labels[i] || "",
+        }).save()
+      )
+    );
+    res.status(201).json({ message: "Files uploaded", files: saved });
+  } catch (err) { console.error(err); res.status(500).json({ message: "Upload failed" }); }
+});
+
+app.get("/patient/files", authMiddleware, async (req, res) => {
+  try {
+    const files = await MedicalFile.find({ patient: req.user.id }).sort({ createdAt: -1 });
+    res.json(files);
+  } catch (err) { res.status(500).json({ message: "Server error" }); }
+});
+
+app.delete("/patient/files/:id", authMiddleware, async (req, res) => {
+  try {
+    const file = await MedicalFile.findOne({ _id: req.params.id, patient: req.user.id });
+    if (!file) return res.status(404).json({ message: "File not found" });
+    const diskPath = path.join(__dirname, "uploads/medical", file.storedName);
+    if (fs.existsSync(diskPath)) fs.unlinkSync(diskPath);
+    await file.deleteOne();
+    res.json({ message: "File deleted" });
+  } catch (err) { res.status(500).json({ message: "Server error" }); }
+});
+
 /* ─────────────────────────────────────────────
    CHAT ROUTES
 ───────────────────────────────────────────── */
@@ -834,8 +902,16 @@ app.get("/chat/admin/conversations", authMiddleware, adminMiddleware, async (req
 
 app.get("/chat/:userId", authMiddleware, async (req, res) => {
   try {
-    const messages = await Message.find({ $or: [{ sender: req.user.id, receiver: req.params.userId }, { sender: req.params.userId, receiver: req.user.id }] }).sort({ createdAt: 1 });
-    await Message.updateMany({ sender: req.params.userId, receiver: req.user.id, read: false }, { read: true });
+    const messages = await Message.find({
+      $or: [
+        { sender: req.user.id, receiver: req.params.userId },
+        { sender: req.params.userId, receiver: req.user.id },
+      ],
+    }).sort({ createdAt: 1 });
+    await Message.updateMany(
+      { sender: req.params.userId, receiver: req.user.id, read: false },
+      { read: true }
+    );
     res.json(messages);
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
@@ -941,46 +1017,68 @@ cron.schedule("0 * * * *", async () => {
 
 /* ─────────────────────────────────────────────
    SOCKET.IO
+   
+   FIX SUMMARY:
+   - sendMessage: resolve senderModel/receiverModel dynamically from DB
+     instead of hardcoding "User"/"Admin" (caused "messaging yourself" bug)
+   - sendMessage: only emit "receiveMessage" to the RECEIVER's room.
+     The sender gets "messageSent" only — never both. This eliminates duplicates.
+   - The saved message includes a plain `sender` id string so the frontend
+     can reliably distinguish sent vs received with `String(msg.sender) === userId`
 ───────────────────────────────────────────── */
 
 const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
 
-  // Patients and doctors join by their userId
   socket.on("join", (userId) => {
     onlineUsers.set(String(userId), socket.id);
     socket.join(String(userId));
   });
 
-  // Admins join the shared "admins" room so they receive
-  // appointmentCancelled broadcasts from the cancel route
   socket.on("joinAsAdmin", () => {
     socket.join("admins");
     console.log("Admin joined admins room:", socket.id);
   });
 
-  // Relay for any client-side appointmentCancelled emit
-  // (acts as a fallback — the REST route handles it server-side too)
   socket.on("appointmentCancelled", (data) => {
     const { doctorId, ...rest } = data;
-    if (doctorId) {
-      io.to(String(doctorId)).emit("appointmentCancelled", rest);
-    }
+    if (doctorId) io.to(String(doctorId)).emit("appointmentCancelled", rest);
     io.to("admins").emit("appointmentCancelled", rest);
   });
 
-  socket.on("sendMessage", async ({ senderId, receiverId, content, senderModel, receiverModel }) => {
+  /* ── FIXED sendMessage ── */
+  socket.on("sendMessage", async ({ senderId, receiverId, content }) => {
+    // Basic validation
     if (!senderId || !receiverId || !content?.trim()) return;
+
     try {
+      // Resolve correct model names by checking which collection each ID lives in
+      const [senderModel, receiverModel] = await Promise.all([
+        resolveModel(senderId),
+        resolveModel(receiverId),
+      ]);
+
+      // Save to DB
       const message = await Message.create({
-        sender: senderId, senderModel: senderModel || "User",
-        receiver: receiverId, receiverModel: receiverModel || "Admin",
-        content: content.trim(), read: false,
+        sender:        senderId,
+        senderModel,
+        receiver:      receiverId,
+        receiverModel,
+        content:       content.trim(),
+        read:          false,
       });
+
+      // Populate sender info (name, photo, role) for display
       await message.populate("sender", "name photo role");
+
+      // ── KEY FIX ──
+      // Emit "messageSent" ONLY back to the sender's socket (so it appears in their chat)
+      // Emit "receiveMessage" ONLY to the receiver's room (so they get the notification)
+      // Never emit both to the same person — that's what caused the duplication.
       socket.emit("messageSent", message);
-      io.to(String(receiverId)).emit("receiveMessage", message);
+      socket.to(String(receiverId)).emit("receiveMessage", message);
+
     } catch (err) {
       console.error("sendMessage error:", err);
       socket.emit("error", { message: "Failed to send message" });
@@ -989,7 +1087,10 @@ io.on("connection", (socket) => {
 
   socket.on("markRead", async ({ senderId, receiverId }) => {
     try {
-      await Message.updateMany({ sender: senderId, receiver: receiverId, read: false }, { read: true });
+      await Message.updateMany(
+        { sender: senderId, receiver: receiverId, read: false },
+        { read: true }
+      );
     } catch (err) { console.error("markRead error:", err); }
   });
 
