@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import "../style/DoctorDashboard.css";
+import Logo from "../images/logo.jpeg";
 
 const API = "http://localhost:5000";
 let socket;
@@ -22,21 +23,16 @@ export default function DoctorDashboard() {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
 
-  const [plans, setPlans] = useState([]);
-  const [selectedPatient, setSelectedPatient] = useState(null);
-  const [planForm, setPlanForm] = useState({
-    diagnosis: "",
-    goals: "",
-    exercises: "",
-    progress: "",
-    nextSteps: "",
-  });
+  const [showFilesModal, setShowFilesModal] = useState(false);
+  const [filesPatient, setFilesPatient] = useState(null);
+  const [patientFiles, setPatientFiles] = useState([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
 
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const token = localStorage.getItem("token");
-  const userId = JSON.parse(atob(token.split(".")[1])).id;
+  const userId = token ? JSON.parse(atob(token.split(".")[1])).id : null;
 
   const headers = {
     Authorization: `Bearer ${token}`,
@@ -51,15 +47,6 @@ export default function DoctorDashboard() {
   const get = async (path) => {
     const res = await fetch(`${API}${path}`, { headers });
     return res.json();
-  };
-
-  const fetchPlans = async () => {
-    try {
-      const data = await get("/doctor/treatment-plans");
-      setPlans(Array.isArray(data) ? data : []);
-    } catch {
-      setPlans([]);
-    }
   };
 
   const fetchAll = async () => {
@@ -88,8 +75,6 @@ export default function DoctorDashboard() {
       setAppointments(Array.isArray(appts) ? appts : []);
       setPatients(Array.isArray(pats) ? pats : []);
       setConversations(Array.isArray(convos) ? convos : []);
-
-      await fetchPlans();
     } catch {
       showToast("Failed to load data", "error");
     } finally {
@@ -98,6 +83,11 @@ export default function DoctorDashboard() {
   };
 
   useEffect(() => {
+    if (!token || !userId) {
+      window.location.href = "/login";
+      return;
+    }
+
     fetchAll();
 
     socket = io(API);
@@ -113,9 +103,9 @@ export default function DoctorDashboard() {
                 ...c,
                 lastMessage: msg.content,
                 unread:
-                  activeConvo === String(msg.sender._id || msg.sender)
+                  activeConvo?.user?._id === String(msg.sender._id || msg.sender)
                     ? 0
-                    : c.unread + 1,
+                    : (c.unread || 0) + 1,
               }
             : c
         )
@@ -126,12 +116,18 @@ export default function DoctorDashboard() {
       setMessages((prev) => [...prev, msg]);
     });
 
-    return () => socket.disconnect();
+    return () => {
+      if (socket) socket.disconnect();
+    };
   }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const goToWebsite = () => {
+    window.location.href = "/";
+  };
 
   const openConversation = async (convo) => {
     setActiveConvo(convo);
@@ -190,7 +186,7 @@ export default function DoctorDashboard() {
         showToast("Appointment updated");
         fetchAll();
       } else {
-        showToast(data.message, "error");
+        showToast(data.message || "Failed to update", "error");
       }
     } catch {
       showToast("Failed to update", "error");
@@ -211,7 +207,7 @@ export default function DoctorDashboard() {
         showToast("Profile updated");
         setProfile(data.doctor);
       } else {
-        showToast(data.message, "error");
+        showToast(data.message || "Failed to save profile", "error");
       }
     } catch {
       showToast("Failed to save profile", "error");
@@ -227,7 +223,9 @@ export default function DoctorDashboard() {
     try {
       const res = await fetch(`${API}/doctor/profile/photo`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       });
 
@@ -239,7 +237,7 @@ export default function DoctorDashboard() {
         setPhotoFile(null);
         setPhotoPreview(null);
       } else {
-        showToast(data.message, "error");
+        showToast(data.message || "Upload failed", "error");
       }
     } catch {
       showToast("Upload failed", "error");
@@ -254,63 +252,43 @@ export default function DoctorDashboard() {
     setPhotoPreview(URL.createObjectURL(file));
   };
 
-  const openPatientPlan = (patient) => {
-    setSelectedPatient(patient);
-
-    const existingPlan = plans.find(
-      (p) => String(p.patient?._id || p.patient) === String(patient._id)
-    );
-
-    setPlanForm({
-      diagnosis: existingPlan?.diagnosis || "",
-      goals: existingPlan?.goals || "",
-      exercises: existingPlan?.exercises || "",
-      progress: existingPlan?.progress || "",
-      nextSteps: existingPlan?.nextSteps || "",
-    });
-  };
-
-  const saveTreatmentPlan = async () => {
-    if (!selectedPatient) {
-      showToast("Please select a patient first", "error");
-      return;
-    }
+  const openPatientFiles = async (patient) => {
+    setFilesPatient(patient);
+    setShowFilesModal(true);
+    setLoadingFiles(true);
+    setPatientFiles([]);
 
     try {
-      const existingPlan = plans.find(
-        (p) => String(p.patient?._id || p.patient) === String(selectedPatient._id)
-      );
-
-      const url = existingPlan
-        ? `${API}/doctor/treatment-plans/${existingPlan._id}`
-        : `${API}/doctor/treatment-plans`;
-
-      const method = existingPlan ? "PATCH" : "POST";
-
-      const res = await fetch(url, {
-        method,
+      const res = await fetch(`${API}/doctor/patients/${patient._id}/files`, {
         headers,
-        body: JSON.stringify({
-          patientId: selectedPatient._id,
-          diagnosis: planForm.diagnosis,
-          goals: planForm.goals,
-          exercises: planForm.exercises,
-          progress: planForm.progress,
-          nextSteps: planForm.nextSteps,
-        }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        showToast(existingPlan ? "Treatment plan updated" : "Treatment plan created");
-        fetchPlans();
+        setPatientFiles(Array.isArray(data) ? data : []);
       } else {
-        showToast(data.message || "Failed to save treatment plan", "error");
+        showToast(data.message || "Could not load files", "error");
       }
     } catch {
-      showToast("Failed to save treatment plan", "error");
+      showToast("Could not load files", "error");
+    } finally {
+      setLoadingFiles(false);
     }
+  };
+
+  const fileIcon = (mimetype = "", filename = "") => {
+    if (mimetype?.includes("pdf") || filename?.endsWith(".pdf")) return "📄";
+    if (mimetype?.includes("image")) return "🖼️";
+    if (filename?.match(/\.(doc|docx)$/)) return "📝";
+    return "📎";
+  };
+
+  const fmtSize = (bytes) => {
+    if (!bytes) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const fmtDate = (d) =>
@@ -336,20 +314,20 @@ export default function DoctorDashboard() {
     window.location.href = "/login";
   };
 
-  if (loading)
+  if (loading) {
     return (
       <div className="loader-screen">
         <div className="loader-ring"></div>
         <p>Loading dashboard...</p>
       </div>
     );
+  }
 
   const navItems = [
     { key: "overview", icon: "📊", label: "Overview" },
     { key: "schedule", icon: "🗓️", label: "Today's Schedule" },
     { key: "appointments", icon: "📅", label: "Appointments" },
     { key: "patients", icon: "🧑‍🦯", label: "My Patients" },
-    { key: "progress", icon: "📈", label: "Progress & Plans" },
     { key: "chat", icon: "💬", label: "Chat", badge: stats?.unreadMessages },
     { key: "profile", icon: "👤", label: "Profile" },
   ];
@@ -359,7 +337,15 @@ export default function DoctorDashboard() {
       <aside className="sidebar">
         <div className="sidebar-top">
           <div className="sidebar-brand">
-            <div className="brand-icon">🏥</div>
+            <button
+              type="button"
+              className="brand-icon brand-logo-btn"
+              onClick={goToWebsite}
+              title="Go to website"
+            >
+              <img src={Logo} alt="Afiya Care Logo" className="brand-logo" />
+            </button>
+
             <div className="brand-text">
               <h2>Afiya Care</h2>
               <span>Doctor Portal</span>
@@ -415,7 +401,9 @@ export default function DoctorDashboard() {
               <div className="stat-card">
                 <div className="stat-icon-box green">📅</div>
                 <div>
-                  <div className="stat-value">{stats?.totalAppointments ?? 0}</div>
+                  <div className="stat-value">
+                    {stats?.totalAppointments ?? 0}
+                  </div>
                   <div className="stat-label">Total Appointments</div>
                 </div>
               </div>
@@ -423,7 +411,9 @@ export default function DoctorDashboard() {
               <div className="stat-card">
                 <div className="stat-icon-box amber">⏳</div>
                 <div>
-                  <div className="stat-value">{stats?.todayAppointments ?? 0}</div>
+                  <div className="stat-value">
+                    {stats?.todayAppointments ?? 0}
+                  </div>
                   <div className="stat-label">Today's Schedule</div>
                 </div>
               </div>
@@ -431,7 +421,9 @@ export default function DoctorDashboard() {
               <div className="stat-card">
                 <div className="stat-icon-box purple">💬</div>
                 <div>
-                  <div className="stat-value">{stats?.unreadMessages ?? 0}</div>
+                  <div className="stat-value">
+                    {stats?.unreadMessages ?? 0}
+                  </div>
                   <div className="stat-label">Unread Messages</div>
                 </div>
               </div>
@@ -464,6 +456,7 @@ export default function DoctorDashboard() {
                   {todaySchedule.slice(0, 5).map((a) => (
                     <div className="schedule-item" key={a._id}>
                       <div className="schedule-time">{a.time}</div>
+
                       <div className="avatar green">
                         {a.patient?.name?.charAt(0).toUpperCase()}
                       </div>
@@ -517,7 +510,7 @@ export default function DoctorDashboard() {
 
                     <span className={`pill ${a.status}`}>{a.status}</span>
 
-                    <div style={{ display: "flex", gap: 6, marginLeft: 8 }}>
+                    <div className="schedule-actions">
                       {a.status === "pending" && (
                         <button
                           className="btn btn-green btn-sm"
@@ -536,7 +529,8 @@ export default function DoctorDashboard() {
                         </button>
                       )}
 
-                      {(a.status === "pending" || a.status === "confirmed") && (
+                      {(a.status === "pending" ||
+                        a.status === "confirmed") && (
                         <button
                           className="btn btn-red btn-sm"
                           onClick={() => updateAppt(a._id, "cancelled")}
@@ -594,8 +588,11 @@ export default function DoctorDashboard() {
                       <td>{fmtDate(a.date)}</td>
                       <td>{a.time || "—"}</td>
                       <td>{a.reason || "—"}</td>
+
                       <td>
-                        <span className={`pill ${a.status}`}>{a.status}</span>
+                        <span className={`pill ${a.status}`}>
+                          {a.status}
+                        </span>
                       </td>
 
                       <td>
@@ -639,7 +636,7 @@ export default function DoctorDashboard() {
                     <th>Email</th>
                     <th>Phone</th>
                     <th>Joined</th>
-                    <th>Action</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
 
@@ -660,174 +657,40 @@ export default function DoctorDashboard() {
                       <td>{fmtDate(p.createdAt)}</td>
 
                       <td>
-                        <button
-                          className="btn btn-primary btn-sm"
-                          onClick={() => {
-                            const convo = conversations.find(
-                              (c) => String(c.user._id) === String(p._id)
-                            );
+                        <div className="patient-actions">
+                          <button
+                            className="btn btn-primary btn-sm"
+                            onClick={() => {
+                              const convo = conversations.find(
+                                (c) => String(c.user._id) === String(p._id)
+                              );
 
-                            if (convo) {
-                              setActiveTab("chat");
-                              openConversation(convo);
-                            } else {
-                              setActiveTab("chat");
-                              setActiveConvo({ user: p });
-                              setMessages([]);
-                            }
-                          }}
-                        >
-                          💬 Message
-                        </button>
+                              if (convo) {
+                                setActiveTab("chat");
+                                openConversation(convo);
+                              } else {
+                                setActiveTab("chat");
+                                setActiveConvo({ user: p });
+                                setMessages([]);
+                              }
+                            }}
+                          >
+                            💬 Message
+                          </button>
+
+                          <button
+                            className="btn btn-files btn-sm"
+                            onClick={() => openPatientFiles(p)}
+                          >
+                            📁 Files
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             )}
-          </div>
-        )}
-
-        {activeTab === "progress" && (
-          <div className="profile-layout progress-page">
-            <div className="section-card">
-              <div className="section-header">
-                <div>
-                  <div className="section-title">Patient Progress</div>
-                  <div className="section-sub">
-                    Select a patient to view or update their treatment plan
-                  </div>
-                </div>
-              </div>
-
-              {patients.length === 0 ? (
-                <div className="empty-state">
-                  <span className="empty-icon">🧑‍🦯</span>
-                  <p>No patients yet</p>
-                </div>
-              ) : (
-                <div className="schedule-list">
-                  {patients.map((p) => {
-                    const hasPlan = plans.some(
-                      (plan) =>
-                        String(plan.patient?._id || plan.patient) === String(p._id)
-                    );
-
-                    return (
-                      <div
-                        className={`schedule-item ${
-                          selectedPatient?._id === p._id ? "active" : ""
-                        }`}
-                        key={p._id}
-                        onClick={() => openPatientPlan(p)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <div className="avatar green">
-                          {p.name?.charAt(0).toUpperCase()}
-                        </div>
-
-                        <div className="schedule-patient">
-                          <div className="schedule-name">{p.name}</div>
-                          <div className="schedule-reason">{p.email}</div>
-                        </div>
-
-                        <span className={`pill ${hasPlan ? "confirmed" : "pending"}`}>
-                          {hasPlan ? "Plan Added" : "No Plan"}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div className="profile-form-card">
-              <div className="section-header" style={{ padding: "0 0 16px" }}>
-                <div>
-                  <div className="section-title">
-                    {selectedPatient
-                      ? `${selectedPatient.name}'s Treatment Plan`
-                      : "Treatment Plan"}
-                  </div>
-                  <div className="section-sub">
-                    Create, edit, and update patient progress
-                  </div>
-                </div>
-
-                <button className="btn btn-primary" onClick={saveTreatmentPlan}>
-                  Save Plan
-                </button>
-              </div>
-
-              {!selectedPatient ? (
-                <div className="empty-state">
-                  <span className="empty-icon">📋</span>
-                  <p>Select a patient to start editing their plan</p>
-                </div>
-              ) : (
-                <div className="form-grid">
-                  <div className="form-group form-full">
-                    <label className="form-label">Diagnosis / Condition</label>
-                    <textarea
-                      className="form-textarea"
-                      placeholder="Example: Lower back pain, ACL recovery, shoulder stiffness..."
-                      value={planForm.diagnosis}
-                      onChange={(e) =>
-                        setPlanForm({ ...planForm, diagnosis: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="form-group form-full">
-                    <label className="form-label">Treatment Goals</label>
-                    <textarea
-                      className="form-textarea"
-                      placeholder="Example: Reduce pain, improve mobility, strengthen muscles..."
-                      value={planForm.goals}
-                      onChange={(e) =>
-                        setPlanForm({ ...planForm, goals: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="form-group form-full">
-                    <label className="form-label">Exercises / Treatment Plan</label>
-                    <textarea
-                      className="form-textarea"
-                      placeholder="Write exercises, repetitions, frequency, and therapy plan..."
-                      value={planForm.exercises}
-                      onChange={(e) =>
-                        setPlanForm({ ...planForm, exercises: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="form-group form-full">
-                    <label className="form-label">Progress Tracking</label>
-                    <textarea
-                      className="form-textarea"
-                      placeholder="Update the patient's progress after each session..."
-                      value={planForm.progress}
-                      onChange={(e) =>
-                        setPlanForm({ ...planForm, progress: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="form-group form-full">
-                    <label className="form-label">Next Steps</label>
-                    <textarea
-                      className="form-textarea"
-                      placeholder="Example: Continue same plan, increase resistance, book follow-up..."
-                      value={planForm.nextSteps}
-                      onChange={(e) =>
-                        setPlanForm({ ...planForm, nextSteps: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         )}
 
@@ -840,14 +703,7 @@ export default function DoctorDashboard() {
 
               <div className="chat-conversations">
                 {conversations.length === 0 ? (
-                  <div
-                    style={{
-                      padding: 20,
-                      color: "var(--text-light)",
-                      fontSize: 13,
-                      textAlign: "center",
-                    }}
-                  >
+                  <div className="chat-no-conversations">
                     No conversations yet
                   </div>
                 ) : (
@@ -880,7 +736,7 @@ export default function DoctorDashboard() {
             <div className="chat-main">
               {!activeConvo ? (
                 <div className="chat-no-select">
-                  <span style={{ fontSize: 40 }}>💬</span>
+                  <span className="chat-empty-big-icon">💬</span>
                   <p>Select a conversation to start chatting</p>
                 </div>
               ) : (
@@ -891,7 +747,9 @@ export default function DoctorDashboard() {
                     </div>
 
                     <div>
-                      <div className="chat-header-name">{activeConvo.user?.name}</div>
+                      <div className="chat-header-name">
+                        {activeConvo.user?.name}
+                      </div>
                       <div className="chat-header-sub">Patient</div>
                     </div>
                   </div>
@@ -913,7 +771,9 @@ export default function DoctorDashboard() {
                             className={`msg ${isSent ? "sent" : "received"}`}
                           >
                             <div className="msg-bubble">{msg.content}</div>
-                            <div className="msg-time">{fmtTime(msg.createdAt)}</div>
+                            <div className="msg-time">
+                              {fmtTime(msg.createdAt)}
+                            </div>
                           </div>
                         );
                       })
@@ -968,7 +828,7 @@ export default function DoctorDashboard() {
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
-                  style={{ display: "none" }}
+                  className="hidden-input"
                   onChange={handlePhotoChange}
                 />
               </div>
@@ -977,16 +837,12 @@ export default function DoctorDashboard() {
               <div className="profile-role">{profile?.specialty || "Doctor"}</div>
 
               {photoFile && (
-                <button
-                  className="btn btn-primary"
-                  style={{ width: "100%" }}
-                  onClick={uploadPhoto}
-                >
+                <button className="btn btn-primary full-btn" onClick={uploadPhoto}>
                   Upload Photo
                 </button>
               )}
 
-              <div style={{ width: "100%" }}>
+              <div className="profile-stats-box">
                 <div className="profile-stat">
                   <span>Email</span>
                   <span>{profile?.email}</span>
@@ -994,7 +850,9 @@ export default function DoctorDashboard() {
 
                 <div className="profile-stat">
                   <span>Experience</span>
-                  <span>{profile?.experience ? `${profile.experience} yrs` : "—"}</span>
+                  <span>
+                    {profile?.experience ? `${profile.experience} yrs` : "—"}
+                  </span>
                 </div>
 
                 <div className="profile-stat">
@@ -1012,7 +870,7 @@ export default function DoctorDashboard() {
             </div>
 
             <div className="profile-form-card">
-              <div className="section-header" style={{ padding: "0 0 16px" }}>
+              <div className="section-header profile-section-header">
                 <div>
                   <div className="section-title">Edit Profile</div>
                   <div className="section-sub">Update your information</div>
@@ -1086,6 +944,85 @@ export default function DoctorDashboard() {
           </div>
         )}
       </main>
+
+      {showFilesModal && filesPatient && (
+        <div
+          className="dr-modal-overlay"
+          onClick={() => setShowFilesModal(false)}
+        >
+          <div className="dr-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="dr-modal-header">
+              <div>
+                <div className="dr-modal-title">
+                  📁 Medical Files — {filesPatient.name}
+                </div>
+                <div className="dr-modal-sub">
+                  Files uploaded by this patient
+                </div>
+              </div>
+
+              <button
+                className="dr-modal-close"
+                onClick={() => setShowFilesModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="dr-modal-body">
+              {loadingFiles ? (
+                <div className="dr-modal-loading">
+                  <div className="loader-ring" />
+                  <p>Loading files…</p>
+                </div>
+              ) : patientFiles.length === 0 ? (
+                <div className="dr-modal-empty">
+                  <span>📂</span>
+                  <p>This patient hasn't uploaded any files yet.</p>
+                </div>
+              ) : (
+                <div className="dr-files-list">
+                  {patientFiles.map((f) => (
+                    <div className="dr-file-item" key={f._id}>
+                      <span className="dr-file-icon">
+                        {fileIcon(f.mimetype, f.filename)}
+                      </span>
+
+                      <div className="dr-file-info">
+                        <div className="dr-file-name">{f.filename}</div>
+
+                        <div className="dr-file-meta">
+                          {f.label && (
+                            <span className="dr-file-label">{f.label}</span>
+                          )}
+
+                          <span>{fmtSize(f.size)}</span>
+
+                          {f.createdAt && (
+                            <>
+                              <span>·</span>
+                              <span>{fmtDate(f.createdAt)}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <a
+                        href={`${API}${f.url}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-primary btn-sm"
+                      >
+                        Open
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && <div className={`toast ${toast.type}`}>{toast.message}</div>}
     </div>

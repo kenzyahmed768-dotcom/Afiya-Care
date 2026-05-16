@@ -6,47 +6,59 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
-  try {
-    const response = await fetch("http://localhost:5000/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const response = await fetch("http://localhost:5000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password,
+        }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (response.ok) {
-      // ✅ Save token and role
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.role);
-      localStorage.setItem("userEmail", email);
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
+        localStorage.setItem("userEmail", email.trim().toLowerCase());
+        localStorage.setItem("userName", data.name || "");
 
-      // ✅ Redirect based on role
-      if (data.role === "admin") {
-        navigate("/admin");
-      } else if (data.role === "doctor") {
-        navigate("/doctor");
+        if (data.role === "admin") {
+          navigate("/admin");
+        } else if (data.role === "doctor") {
+          navigate("/doctor");
+        } else {
+          navigate("/patient");
+        }
       } else {
-        navigate("/");
+        setError(data.message || "Invalid credentials");
       }
-    } else {
-      setError(data.message || "Invalid credentials");
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Server error. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("Login error:", err);
-    setError("Server error. Please try again.");
-  }
-};
+  };
+
   return (
     <div className="login-wrapper">
       <h2>Login</h2>
+
       {error && <p className="login-error">{error}</p>}
+
       <form onSubmit={handleSubmit} className="login-form">
         <input
           type="email"
@@ -56,6 +68,7 @@ function Login() {
           required
           className="login-input"
         />
+
         <input
           type="password"
           placeholder="Password"
@@ -64,13 +77,25 @@ function Login() {
           required
           className="login-input"
         />
-        <a href="/forgot-password" className="login-forgot">Forgot password?</a>
-        <button type="submit" className="login-btn">
-          Login
+
+        <a href="/forgot-password" className="login-forgot">
+          Forgot password?
+        </a>
+
+        <button type="submit" className="login-btn" disabled={loading}>
+          {loading ? "Logging in..." : "Login"}
         </button>
       </form>
-      <div className="login-divider"><span>or</span></div>
-      <button className="login-btn-register" onClick={() => navigate("/register")}>
+
+      <div className="login-divider">
+        <span>or</span>
+      </div>
+
+      <button
+        type="button"
+        className="login-btn-register"
+        onClick={() => navigate("/register")}
+      >
         Create an account
       </button>
     </div>

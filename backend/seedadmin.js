@@ -1,35 +1,44 @@
-// seedAdmin.js — run ONCE with: node seedAdmin.js, then delete it
 require("dotenv").config();
-const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+
 const connectDB = require("./config/db");
+const Admin = require("./models/admin");
 const User = require("./models/user");
 
 async function seedAdmin() {
-  await connectDB();
+  try {
+    await connectDB();
 
-  const email = "admin@afiya.com";   // ← change this
-  const password = "123456"; // ← change this
+    const email = "admin@afiya.com";
+    const password = "123456";
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  await User.findOneAndUpdate(
-    { email },
-    {
-      name: "Admin",
-      email,
-      password: hashedPassword,
-      role: "admin",
-      status: "approved",
-    },
-    { upsert: true, new: true }
-  );
+    // Remove wrongly-created admin from User collection
+    await User.deleteOne({ email });
 
-  console.log("✅ Admin seeded successfully");
-  process.exit();
+    // Create or update admin in Admin collection
+    await Admin.findOneAndUpdate(
+      { email },
+      {
+        name: "Admin",
+        email,
+        password: hashedPassword,
+        role: "admin",
+        status: "approved",
+      },
+      { upsert: true, new: true }
+    );
+
+    console.log("✅ Admin seeded successfully in Admin collection");
+    console.log("Email:", email);
+    console.log("Password:", password);
+
+    process.exit(0);
+  } catch (err) {
+    console.error("❌ Seed failed:", err);
+    process.exit(1);
+  }
 }
 
-seedAdmin().catch((err) => {
-  console.error("❌ Seed failed:", err);
-  process.exit(1);
-});
+seedAdmin();

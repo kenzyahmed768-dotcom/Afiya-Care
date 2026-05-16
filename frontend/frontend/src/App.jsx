@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 import Layout from "./components/Layout";
 import Register from "./pages/Register";
@@ -18,12 +18,37 @@ import Services from "./pages/Services";
 import Blog from "./pages/Blog";
 import PatientCommunity from "./pages/PatientCommunity";
 
+function ProtectedRoute({ children, allowedRoles }) {
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    if (role === "admin") {
+      return <Navigate to="/admin" replace />;
+    }
+
+    if (role === "doctor") {
+      return <Navigate to="/doctor" replace />;
+    }
+
+    if (role === "patient") {
+      return <Navigate to="/patient" replace />;
+    }
+
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
 function App() {
   return (
     <Router>
       <Routes>
-
-        {/* Layout Routes */}
         <Route path="/" element={<Layout />}>
           <Route index element={<Homepage />} />
           <Route path="join" element={<JoinUs />} />
@@ -33,20 +58,42 @@ function App() {
           <Route path="about" element={<About />} />
           <Route path="service" element={<Services />} />
           <Route path="blog" element={<Blog />} />
-          <Route path="/patient-community" element={<PatientCommunity />} />
-
+          <Route path="patient-community" element={<PatientCommunity />} />
         </Route>
 
-        {/* Auth & Dashboards */}
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/doctor" element={<DoctorDashboard />} />
-        <Route path="/patient" element={<PatientDashboard />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
 
+        <Route
+          path="/doctor"
+          element={
+            <ProtectedRoute allowedRoles={["doctor"]}>
+              <DoctorDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/patient"
+          element={
+            <ProtectedRoute allowedRoles={["patient"]}>
+              <PatientDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

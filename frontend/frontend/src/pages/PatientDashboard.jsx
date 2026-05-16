@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
+import Logo from "../images/logo.jpeg";
 import "../style/PatientDashboard.css";
 
 const API = "http://localhost:5000";
@@ -20,15 +21,13 @@ export default function PatientDashboard() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [toast, setToast] = useState(null);
   const [form, setForm] = useState({ name: "", phone: "" });
+  const [logoFailed, setLogoFailed] = useState(false);
 
   const [stats, setStats] = useState({
     totalAppointments: 0,
     upcomingAppointments: 0,
     completedAppointments: 0,
   });
-
-  const [cancelModal, setCancelModal] = useState(null);
-  const [cancelling, setCancelling] = useState(false);
 
   const [reviews, setReviews] = useState([]);
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -43,40 +42,33 @@ export default function PatientDashboard() {
   const [completedAppointmentsList, setCompletedAppointmentsList] = useState([]);
 
   const [medicalFiles, setMedicalFiles] = useState([]);
-  const [selectedMedicalFile, setSelectedMedicalFile] = useState(null);
-  const [medicalFileNote, setMedicalFileNote] = useState("");
-  const [uploadingMedicalFile, setUploadingMedicalFile] = useState(false);
+  const [uploadingMedical, setUploadingMedical] = useState(false);
+  const [medicalLabel, setMedicalLabel] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [cancellingId, setCancellingId] = useState(null);
 
   const fileRef = useRef(null);
+  const medicalFileRef = useRef(null);
   const messagesEndRef = useRef(null);
-  const activeConvoRef = useRef(null);
-  const conversationsRef = useRef([]);
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
   const userId = token ? JSON.parse(atob(token.split(".")[1])).id : null;
 
-  const headers = {
+  const authHeader = { Authorization: `Bearer ${token}` };
+  const jsonHeaders = {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json",
   };
 
-  useEffect(() => {
-    activeConvoRef.current = activeConvo;
-  }, [activeConvo]);
-
-  useEffect(() => {
-    conversationsRef.current = conversations;
-  }, [conversations]);
-
   const showToast = (message, type = "success") => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 3500);
   };
 
   const safeFetch = async (path) => {
     try {
-      const res = await fetch(`${API}${path}`, { headers });
+      const res = await fetch(`${API}${path}`, { headers: jsonHeaders });
       if (!res.ok) return null;
       return await res.json();
     } catch {
@@ -84,15 +76,21 @@ export default function PatientDashboard() {
     }
   };
 
+  const fetchMedicalFiles = async () => {
+    const files = await safeFetch("/patient/files");
+    setMedicalFiles(Array.isArray(files) ? files : []);
+  };
+
   const fetchData = async () => {
     try {
-      const [profile, appts, convos, reviewsData, filesData] = await Promise.all([
-        safeFetch("/patient/profile"),
-        safeFetch("/patient/appointments"),
-        safeFetch("/chat/conversations/list"),
-        safeFetch("/patient/reviews"),
-        safeFetch("/patient/medical-files"),
-      ]);
+      const [profile, appts, convos, reviewsData, filesData] =
+        await Promise.all([
+          safeFetch("/patient/profile"),
+          safeFetch("/patient/appointments"),
+          safeFetch("/chat/conversations/list"),
+          safeFetch("/patient/reviews"),
+          safeFetch("/patient/files"),
+        ]);
 
       if (profile) {
         setPatient(profile);
@@ -104,9 +102,9 @@ export default function PatientDashboard() {
 
       const apptsList = Array.isArray(appts) ? appts : [];
       setAppointments(apptsList);
-
-      const completed = apptsList.filter((a) => a.status === "completed");
-      setCompletedAppointmentsList(completed);
+      setCompletedAppointmentsList(
+        apptsList.filter((a) => a.status === "completed")
+      );
 
       const now = new Date();
 
@@ -115,7 +113,9 @@ export default function PatientDashboard() {
         upcomingAppointments: apptsList.filter(
           (a) => new Date(a.date) >= now && a.status !== "cancelled"
         ).length,
-        completedAppointments: apptsList.filter((a) => a.status === "completed").length,
+        completedAppointments: apptsList.filter(
+          (a) => a.status === "completed"
+        ).length,
       });
 
       const convoList = Array.isArray(convos) ? convos : [];
@@ -130,7 +130,7 @@ export default function PatientDashboard() {
   };
 
   useEffect(() => {
-    if (!token || !userId) {
+    if (!token) {
       navigate("/login");
       return;
     }
@@ -141,90 +141,29 @@ export default function PatientDashboard() {
     socket.emit("join", userId);
 
     socket.on("receiveMessage", (msg) => {
-      const senderId = String(msg.sender?._id || msg.sender);
-      const currentConvo = activeConvoRef.current;
-      const isCurrentOpen = String(currentConvo?.user?._id || "") === senderId;
+      setMessages((prev) => [...prev, msg]);
 
-      if (isCurrentOpen) {
-        setMessages((prev) => [...prev, msg]);
+      setConversations((prev) =>
+        prev.map((c) =>
+          String(c.user._id) === String(msg.sender?._id || msg.sender)
+            ? {
+                ...c,
+                lastMessage: msg.content,
+                unread: (c.unread || 0) + 1,
+              }
+            : c
+        )
+      );
 
-        socket.emit("markRead", {
-          senderId,
-          receiverId: userId,
-        });
-      }
-
-      setConversations((prev) => {
-        const exists = prev.some((c) => String(c.user?._id) === senderId);
-
-        if (exists) {
-          return prev.map((c) =>
-            String(c.user?._id) === senderId
-              ? {
-                  ...c,
-                  lastMessage: msg.content,
-                  unread: isCurrentOpen ? 0 : (c.unread || 0) + 1,
-                }
-              : c
-          );
-        }
-
-        return [
-          {
-            user: msg.sender,
-            lastMessage: msg.content,
-            unread: isCurrentOpen ? 0 : 1,
-          },
-          ...prev,
-        ];
-      });
-
-      if (!isCurrentOpen) {
-        setUnreadCount((n) => n + 1);
-      }
+      setUnreadCount((n) => n + 1);
     });
 
     socket.on("messageSent", (msg) => {
-      const receiverId = String(msg.receiver?._id || msg.receiver);
-      const currentConvo = activeConvoRef.current;
-      const isCurrentOpen = String(currentConvo?.user?._id || "") === receiverId;
-
-      if (isCurrentOpen) {
-        setMessages((prev) => [...prev, msg]);
-      }
-
-      setConversations((prev) => {
-        const exists = prev.some((c) => String(c.user?._id) === receiverId);
-
-        if (exists) {
-          return prev.map((c) =>
-            String(c.user?._id) === receiverId
-              ? { ...c, lastMessage: msg.content }
-              : c
-          );
-        }
-
-        if (currentConvo?.user) {
-          return [
-            {
-              user: currentConvo.user,
-              lastMessage: msg.content,
-              unread: 0,
-            },
-            ...prev,
-          ];
-        }
-
-        return prev;
-      });
+      setMessages((prev) => [...prev, msg]);
     });
 
     return () => {
-      if (socket) {
-        socket.off("receiveMessage");
-        socket.off("messageSent");
-        socket.disconnect();
-      }
+      if (socket) socket.disconnect();
     };
   }, []);
 
@@ -234,12 +173,13 @@ export default function PatientDashboard() {
 
   const openConversation = async (convo) => {
     setActiveConvo(convo);
-    activeConvoRef.current = convo;
 
     try {
-      const res = await fetch(`${API}/chat/${convo.user._id}`, { headers });
-      const msgs = await res.json();
+      const res = await fetch(`${API}/chat/${convo.user._id}`, {
+        headers: jsonHeaders,
+      });
 
+      const msgs = await res.json();
       setMessages(Array.isArray(msgs) ? msgs : []);
 
       socket.emit("markRead", {
@@ -249,40 +189,15 @@ export default function PatientDashboard() {
 
       setConversations((prev) =>
         prev.map((c) =>
-          String(c.user._id) === String(convo.user._id) ? { ...c, unread: 0 } : c
+          String(c.user._id) === String(convo.user._id)
+            ? { ...c, unread: 0 }
+            : c
         )
       );
 
       setUnreadCount((prev) => Math.max(0, prev - (convo.unread || 0)));
     } catch {
       showToast("Failed to load messages", "error");
-    }
-  };
-
-  const openDoctorChat = (doctor) => {
-    if (!doctor?._id) {
-      showToast("Doctor information not found", "error");
-      return;
-    }
-
-    const convo = conversationsRef.current.find(
-      (c) => String(c.user?._id) === String(doctor._id)
-    );
-
-    setActiveTab("chat");
-
-    if (convo) {
-      openConversation(convo);
-    } else {
-      const newConvo = {
-        user: doctor,
-        lastMessage: "",
-        unread: 0,
-      };
-
-      setActiveConvo(newConvo);
-      activeConvoRef.current = newConvo;
-      setMessages([]);
     }
   };
 
@@ -305,79 +220,13 @@ export default function PatientDashboard() {
     }
   };
 
-  const CANCEL_FEE_HOURS = 24;
-
-  const getAppointmentDateTime = (appointment) => {
-    const apptDate = new Date(appointment.date);
-
-    if (appointment.time) {
-      const [timePart, meridiem] = appointment.time.split(" ");
-      let [hours, minutes] = timePart.split(":").map(Number);
-
-      if (meridiem === "PM" && hours !== 12) hours += 12;
-      if (meridiem === "AM" && hours === 12) hours = 0;
-
-      apptDate.setHours(hours || 0, minutes || 0, 0, 0);
-    }
-
-    return apptDate;
-  };
-
-  const isNearAppointment = (appointment) => {
-    if (!appointment) return false;
-
-    const apptDate = getAppointmentDateTime(appointment);
-    const hoursUntil = (apptDate.getTime() - Date.now()) / (1000 * 60 * 60);
-
-    return hoursUntil > 0 && hoursUntil <= CANCEL_FEE_HOURS;
-  };
-
-  const handleCancelAppointment = async () => {
-    if (!cancelModal) return;
-
-    setCancelling(true);
-
-    try {
-      const res = await fetch(`${API}/patient/appointments/${cancelModal._id}/cancel`, {
-        method: "PATCH",
-        headers,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        showToast(data.message || "Failed to cancel appointment", "error");
-        return;
-      }
-
-      setAppointments((prev) =>
-        prev.map((a) =>
-          a._id === cancelModal._id ? { ...a, status: "cancelled" } : a
-        )
-      );
-
-      setStats((prev) => ({
-        ...prev,
-        upcomingAppointments: Math.max(0, prev.upcomingAppointments - 1),
-      }));
-
-      showToast("Appointment cancelled successfully");
-      setCancelModal(null);
-      fetchData();
-    } catch {
-      showToast("Could not connect to server", "error");
-    } finally {
-      setCancelling(false);
-    }
-  };
-
   const handleSave = async () => {
     setSaving(true);
 
     try {
       const res = await fetch(`${API}/patient/profile`, {
         method: "PATCH",
-        headers,
+        headers: jsonHeaders,
         body: JSON.stringify({
           name: form.name,
           phone: form.phone,
@@ -412,7 +261,7 @@ export default function PatientDashboard() {
     try {
       const res = await fetch(`${API}/patient/profile/photo`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: authHeader,
         body: formData,
       });
 
@@ -431,22 +280,31 @@ export default function PatientDashboard() {
     }
   };
 
-  const handleMedicalFileUpload = async (e) => {
-    e.preventDefault();
+  const handleFileSelect = (e) => {
+    setSelectedFiles(Array.from(e.target.files || []));
+  };
 
-    if (!selectedMedicalFile) {
-      showToast("Please select a file first", "error");
+  const handleMedicalUpload = async () => {
+    if (selectedFiles.length === 0) {
+      showToast("Please select at least one file first", "error");
       return;
     }
 
-    setUploadingMedicalFile(true);
-
-    const formData = new FormData();
-    formData.append("file", selectedMedicalFile);
-    formData.append("note", medicalFileNote);
+    setUploadingMedical(true);
 
     try {
-      const res = await fetch(`${API}/patient/medical-files`, {
+      const formData = new FormData();
+
+      selectedFiles.forEach((file) => {
+        formData.append("files", file);
+      });
+
+      formData.append(
+        "labels",
+        JSON.stringify(selectedFiles.map(() => medicalLabel.trim() || ""))
+      );
+
+      const res = await fetch(`${API}/patient/files`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -454,21 +312,88 @@ export default function PatientDashboard() {
         body: formData,
       });
 
+      let data;
+
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error(`Server error (${res.status})`);
+      }
+
+      if (res.ok) {
+        showToast(
+          `${selectedFiles.length} file${
+            selectedFiles.length > 1 ? "s" : ""
+          } uploaded!`
+        );
+
+        setMedicalLabel("");
+        setSelectedFiles([]);
+
+        if (medicalFileRef.current) {
+          medicalFileRef.current.value = "";
+        }
+
+        await fetchMedicalFiles();
+      } else {
+        showToast(data?.message || `Upload failed (${res.status})`, "error");
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+      showToast(err.message || "Could not upload files", "error");
+    } finally {
+      setUploadingMedical(false);
+    }
+  };
+
+  const handleDeleteMedicalFile = async (id) => {
+    if (!window.confirm("Delete this medical file?")) return;
+
+    try {
+      const res = await fetch(`${API}/patient/files/${id}`, {
+        method: "DELETE",
+        headers: authHeader,
+      });
+
       const data = await res.json();
 
       if (res.ok) {
-        showToast("Medical file uploaded successfully");
-        setMedicalFiles((prev) => [data.file, ...prev]);
-        setSelectedMedicalFile(null);
-        setMedicalFileNote("");
-        e.target.reset();
+        showToast("File deleted");
+        setMedicalFiles((prev) => prev.filter((f) => f._id !== id));
       } else {
-        showToast(data.message || "Upload failed", "error");
+        showToast(data.message || "Delete failed", "error");
       }
     } catch {
-      showToast("Could not upload file", "error");
+      showToast("Could not delete file", "error");
+    }
+  };
+
+  const handleCancelAppointment = async (id) => {
+    if (!window.confirm("Cancel this appointment?")) return;
+
+    setCancellingId(id);
+
+    try {
+      const res = await fetch(`${API}/patient/appointments/${id}/cancel`, {
+        method: "PATCH",
+        headers: authHeader,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        showToast("Appointment cancelled");
+
+        setAppointments((prev) =>
+          prev.map((a) => (a._id === id ? { ...a, status: "cancelled" } : a))
+        );
+      } else {
+        showToast(data.message || "Could not cancel", "error");
+      }
+    } catch {
+      showToast("Could not connect to server", "error");
     } finally {
-      setUploadingMedicalFile(false);
+      setCancellingId(null);
     }
   };
 
@@ -485,7 +410,7 @@ export default function PatientDashboard() {
     try {
       const res = await fetch(`${API}/patient/reviews`, {
         method: "POST",
-        headers,
+        headers: jsonHeaders,
         body: JSON.stringify(reviewForm),
       });
 
@@ -495,7 +420,6 @@ export default function PatientDashboard() {
         showToast("Thank you for your review!");
         setReviews((prev) => [data.review, ...prev]);
         setShowReviewForm(false);
-
         setReviewForm({
           rating: 5,
           title: "",
@@ -503,8 +427,6 @@ export default function PatientDashboard() {
           doctorId: "",
           appointmentId: "",
         });
-
-        fetchData();
       } else {
         showToast(data.message || "Failed to submit review", "error");
       }
@@ -539,17 +461,55 @@ export default function PatientDashboard() {
         })
       : "";
 
-  const renderStars = (rating) => {
-    return "★".repeat(rating) + "☆".repeat(5 - rating);
+  const formatFileSize = (bytes) => {
+    if (!bytes) return "---";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  if (loading)
+  const getFileIcon = (mimetype = "", filename = "") => {
+    const lower = filename.toLowerCase();
+
+    if (mimetype.includes("image") || /\.(jpg|jpeg|png|webp)$/i.test(lower)) {
+      return "🖼️";
+    }
+
+    if (mimetype.includes("pdf") || lower.endsWith(".pdf")) return "📄";
+    if (lower.endsWith(".doc") || lower.endsWith(".docx")) return "📝";
+    if (lower.endsWith(".txt")) return "📃";
+
+    return "📁";
+  };
+
+  const getProviderName = (appointment) => {
+    if (!appointment) return "Provider";
+
+    return (
+      appointment.providerName ||
+      appointment.doctorName ||
+      appointment.doctor?.name ||
+      appointment.labName ||
+      appointment.lab?.name ||
+      appointment.provider?.name ||
+      "Provider"
+    );
+  };
+
+  const getProviderInitial = (appointment) => {
+    return getProviderName(appointment).charAt(0).toUpperCase();
+  };
+
+  const renderStars = (rating) => "★".repeat(rating) + "☆".repeat(5 - rating);
+
+  if (loading) {
     return (
       <div className="pd-loader">
         <div className="pd-loader-ring" />
         <p>Loading your dashboard...</p>
       </div>
     );
+  }
 
   const initials =
     patient?.name
@@ -560,15 +520,22 @@ export default function PatientDashboard() {
       .slice(0, 2) || "P";
 
   const navItems = [
-    { key: "home", icon: "🏠", label: "Home", path: "/" },
     { key: "overview", icon: "📊", label: "Overview" },
-    { key: "appointments", icon: "📅", label: `Appointments (${appointments.length})` },
+    {
+      key: "appointments",
+      icon: "📅",
+      label: `Appointments (${appointments.length})`,
+    },
+    {
+      key: "medical",
+      icon: "📁",
+      label: `Medical Files (${medicalFiles.length})`,
+    },
     {
       key: "chat",
       icon: "💬",
       label: `Messages${unreadCount > 0 ? ` (${unreadCount})` : ""}`,
     },
-    { key: "medicalFiles", icon: "📁", label: `Medical Files (${medicalFiles.length})` },
     { key: "reviews", icon: "⭐", label: "Reviews" },
     { key: "profile", icon: "👤", label: "Profile" },
   ];
@@ -582,7 +549,18 @@ export default function PatientDashboard() {
           onClick={() => navigate("/")}
         >
           <div className="pd-sidebar-brand">
-            <div className="pd-brand-icon">🏥</div>
+            <div className="pd-logo-box" aria-label="Afiya Care logo">
+              {!logoFailed ? (
+                <img
+                  src={Logo}
+                  alt="Afiya Care"
+                  className="pd-sidebar-logo"
+                  onError={() => setLogoFailed(true)}
+                />
+              ) : (
+                <span className="pd-logo-fallback">AC</span>
+              )}
+            </div>
 
             <div className="pd-brand-text">
               <h2>Afiya Care</h2>
@@ -598,16 +576,11 @@ export default function PatientDashboard() {
             <button
               key={key}
               className={`pd-nav-item ${activeTab === key ? "active" : ""}`}
-              onClick={() => {
-                if (key === "home") {
-                  navigate("/");
-                } else {
-                  setActiveTab(key);
-                }
-              }}
+              onClick={() => setActiveTab(key)}
             >
               <span className="pd-nav-icon">{icon}</span>
               <span className="pd-nav-text">{label}</span>
+
               {key === "chat" && unreadCount > 0 && (
                 <span className="pd-nav-badge">{unreadCount}</span>
               )}
@@ -626,7 +599,9 @@ export default function PatientDashboard() {
       <main className="pd-main-content">
         <div className="pd-topbar">
           <div className="pd-topbar-left">
-            <h1>{navItems.find((n) => n.key === activeTab)?.label}</h1>
+            <h1>
+              {navItems.find((n) => n.key === activeTab)?.label || "Dashboard"}
+            </h1>
             <p>Welcome back, {patient?.name?.split(" ")[0] || "Patient"}</p>
           </div>
 
@@ -639,44 +614,49 @@ export default function PatientDashboard() {
         {activeTab === "overview" && (
           <>
             <div className="pd-stats-grid">
-              <div className="pd-stat-card">
-                <div className="pd-stat-icon-box blue">📅</div>
-                <div>
-                  <div className="pd-stat-value">{stats.totalAppointments}</div>
-                  <div className="pd-stat-label">Total Appointments</div>
+              {[
+                {
+                  icon: "📅",
+                  color: "blue",
+                  val: stats.totalAppointments,
+                  label: "Total Appointments",
+                },
+                {
+                  icon: "⏰",
+                  color: "green",
+                  val: stats.upcomingAppointments,
+                  label: "Upcoming",
+                },
+                {
+                  icon: "✅",
+                  color: "purple",
+                  val: stats.completedAppointments,
+                  label: "Completed",
+                },
+                {
+                  icon: "💬",
+                  color: "amber",
+                  val: unreadCount,
+                  label: "Unread Messages",
+                },
+              ].map(({ icon, color, val, label }) => (
+                <div className="pd-stat-card" key={label}>
+                  <div className={`pd-stat-icon-box ${color}`}>{icon}</div>
+                  <div>
+                    <div className="pd-stat-value">{val}</div>
+                    <div className="pd-stat-label">{label}</div>
+                  </div>
                 </div>
-              </div>
-
-              <div className="pd-stat-card">
-                <div className="pd-stat-icon-box green">⏰</div>
-                <div>
-                  <div className="pd-stat-value">{stats.upcomingAppointments}</div>
-                  <div className="pd-stat-label">Upcoming</div>
-                </div>
-              </div>
-
-              <div className="pd-stat-card">
-                <div className="pd-stat-icon-box purple">✅</div>
-                <div>
-                  <div className="pd-stat-value">{stats.completedAppointments}</div>
-                  <div className="pd-stat-label">Completed</div>
-                </div>
-              </div>
-
-              <div className="pd-stat-card">
-                <div className="pd-stat-icon-box amber">💬</div>
-                <div>
-                  <div className="pd-stat-value">{unreadCount}</div>
-                  <div className="pd-stat-label">Unread Messages</div>
-                </div>
-              </div>
+              ))}
             </div>
 
             <div className="pd-section-card">
               <div className="pd-section-header">
                 <div>
                   <div className="pd-section-title">Upcoming Appointments</div>
-                  <div className="pd-section-sub">Your next scheduled sessions</div>
+                  <div className="pd-section-sub">
+                    Your next scheduled sessions
+                  </div>
                 </div>
 
                 <button
@@ -688,7 +668,8 @@ export default function PatientDashboard() {
               </div>
 
               {appointments.filter(
-                (a) => new Date(a.date) >= new Date() && a.status !== "cancelled"
+                (a) =>
+                  new Date(a.date) >= new Date() && a.status !== "cancelled"
               ).length === 0 ? (
                 <div className="pd-empty-state">
                   <span className="pd-empty-icon">📅</span>
@@ -698,7 +679,8 @@ export default function PatientDashboard() {
                 appointments
                   .filter(
                     (a) =>
-                      new Date(a.date) >= new Date() && a.status !== "cancelled"
+                      new Date(a.date) >= new Date() &&
+                      a.status !== "cancelled"
                   )
                   .slice(0, 5)
                   .map((a) => (
@@ -706,12 +688,12 @@ export default function PatientDashboard() {
                       <div className="pd-appointment-time">{a.time}</div>
 
                       <div className="pd-avatar green">
-                        {a.doctor?.name?.charAt(0).toUpperCase() || "D"}
+                        {getProviderInitial(a)}
                       </div>
 
                       <div className="pd-appointment-info">
                         <div className="pd-appointment-name">
-                          Dr. {a.doctor?.name}
+                          {getProviderName(a)}
                         </div>
                         <div className="pd-appointment-reason">
                           {a.reason || "General Consultation"}
@@ -733,6 +715,13 @@ export default function PatientDashboard() {
                 <div className="pd-section-title">All Appointments</div>
                 <div className="pd-section-sub">{appointments.length} total</div>
               </div>
+
+              <button
+                className="pd-btn pd-btn-primary"
+                onClick={() => navigate("/booking")}
+              >
+                Book New
+              </button>
             </div>
 
             {appointments.length === 0 ? (
@@ -751,7 +740,7 @@ export default function PatientDashboard() {
               <table className="pd-data-table">
                 <thead>
                   <tr>
-                    <th>Doctor</th>
+                    <th>Provider</th>
                     <th>Date</th>
                     <th>Time</th>
                     <th>Reason</th>
@@ -766,9 +755,9 @@ export default function PatientDashboard() {
                       <td>
                         <div className="pd-cell-name">
                           <div className="pd-avatar green">
-                            {a.doctor?.name?.charAt(0).toUpperCase() || "D"}
+                            {getProviderInitial(a)}
                           </div>
-                          Dr. {a.doctor?.name}
+                          {getProviderName(a)}
                         </div>
                       </td>
 
@@ -777,29 +766,170 @@ export default function PatientDashboard() {
                       <td>{a.reason || "---"}</td>
 
                       <td>
-                        <span className={`pd-pill ${a.status}`}>{a.status}</span>
+                        <span className={`pd-pill ${a.status}`}>
+                          {a.status}
+                        </span>
                       </td>
 
                       <td>
-                        <div className="pd-appt-actions">
-                          {(a.status === "confirmed" || a.status === "completed") &&
-                            a.doctor && (
-                              <button
-                                className="pd-btn pd-btn-primary pd-btn-sm"
-                                onClick={() => openDoctorChat(a.doctor)}
-                              >
-                                💬 Message
-                              </button>
-                            )}
-
-                          {(a.status === "pending" || a.status === "confirmed") && (
+                        <div className="pd-table-actions">
+                          {a.status === "confirmed" && a.doctor?._id && (
                             <button
-                              className="pd-btn pd-btn-cancel pd-btn-sm"
-                              onClick={() => setCancelModal(a)}
+                              className="pd-btn pd-btn-primary pd-btn-sm"
+                              onClick={() => {
+                                const convo = conversations.find(
+                                  (c) =>
+                                    String(c.user._id) ===
+                                    String(a.doctor._id)
+                                );
+
+                                setActiveTab("chat");
+
+                                if (convo) openConversation(convo);
+                                else {
+                                  setActiveConvo({ user: a.doctor });
+                                  setMessages([]);
+                                }
+                              }}
                             >
-                              ✕ Cancel
+                              💬 Message
                             </button>
                           )}
+
+                          {["pending", "confirmed"].includes(a.status) && (
+                            <button
+                              className="pd-btn pd-btn-danger pd-btn-sm"
+                              disabled={cancellingId === a._id}
+                              onClick={() => handleCancelAppointment(a._id)}
+                            >
+                              {cancellingId === a._id
+                                ? "Cancelling…"
+                                : "Cancel"}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+        {activeTab === "medical" && (
+          <div className="pd-section-card">
+            <div className="pd-section-header">
+              <div>
+                <div className="pd-section-title">Medical Files</div>
+                <div className="pd-section-sub">
+                  Upload reports, prescriptions, scans, or documents for your
+                  doctors.
+                </div>
+              </div>
+            </div>
+
+            <div className="pd-medical-upload-area">
+              <div className="pd-form-grid">
+                <div className="pd-form-group">
+                  <label className="pd-form-label">File Label / Note</label>
+                  <input
+                    className="pd-form-input"
+                    value={medicalLabel}
+                    onChange={(e) => setMedicalLabel(e.target.value)}
+                    placeholder="e.g. MRI report, blood test, prescription"
+                    disabled={uploadingMedical}
+                  />
+                </div>
+
+                <div className="pd-form-group">
+                  <label className="pd-form-label">Choose Files</label>
+                  <input
+                    ref={medicalFileRef}
+                    className="pd-form-input"
+                    type="file"
+                    multiple
+                    accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.txt"
+                    onChange={handleFileSelect}
+                    disabled={uploadingMedical}
+                  />
+
+                  {selectedFiles.length > 0 && (
+                    <p className="pd-file-selected-hint">
+                      {selectedFiles.length} file
+                      {selectedFiles.length > 1 ? "s" : ""} selected:{" "}
+                      {selectedFiles.map((f) => f.name).join(", ")}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <button
+                className="pd-btn pd-btn-primary pd-medical-upload-btn"
+                type="button"
+                onClick={handleMedicalUpload}
+                disabled={uploadingMedical || selectedFiles.length === 0}
+              >
+                {uploadingMedical
+                  ? "Uploading…"
+                  : selectedFiles.length > 0
+                  ? `Upload ${selectedFiles.length} File${
+                      selectedFiles.length > 1 ? "s" : ""
+                    }`
+                  : "Select Files First"}
+              </button>
+            </div>
+
+            {medicalFiles.length === 0 ? (
+              <div className="pd-empty-state">
+                <span className="pd-empty-icon">📁</span>
+                <p>No medical files uploaded yet</p>
+              </div>
+            ) : (
+              <table className="pd-data-table">
+                <thead>
+                  <tr>
+                    <th>File</th>
+                    <th>Label</th>
+                    <th>Size</th>
+                    <th>Uploaded</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {medicalFiles.map((file) => (
+                    <tr key={file._id}>
+                      <td>
+                        <div className="pd-cell-name">
+                          <div className="pd-avatar blue">
+                            {getFileIcon(file.mimetype, file.filename)}
+                          </div>
+                          {file.filename}
+                        </div>
+                      </td>
+
+                      <td>{file.label || "---"}</td>
+                      <td>{formatFileSize(file.size)}</td>
+                      <td>{fmtDate(file.createdAt)}</td>
+
+                      <td>
+                        <div className="pd-table-actions">
+                          <a
+                            className="pd-btn pd-btn-primary pd-btn-sm"
+                            href={`${API}${file.url}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Open
+                          </a>
+
+                          <button
+                            className="pd-btn pd-btn-outline pd-btn-sm"
+                            onClick={() => handleDeleteMedicalFile(file._id)}
+                          >
+                            Delete
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -841,7 +971,7 @@ export default function PatientDashboard() {
                       </div>
 
                       <div className="pd-convo-info">
-                        <div className="pd-convo-name">Dr. {c.user?.name}</div>
+                        <div className="pd-convo-name">{c.user?.name}</div>
                         <div className="pd-convo-last">
                           {c.lastMessage || "Start a conversation"}
                         </div>
@@ -871,7 +1001,7 @@ export default function PatientDashboard() {
 
                     <div>
                       <div className="pd-chat-header-name">
-                        Dr. {activeConvo.user?.name}
+                        {activeConvo.user?.name}
                       </div>
                       <div className="pd-chat-header-sub">
                         {activeConvo.user?.specialty || "Doctor"}
@@ -888,12 +1018,14 @@ export default function PatientDashboard() {
                     ) : (
                       messages.map((msg, i) => {
                         const isSent =
-                          String(msg.sender?._id || msg.sender) === String(userId);
+                          String(msg.sender?._id || msg.sender) === userId;
 
                         return (
                           <div
-                            key={msg._id || i}
-                            className={`pd-msg ${isSent ? "sent" : "received"}`}
+                            key={i}
+                            className={`pd-msg ${
+                              isSent ? "sent" : "received"
+                            }`}
                           >
                             <div className="pd-msg-bubble">{msg.content}</div>
                             <div className="pd-msg-time">
@@ -926,181 +1058,15 @@ export default function PatientDashboard() {
           </div>
         )}
 
-        {activeTab === "medicalFiles" && (
-          <div className="pd-medical-wrapper">
-            <div className="pd-medical-banner">
-              <div className="pd-medical-banner-left">
-                <div className="pd-medical-banner-icon">📁</div>
-                <div>
-                  <h2>Medical Files</h2>
-                  <p>
-                    Upload and manage your scans, reports, prescriptions, and lab results
-                    so your doctor always has the full picture.
-                  </p>
-                </div>
-              </div>
-
-              <div className="pd-medical-banner-stats">
-                <div className="pd-medical-banner-stat">
-                  <span className="pd-medical-banner-stat-val">
-                    {medicalFiles.length}
-                  </span>
-                  <span className="pd-medical-banner-stat-label">
-                    Files Uploaded
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="pd-medical-upload-card">
-              <div className="pd-medical-upload-card-header">
-                <span className="pd-medical-upload-card-icon">⬆️</span>
-                <div>
-                  <div className="pd-medical-upload-card-title">
-                    Upload a New Document
-                  </div>
-                  <div className="pd-medical-upload-card-sub">
-                    Accepted: images, PDF, DOC, DOCX
-                  </div>
-                </div>
-              </div>
-
-              <form
-                className="pd-medical-upload-form"
-                onSubmit={handleMedicalFileUpload}
-              >
-                <div className="pd-medical-upload-fields">
-                  <div className="pd-medical-field">
-                    <label className="pd-medical-field-label">
-                      Choose File <span className="pd-medical-required">*</span>
-                    </label>
-
-                    <label className="pd-medical-file-drop">
-                      <input
-                        type="file"
-                        accept="image/*,.pdf,.doc,.docx"
-                        className="pd-medical-file-hidden"
-                        onChange={(e) =>
-                          setSelectedMedicalFile(e.target.files[0])
-                        }
-                      />
-                      <span className="pd-medical-file-drop-icon">📎</span>
-                      <span className="pd-medical-file-drop-text">
-                        {selectedMedicalFile
-                          ? selectedMedicalFile.name
-                          : "Click to browse or drag & drop"}
-                      </span>
-                    </label>
-                  </div>
-
-                  <div className="pd-medical-field">
-                    <label className="pd-medical-field-label">
-                      Note <span className="pd-medical-optional">Optional</span>
-                    </label>
-
-                    <textarea
-                      className="pd-medical-note-input"
-                      rows={3}
-                      placeholder="e.g. Knee MRI — May 2025, blood test from last visit..."
-                      value={medicalFileNote}
-                      onChange={(e) => setMedicalFileNote(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="pd-medical-upload-footer">
-                  <button
-                    type="submit"
-                    className="pd-medical-upload-btn"
-                    disabled={uploadingMedicalFile}
-                  >
-                    {uploadingMedicalFile ? "Uploading..." : "⬆️ Upload File"}
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {medicalFiles.length === 0 ? (
-              <div className="pd-medical-empty-card">
-                <div className="pd-medical-empty-emoji">🗂️</div>
-                <h3>No files yet</h3>
-                <p>Upload your first medical document above to get started.</p>
-              </div>
-            ) : (
-              <div className="pd-medical-files-card">
-                <div className="pd-medical-files-card-header">
-                  <span className="pd-medical-files-card-title">
-                    Uploaded Documents
-                  </span>
-                  <span className="pd-medical-files-count">
-                    {medicalFiles.length} file
-                    {medicalFiles.length !== 1 ? "s" : ""}
-                  </span>
-                </div>
-
-                <div className="pd-medical-files-grid">
-                  {medicalFiles.map((file) => {
-                    const ext = (file.originalName || file.filename || "")
-                      .split(".")
-                      .pop()
-                      .toLowerCase();
-
-                    const icon =
-                      ext === "pdf"
-                        ? "📑"
-                        : ["jpg", "jpeg", "png", "gif", "webp"].includes(ext)
-                        ? "🖼️"
-                        : ["doc", "docx"].includes(ext)
-                        ? "📝"
-                        : "📄";
-
-                    return (
-                      <div className="pd-medical-file-tile" key={file._id}>
-                        <div className="pd-medical-file-tile-top">
-                          <div className="pd-medical-file-tile-icon">{icon}</div>
-
-                          <div className="pd-medical-file-tile-meta">
-                            <div className="pd-medical-file-tile-name">
-                              {file.originalName || file.filename || "Medical File"}
-                            </div>
-                            <div className="pd-medical-file-tile-date">
-                              📅 {fmtDate(file.createdAt)}
-                            </div>
-                          </div>
-                        </div>
-
-                        {file.note && (
-                          <div className="pd-medical-file-tile-note">
-                            {file.note}
-                          </div>
-                        )}
-
-                        {file.fileUrl && (
-                          <a
-                            className="pd-medical-file-view-btn"
-                            href={`${API}${file.fileUrl}`}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            View File
-                          </a>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         {activeTab === "reviews" && (
           <div className="pd-reviews-container">
             <div className="pd-section-card">
               <div className="pd-section-header">
                 <div>
                   <div className="pd-section-title">My Reviews</div>
-                  <div className="pd-section-sub">Share your experience with us</div>
+                  <div className="pd-section-sub">
+                    Share your experience with us
+                  </div>
                 </div>
 
                 {!showReviewForm && (
@@ -1117,11 +1083,11 @@ export default function PatientDashboard() {
                 <div className="pd-review-form-container">
                   <form className="pd-review-form" onSubmit={handleSubmitReview}>
                     <h3>Share Your Feedback</h3>
-                    <p>We'd love to hear about your experience!</p>
+                    <p>We&apos;d love to hear about your experience!</p>
 
                     <div className="pd-form-group">
                       <label className="pd-form-label">
-                        Select Appointment Optional
+                        Select Appointment (Optional)
                       </label>
 
                       <select
@@ -1140,10 +1106,9 @@ export default function PatientDashboard() {
                         }}
                       >
                         <option value="">General Feedback</option>
-
                         {completedAppointmentsList.map((a) => (
                           <option key={a._id} value={a._id}>
-                            {fmtDate(a.date)} with Dr. {a.doctor?.name}
+                            {fmtDate(a.date)} with {getProviderName(a)}
                           </option>
                         ))}
                       </select>
@@ -1171,22 +1136,23 @@ export default function PatientDashboard() {
                     </div>
 
                     <div className="pd-form-group">
-                      <label className="pd-form-label">Title Optional</label>
-
+                      <label className="pd-form-label">Title (Optional)</label>
                       <input
                         type="text"
                         className="pd-form-input"
                         placeholder="e.g., Great experience!"
                         value={reviewForm.title}
                         onChange={(e) =>
-                          setReviewForm({ ...reviewForm, title: e.target.value })
+                          setReviewForm({
+                            ...reviewForm,
+                            title: e.target.value,
+                          })
                         }
                       />
                     </div>
 
                     <div className="pd-form-group">
                       <label className="pd-form-label">Your Review *</label>
-
                       <textarea
                         className="pd-form-textarea"
                         rows={4}
@@ -1280,7 +1246,7 @@ export default function PatientDashboard() {
 
                       {review.doctor && (
                         <div className="pd-review-doctor">
-                          <span>👨‍⚕️ Doctor: Dr. {review.doctor.name}</span>
+                          👨‍⚕️ Doctor: Dr. {review.doctor.name}
                         </div>
                       )}
                     </div>
@@ -1317,7 +1283,7 @@ export default function PatientDashboard() {
                   ref={fileRef}
                   type="file"
                   accept="image/*"
-                  style={{ display: "none" }}
+                  className="pd-hidden-input"
                   onChange={handlePhotoUpload}
                 />
               </div>
@@ -1325,28 +1291,22 @@ export default function PatientDashboard() {
               <div className="pd-profile-name">{patient?.name}</div>
               <div className="pd-profile-role">Patient</div>
 
-              {uploadingPhoto && <p>Uploading...</p>}
+              {uploadingPhoto && (
+                <p className="pd-uploading-text">Uploading...</p>
+              )}
 
-              <div style={{ width: "100%" }}>
-                <div className="pd-profile-stat">
-                  <span>Email</span>
-                  <span>{patient?.email}</span>
-                </div>
-
-                <div className="pd-profile-stat">
-                  <span>Phone</span>
-                  <span>{patient?.phone || "---"}</span>
-                </div>
-
-                <div className="pd-profile-stat">
-                  <span>Member Since</span>
-                  <span>{fmtDate(patient?.createdAt)}</span>
-                </div>
-
-                <div className="pd-profile-stat">
-                  <span>Appointments</span>
-                  <span>{stats.totalAppointments}</span>
-                </div>
+              <div className="pd-full-width">
+                {[
+                  ["Email", patient?.email],
+                  ["Phone", patient?.phone || "---"],
+                  ["Member Since", fmtDate(patient?.createdAt)],
+                  ["Appointments", stats.totalAppointments],
+                ].map(([label, val]) => (
+                  <div className="pd-profile-stat" key={label}>
+                    <span>{label}</span>
+                    <span>{val}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -1366,24 +1326,26 @@ export default function PatientDashboard() {
                 </button>
               </div>
 
-              <div className="pd-form-grid">
+              <div className="pd-form-grid pd-profile-form-grid">
                 <div className="pd-form-group">
                   <label className="pd-form-label">Full Name</label>
-
                   <input
                     className="pd-form-input"
                     value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, name: e.target.value })
+                    }
                   />
                 </div>
 
                 <div className="pd-form-group">
                   <label className="pd-form-label">Phone</label>
-
                   <input
                     className="pd-form-input"
                     value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, phone: e.target.value })
+                    }
                     placeholder="+20 100 000 0000"
                   />
                 </div>
@@ -1394,79 +1356,6 @@ export default function PatientDashboard() {
       </main>
 
       {toast && <div className={`pd-toast ${toast.type}`}>{toast.message}</div>}
-
-      {cancelModal && (
-        <div
-          className="pd-modal-overlay"
-          onClick={() => !cancelling && setCancelModal(null)}
-        >
-          <div className="pd-modal" onClick={(e) => e.stopPropagation()}>
-            {isNearAppointment(cancelModal) && (
-              <div className="pd-modal-fee-banner">
-                <span className="pd-modal-fee-icon">⚠️</span>
-                <div>
-                  <div className="pd-modal-fee-title">
-                    Late Cancellation Fee Applies
-                  </div>
-                  <div className="pd-modal-fee-sub">
-                    This appointment is within {CANCEL_FEE_HOURS} hours. Cancelling
-                    now may incur a cancellation fee as per our policy.
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="pd-modal-body">
-              <div className="pd-modal-icon">
-                {isNearAppointment(cancelModal) ? "🚨" : "📅"}
-              </div>
-
-              <h2 className="pd-modal-title">Cancel Appointment?</h2>
-
-              <p className="pd-modal-sub">
-                You are about to cancel your appointment with{" "}
-                <strong>Dr. {cancelModal.doctor?.name}</strong> on{" "}
-                <strong>{fmtDate(cancelModal.date)}</strong>
-                {cancelModal.time ? ` at ${cancelModal.time}` : ""}.
-              </p>
-
-              <div className="pd-modal-detail-row">
-                <span>📋 Reason</span>
-                <span>{cancelModal.reason || "General Consultation"}</span>
-              </div>
-
-              <div className="pd-modal-detail-row">
-                <span>🏥 Status</span>
-                <span className={`pd-pill ${cancelModal.status}`}>
-                  {cancelModal.status}
-                </span>
-              </div>
-
-              <p className="pd-modal-notice">
-                The doctor and clinic admin will be notified immediately.
-              </p>
-            </div>
-
-            <div className="pd-modal-footer">
-              <button
-                className="pd-btn pd-btn-outline"
-                onClick={() => setCancelModal(null)}
-                disabled={cancelling}
-              >
-                Keep Appointment
-              </button>
-
-              <button
-                className="pd-btn pd-btn-danger"
-                onClick={handleCancelAppointment}
-                disabled={cancelling}
-              >
-                {cancelling ? "Cancelling..." : "Yes, Cancel It"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

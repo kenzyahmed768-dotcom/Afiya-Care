@@ -1,62 +1,54 @@
-import { useState, useEffect, useRef } from "react";
-import { Outlet, Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import Logo from "../images/logo.jpeg";
 import "./Layout.css";
-
 
 function Layout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [user, setUser] = useState(null);
+
   const location = useLocation();
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
-  const mobileMenuRef = useRef(null);
 
-  
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
     const name = localStorage.getItem("userName");
     if (token && role) {
-      setUser({ role, name });
+      setUser({ role, name: name || "User" });
+    } else {
+      setUser(null);
     }
-  }, []);
+  }, [location.pathname]);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-    document.body.style.overflow = !isMenuOpen ? "hidden" : "";
-  };
-
-  const closeMenu = () => {
+  useEffect(() => {
     setIsMenuOpen(false);
-    document.body.style.overflow = "";
-  };
-
-  const closeDropdown = () => {
     setDropdownOpen(false);
-  };
+    document.body.style.overflow = "";
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
-  
   useEffect(() => {
-  closeMenu();
-  closeDropdown();
+    document.body.style.overflow = isMenuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMenuOpen]);
 
-  
-  window.scrollTo(0, 0);
-
-}, [location]);
-
- 
   useEffect(() => {
-    const handler = (e) => {
+    const handleOutsideClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
+
+  const toggleMenu = () => setIsMenuOpen((prev) => !prev);
+  const closeMenu = () => setIsMenuOpen(false);
 
   const handleDashboard = () => {
     setDropdownOpen(false);
@@ -67,8 +59,8 @@ function Layout() {
   };
 
   const handleLogout = () => {
-    ["token", "role", "userName", "userEmail"].forEach((k) =>
-      localStorage.removeItem(k)
+    ["token", "role", "userName", "userEmail"].forEach((key) =>
+      localStorage.removeItem(key)
     );
     setUser(null);
     setDropdownOpen(false);
@@ -77,70 +69,45 @@ function Layout() {
   };
 
   return (
-    <>
-      <nav>
-        <Link to="/" className="logo">
+    <div className={`layout-root ${isMenuOpen ? "menu-open" : ""}`}>
+
+      <nav className="site-nav">
+        <Link to="/" className="logo" onClick={closeMenu}>
           <img src={Logo} alt="AfiyaCare Logo" className="logo-img" />
         </Link>
 
-        
         <button
+          type="button"
           className={`hamburger ${isMenuOpen ? "active" : ""}`}
           onClick={toggleMenu}
-          aria-label="Menu"
+          aria-label="Toggle navigation menu"
+          aria-expanded={isMenuOpen}
         >
-          <span></span>
-          <span></span>
-          <span></span>
+          <span />
+          <span />
+          <span />
         </button>
 
-        
-        <ul
-          className={`nav-links ${isMenuOpen ? "active" : ""}`}
-          ref={mobileMenuRef}
-        >
-          <li>
-            <NavLink to="/" end onClick={closeMenu}>
-              Home
-            </NavLink>
-          </li>
-          <li>
-            <NavLink to="/about" onClick={closeMenu}>
-              About us
-            </NavLink>
-          </li>
-          <li>
-            <NavLink to="/join" onClick={closeMenu}>
-              Join us
-            </NavLink>
-          </li>
-          <li>
-            <NavLink to="/booking" onClick={closeMenu}>
-              Booking
-            </NavLink>
-          </li>
-          <li>
-            <NavLink to="/service" onClick={closeMenu}>
-              Services
-            </NavLink>
-          </li>
-          <li>
-            <NavLink to="/blog" onClick={closeMenu}>
-              Blog
-            </NavLink>
-          </li>
+        <ul className={`nav-links ${isMenuOpen ? "active" : ""}`}>
+          <li><NavLink to="/" end onClick={closeMenu}>Home</NavLink></li>
+          <li><NavLink to="/about" onClick={closeMenu}>About us</NavLink></li>
+          <li><NavLink to="/join" onClick={closeMenu}>Join us</NavLink></li>
+          <li><NavLink to="/booking" onClick={closeMenu}>Booking</NavLink></li>
+          <li><NavLink to="/service" onClick={closeMenu}>Services</NavLink></li>
+          <li><NavLink to="/blog" onClick={closeMenu}>Blog</NavLink></li>
 
           {user ? (
             <li className="profile-nav-item" ref={dropdownRef}>
               <button
+                type="button"
                 className="profile-icon-btn"
-                onClick={() => setDropdownOpen((o) => !o)}
+                onClick={() => setDropdownOpen((prev) => !prev)}
               >
                 <div className="profile-icon-avatar">
                   {user.name?.charAt(0).toUpperCase() || "U"}
                 </div>
                 <span className="profile-icon-name">
-                  {user.name?.split(" ")[0]}
+                  {user.name?.split(" ")[0] || "User"}
                 </span>
                 <svg
                   className={`profile-chevron ${dropdownOpen ? "open" : ""}`}
@@ -159,27 +126,19 @@ function Layout() {
                 <div className="profile-dropdown">
                   <div className="profile-dropdown-header">
                     <div className="profile-dropdown-avatar">
-                      {user.name?.charAt(0).toUpperCase()}
+                      {user.name?.charAt(0).toUpperCase() || "U"}
                     </div>
                     <div>
-                      <div className="profile-dropdown-name">{user.name}</div>
-                      <div className={`profile-dropdown-role ${user.role}`}>
-                        {user.role}
-                      </div>
+                      <div className="profile-dropdown-name">{user.name || "User"}</div>
+                      <div className={`profile-dropdown-role ${user.role}`}>{user.role}</div>
                     </div>
                   </div>
                   <div className="profile-dropdown-divider" />
-                  <button
-                    className="profile-dropdown-item"
-                    onClick={handleDashboard}
-                  >
+                  <button type="button" className="profile-dropdown-item" onClick={handleDashboard}>
                     <span>🏠</span> My Dashboard
                   </button>
                   <div className="profile-dropdown-divider" />
-                  <button
-                    className="profile-dropdown-item logout"
-                    onClick={handleLogout}
-                  >
+                  <button type="button" className="profile-dropdown-item logout" onClick={handleLogout}>
                     <span>🚪</span> Logout
                   </button>
                 </div>
@@ -188,25 +147,16 @@ function Layout() {
           ) : (
             <>
               <li>
-                <Link to="/login" className="btn-nav" onClick={closeMenu}>
-                  Login
-                </Link>
+                <Link to="/login" className="btn-nav" onClick={closeMenu}>Login</Link>
               </li>
               <li>
-                <Link
-                  to="/register"
-                  className="btn-nav btn-nav-signup"
-                  onClick={closeMenu}
-                >
+                <Link to="/register" className="btn-nav btn-nav-signup" onClick={closeMenu}>
                   Sign Up
                 </Link>
               </li>
             </>
           )}
         </ul>
-
-     
-        {isMenuOpen && <div className="menu-overlay" onClick={closeMenu}></div>}
       </nav>
 
       <main>
@@ -226,6 +176,7 @@ function Layout() {
               techniques to help every patient achieve their recovery goals.
             </p>
           </div>
+
           <div className="footer-col">
             <h5>Quick Links</h5>
             <ul>
@@ -233,78 +184,50 @@ function Layout() {
               <li><Link to="/about">About us</Link></li>
               <li><Link to="/join">Join us</Link></li>
               <li><Link to="/booking">Booking</Link></li>
-              <li><Link to="/services">Services</Link></li>
+              <li><Link to="/service">Services</Link></li>
               <li><Link to="/blog">Blog</Link></li>
             </ul>
           </div>
+
           <div className="footer-col">
             <h5>Services</h5>
             <ul>
-              <li><Link to="/services">Orthopedic Physiotherapy</Link></li>
-              <li><Link to="/services">Sports Injury</Link></li>
-              <li><Link to="/services">Physiotherapy</Link></li>
-              <li><Link to="/services">Surgical Rehabilitation</Link></li>
-              <li><Link to="/services">Cardiac Rehab</Link></li>
-              <li><Link to="/services">Elderly Care</Link></li>
-              <li><Link to="/services">Home lab tests</Link></li>
+              <li><Link to="/service">Orthopedic Physiotherapy</Link></li>
+              <li><Link to="/service">Sports Injury</Link></li>
+              <li><Link to="/service">Physiotherapy</Link></li>
+              <li><Link to="/service">Surgical Rehabilitation</Link></li>
+              <li><Link to="/service">Cardiac Rehab</Link></li>
+              <li><Link to="/service">Elderly Care</Link></li>
+              <li><Link to="/service">Home lab tests</Link></li>
             </ul>
           </div>
+
           <div className="footer-col">
             <h5>Contact us</h5>
             <ul>
               <li><a href="mailto:afiyacare@gmail.com">afiyacare@gmail.com</a></li>
-              <li>
-                <a 
-                  href="https://www.facebook.com/profile.php?id=61585057423569"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Facebook
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="https://www.instagram.com/afiyacare_1/?hl=en"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Instagram
-                </a>
-              </li>
-              <li><a href="#">WhatsApp</a></li>
+              <li><a href="https://www.facebook.com/profile.php?id=61585057423569" target="_blank" rel="noopener noreferrer">Facebook</a></li>
+              <li><a href="https://www.instagram.com/afiyacare_1/?hl=en" target="_blank" rel="noopener noreferrer">Instagram</a></li>
+              <li><a href="https://wa.me/" target="_blank" rel="noopener noreferrer">WhatsApp</a></li>
               <li><Link to="/help">Help Center</Link></li>
             </ul>
             <div className="newsletter-row">
               <input type="email" placeholder="Your email" />
-              <button aria-label="Subscribe">→</button>
+              <button type="button" aria-label="Subscribe">→</button>
             </div>
           </div>
         </div>
+
         <div className="footer-bottom">
           <div className="social-links">
-            <a
-              href="https://www.facebook.com/profile.php?id=61585057423569"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Facebook"
-            >
-              f
-            </a>
-            <a 
-              href="https://www.instagram.com/afiyacare_1/?hl=en"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Instagram"
-            >
-              i
-            </a>
+            <a href="https://www.facebook.com/profile.php?id=61585057423569" target="_blank" rel="noopener noreferrer" aria-label="Facebook">f</a>
+            <a href="https://www.instagram.com/afiyacare_1/?hl=en" target="_blank" rel="noopener noreferrer" aria-label="Instagram">i</a>
             <a href="#" aria-label="LinkedIn">in</a>
           </div>
           <p>© 2025 Afiya Care. All Rights Reserved.</p>
         </div>
-        
       </footer>
-    </>
+    </div>
   );
 }
 

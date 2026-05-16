@@ -22,7 +22,15 @@ const io = new Server(server, {
 
 app.set("io", io);
 
-app.use(cors({ origin: "http://localhost:5173" }));
+const corsOptions = {
+  origin: "http://localhost:5173",
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
+app.use(cors(corsOptions));
+app.options("/{*path}", cors(corsOptions)); // FIX: named wildcard required by path-to-regexp v8+
+
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
@@ -63,10 +71,26 @@ const uploadMedical = multer({
   limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase().replace(".", "");
-    if (/jpeg|jpg|png|webp|pdf|doc|docx|txt/.test(ext)) cb(null, true);
-    else cb(new Error("File type not allowed"));
+    if (/^(jpeg|jpg|png|webp|pdf|doc|docx|txt)$/.test(ext)) cb(null, true);
+    else cb(new Error(`File type ".${ext}" is not allowed`));
   },
 });
+
+function multerArray(field, maxCount) {
+  return (req, res, next) => {
+    uploadMedical.array(field, maxCount)(req, res, (err) => {
+      if (!err) return next();
+      if (err instanceof multer.MulterError) {
+        if (err.code === "LIMIT_FILE_SIZE")
+          return res.status(413).json({ message: "File too large. Maximum size is 20MB per file." });
+        if (err.code === "LIMIT_FILE_COUNT")
+          return res.status(400).json({ message: "Too many files. Maximum is 10 files at once." });
+        return res.status(400).json({ message: `Upload error: ${err.message}` });
+      }
+      return res.status(400).json({ message: err.message || "Invalid file type" });
+    });
+  };
+}
 
 const connectDB = require("./config/db");
 connectDB();
@@ -97,11 +121,6 @@ const authMiddleware = (req, res, next) => {
 const adminMiddleware  = (req, res, next) => req.user.role === "admin"  ? next() : res.status(403).json({ message: "Access denied" });
 const doctorMiddleware = (req, res, next) => req.user.role === "doctor" ? next() : res.status(403).json({ message: "Access denied" });
 
-/* ─────────────────────────────────────────────
-   HELPER: resolve senderModel from userId
-   Looks up which collection the user belongs to.
-   Returns "User" | "Doctor" | "Admin"
-───────────────────────────────────────────── */
 async function resolveModel(userId) {
   if (!userId) return "User";
   const id = String(userId);
@@ -348,88 +367,176 @@ app.post("/reset-password/:token", async (req, res) => {
    ADMIN ROUTES
 ───────────────────────────────────────────── */
 
-app.get("/admin/overview", authMiddleware, adminMiddleware, async (req, res) => {
+/* ─────────────────────────────────────────────
+   ADMIN PATIENTS / MESSAGES / MEDICAL FILES FIX
+───────────────────────────────────────────── */
+
+app.get("/admin/patients", authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const [totalDoctors, totalPatients, pendingDoctors, totalAppointments,
-      pendingAppointments, confirmedAppointments, completedAppointments,
-      cancelledAppointments, recentUsers, recentDoctors] = await Promise.all([
-      Doctor.countDocuments(),
-      User.countDocuments({ role: "patient" }),
-      Doctor.countDocuments({ status: "pending" }),
-      Appointment.countDocuments(),
-      Appointment.countDocuments({ status: "pending" }),
-      Appointment.countDocuments({ status: "confirmed" }),
-      Appointment.countDocuments({ status: "completed" }),
-      Appointment.countDocuments({ status: "cancelled" }),
-      User.find().sort({ createdAt: -1 }).limit(3).select("name email role status createdAt"),
-      Doctor.find().sort({ createdAt: -1 }).limit(2).select("name email role status createdAt"),
+    const patients = await User.find()
+      .select("-password -resetToken -resetTokenExpiry")
+      .sort({ createdAt: -1 });
+
+    res.json(patients);
+  } catch (err) {
+    console.error("Admin patients fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.patch("/admin/patients/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!["approved", "pending", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const patient = await User.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    ).select("-password -resetToken -resetTokenExpiry");
+
+    if (!patient) {
+      return res.status(404).json({ message: "Patient not found" });
+    }
+
+    res.json({ message: "Patient updated", patient });
+  } catch (err) {
+    console.error("Admin patient update error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.delete("/admin/patients/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const patient = await User.findById(req.params.id);
+
+    if (!patient) {
+      return res.status(404).json({ message: "Patient not found" });
+    }
+
+    await Promise.all([
+      Appointment.deleteMany({ patient: req.params.id }),
+      Message.deleteMany({
+        $or: [{ sender: req.params.id }, { receiver: req.params.id }],
+      }),
+      Review.deleteMany({ patient: req.params.id }),
+      MedicalFile.deleteMany({ patient: req.params.id }),
     ]);
 
-    const recentRegistrations = [...recentUsers, ...recentDoctors]
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+    await patient.deleteOne();
 
-    res.json({ totalDoctors, totalPatients, pendingDoctors, totalAppointments, pendingAppointments, confirmedAppointments, completedAppointments, cancelledAppointments, recentRegistrations });
-  } catch (err) { res.status(500).json({ message: "Server error" }); }
+    res.json({ message: "Patient deleted" });
+  } catch (err) {
+    console.error("Admin patient delete error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
-app.get("/admin/pending-doctors", authMiddleware, adminMiddleware, async (req, res) => {
-  try { res.json(await Doctor.find({ status: "pending" }).select("-password")); }
-  catch (err) { res.status(500).json({ message: "Server error" }); }
-});
-
-app.get("/admin/all-doctors", authMiddleware, adminMiddleware, async (req, res) => {
-  try { res.json(await Doctor.find().select("-password").sort({ createdAt: -1 })); }
-  catch (err) { res.status(500).json({ message: "Server error" }); }
-});
-
-app.patch("/admin/doctor/:id", authMiddleware, adminMiddleware, async (req, res) => {
+app.get("/admin/medical-files", authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const { status } = req.body;
-    if (!["approved", "rejected"].includes(status)) return res.status(400).json({ message: "Invalid status" });
-    const doctor = await Doctor.findByIdAndUpdate(req.params.id, { status }, { new: true }).select("-password");
-    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
-    res.json({ message: `Doctor ${status}`, doctor });
-  } catch (err) { res.status(500).json({ message: "Server error" }); }
+    const files = await MedicalFile.find()
+      .populate("patient", "name email phone")
+      .sort({ createdAt: -1 });
+
+    res.json(files);
+  } catch (err) {
+    console.error("Admin medical files fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
-app.get("/admin/appointments", authMiddleware, adminMiddleware, async (req, res) => {
+app.delete("/admin/medical-files/:id", authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    res.json(await Appointment.find()
-      .populate("doctor", "name specialty").populate("patient", "name email").sort({ date: -1 }));
-  } catch (err) { res.status(500).json({ message: "Server error" }); }
+    const file = await MedicalFile.findById(req.params.id);
+
+    if (!file) {
+      return res.status(404).json({ message: "Medical file not found" });
+    }
+
+    const diskPath = path.join(__dirname, "uploads/medical", file.storedName);
+
+    if (file.storedName && fs.existsSync(diskPath)) {
+      fs.unlinkSync(diskPath);
+    }
+
+    await file.deleteOne();
+
+    res.json({ message: "Medical file deleted" });
+  } catch (err) {
+    console.error("Admin medical file delete error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
-app.patch("/admin/appointments/:id", authMiddleware, adminMiddleware, async (req, res) => {
+app.get("/admin/messages", authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const { status } = req.body;
-    if (!["pending","confirmed","cancelled","completed"].includes(status)) return res.status(400).json({ message: "Invalid status" });
-    const appt = await Appointment.findByIdAndUpdate(req.params.id, { status }, { new: true })
-      .populate("doctor", "name").populate("patient", "name");
-    if (!appt) return res.status(404).json({ message: "Not found" });
-    res.json({ message: "Updated", appointment: appt });
-  } catch (err) { res.status(500).json({ message: "Server error" }); }
+    const messages = await Message.find()
+      .populate("sender", "name email role photo")
+      .populate("receiver", "name email role photo")
+      .sort({ createdAt: -1 });
+
+    res.json(messages);
+  } catch (err) {
+    console.error("Admin messages fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
-app.get("/admin/schedules/doctors", authMiddleware, adminMiddleware, async (req, res) => {
+app.delete("/admin/messages/:id", authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    res.json(await Appointment.find()
-      .populate("doctor", "name email specialty").populate("patient", "name email").sort({ date: 1 }));
-  } catch (err) { res.status(500).json({ message: "Server error" }); }
+    const message = await Message.findByIdAndDelete(req.params.id);
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    res.json({ message: "Message deleted" });
+  } catch (err) {
+    console.error("Admin message delete error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
-app.get("/admin/schedules/patients", authMiddleware, adminMiddleware, async (req, res) => {
+app.get("/admin/debug-counts", authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    res.json(await Appointment.find()
-      .populate("patient", "name email").populate("doctor", "name email specialty").sort({ date: 1 }));
-  } catch (err) { res.status(500).json({ message: "Server error" }); }
-});
+    const [
+      users,
+      doctors,
+      admins,
+      appointments,
+      messages,
+      medicalFiles,
+      applications,
+      reviews,
+    ] = await Promise.all([
+      User.countDocuments(),
+      Doctor.countDocuments(),
+      Admin.countDocuments(),
+      Appointment.countDocuments(),
+      Message.countDocuments(),
+      MedicalFile.countDocuments(),
+      Application.countDocuments(),
+      Review.countDocuments(),
+    ]);
 
-app.get("/support/agent", authMiddleware, async (req, res) => {
-  try {
-    const admin = await Admin.findOne().select("_id name");
-    if (!admin) return res.status(404).json({ message: "No support agent available" });
-    res.json({ agentId: admin._id, name: admin.name });
-  } catch (err) { res.status(500).json({ message: "Server error" }); }
+    res.json({
+      users,
+      patients: users,
+      doctors,
+      admins,
+      appointments,
+      messages,
+      medicalFiles,
+      applications,
+      reviews,
+    });
+  } catch (err) {
+    console.error("Admin debug counts error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 /* ─────────────────────────────────────────────
@@ -496,29 +603,77 @@ app.get("/booking/slots", async (req, res) => {
 app.post("/booking/create", authMiddleware, async (req, res) => {
   try {
     const {
-      doctorId, labId, labName, labAddress,
-      date, time, reason, paymentMethod,
-      location, address, serviceType, consultationType,
-      packageName, amount,
-      patientName, patientEmail, patientPhone,
+      doctorId,
+      labId,
+      labName,
+      labAddress,
+      date,
+      time,
+      reason,
+      paymentMethod,
+      location,
+      address,
+      serviceType,
+      consultationType,
+      packageName,
+      amount,
+      patientName,
+      patientEmail,
+      patientPhone,
     } = req.body;
 
     const isLab = serviceType === "home-lab";
 
-    if (!isLab && !doctorId) return res.status(400).json({ message: "Doctor is required" });
-    if (isLab && !labId) return res.status(400).json({ message: "Lab is required" });
-    if (!date || !time) return res.status(400).json({ message: "Date and time are required" });
+    if (!isLab && !doctorId) {
+      return res.status(400).json({ message: "Doctor is required" });
+    }
+
+    if (isLab && !labId) {
+      return res.status(400).json({ message: "Lab is required" });
+    }
+
+    if (!date || !time) {
+      return res.status(400).json({ message: "Date and time are required" });
+    }
+
+    let selectedDoctor = null;
 
     if (!isLab) {
-      const doctor = await Doctor.findById(doctorId);
-      if (!doctor || doctor.status !== "approved")
-        return res.status(404).json({ message: "Doctor not found or not available" });
+      selectedDoctor = await Doctor.findById(doctorId).select(
+        "name email status specialty"
+      );
 
-      const start = new Date(date); start.setHours(0,0,0,0);
-      const end   = new Date(date); end.setHours(23,59,59,999);
-      const existing = await Appointment.findOne({ doctor: doctorId, date: { $gte: start, $lte: end }, time, status: { $ne: "cancelled" } });
-      if (existing) return res.status(409).json({ message: "This time slot is already booked. Please choose another." });
+      if (!selectedDoctor || selectedDoctor.status !== "approved") {
+        return res
+          .status(404)
+          .json({ message: "Doctor not found or not available" });
+      }
+
+      const start = new Date(date);
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date(date);
+      end.setHours(23, 59, 59, 999);
+
+      const existing = await Appointment.findOne({
+        doctor: doctorId,
+        date: { $gte: start, $lte: end },
+        time,
+        status: { $ne: "cancelled" },
+      });
+
+      if (existing) {
+        return res.status(409).json({
+          message: "This time slot is already booked. Please choose another.",
+        });
+      }
     }
+
+    const providerName = isLab
+      ? labName || "Lab"
+      : selectedDoctor?.name ||
+        selectedDoctor?.email?.split("@")[0] ||
+        "Doctor";
 
     const appointmentData = {
       patient: req.user.id,
@@ -536,6 +691,8 @@ app.post("/booking/create", authMiddleware, async (req, res) => {
       patientName: patientName || "",
       patientEmail: patientEmail || "",
       patientPhone: patientPhone || "",
+      providerName,
+      doctorName: !isLab ? providerName : "",
       reminded: false,
     };
 
@@ -550,12 +707,6 @@ app.post("/booking/create", authMiddleware, async (req, res) => {
     const appointment = await new Appointment(appointmentData).save();
 
     if (patientEmail) {
-      let providerName = labName || "Unknown";
-      if (!isLab) {
-        const doc = await Doctor.findById(doctorId).select("name email");
-        providerName = doc ? (doc.name || doc.email.split("@")[0]) : "Doctor";
-      }
-
       const invoiceHtml = buildInvoiceEmail({
         patientName: patientName || "Patient",
         bookingId: appointment._id.toString().slice(-8).toUpperCase(),
@@ -571,16 +722,24 @@ app.post("/booking/create", authMiddleware, async (req, res) => {
         consultationType,
       });
 
-      transporter.sendMail({
-        from: `"Afiya Care" <${process.env.EMAIL_USER}>`,
-        to: patientEmail,
-        subject: "✅ Your AfiyaCare Booking is Confirmed",
-        html: invoiceHtml,
-      }).catch(err => console.error("Invoice email error:", err));
+      transporter
+        .sendMail({
+          from: `"Afiya Care" <${process.env.EMAIL_USER}>`,
+          to: patientEmail,
+          subject: "✅ Your AfiyaCare Booking is Confirmed",
+          html: invoiceHtml,
+        })
+        .catch((err) => console.error("Invoice email error:", err));
     }
 
-    res.status(201).json({ message: "Appointment booked successfully!", appointment });
-  } catch (err) { console.error(err); res.status(500).json({ message: "Server error" }); }
+    res.status(201).json({
+      message: "Appointment booked successfully!",
+      appointment,
+    });
+  } catch (err) {
+    console.error("Booking create error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 app.post("/booking/init-chat", authMiddleware, async (req, res) => {
@@ -788,9 +947,28 @@ app.post("/patient/profile/photo", authMiddleware, upload.single("photo"), async
 
 app.get("/patient/appointments", authMiddleware, async (req, res) => {
   try {
-    res.json(await Appointment.find({ patient: req.user.id })
-      .populate("doctor", "name specialty").sort({ date: -1 }));
-  } catch (err) { res.status(500).json({ message: "Server error" }); }
+    const appointments = await Appointment.find({ patient: req.user.id })
+      .populate("doctor", "name email specialty")
+      .sort({ date: -1 });
+
+    const fixedAppointments = appointments.map((appt) => {
+      const obj = appt.toObject();
+
+      obj.providerName =
+        obj.doctor?.name ||
+        obj.doctorName ||
+        obj.labName ||
+        obj.providerName ||
+        "Provider";
+
+      return obj;
+    });
+
+    res.json(fixedAppointments);
+  } catch (err) {
+    console.error("Patient appointments fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 app.get("/patient/reviews", authMiddleware, async (req, res) => {
@@ -821,11 +999,13 @@ app.get("/patient/appointments/completed", authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 });
 
-app.post("/patient/files", authMiddleware, uploadMedical.array("files", 10), async (req, res) => {
+app.post("/patient/files", authMiddleware, multerArray("files", 10), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0)
       return res.status(400).json({ message: "No files uploaded" });
+
     const labels = req.body.labels ? JSON.parse(req.body.labels) : [];
+
     const saved = await Promise.all(
       req.files.map((f, i) =>
         new MedicalFile({
@@ -839,8 +1019,12 @@ app.post("/patient/files", authMiddleware, uploadMedical.array("files", 10), asy
         }).save()
       )
     );
+
     res.status(201).json({ message: "Files uploaded", files: saved });
-  } catch (err) { console.error(err); res.status(500).json({ message: "Upload failed" }); }
+  } catch (err) {
+    console.error("Medical file upload error:", err);
+    res.status(500).json({ message: "Upload failed", detail: err.message });
+  }
 });
 
 app.get("/patient/files", authMiddleware, async (req, res) => {
@@ -1017,14 +1201,6 @@ cron.schedule("0 * * * *", async () => {
 
 /* ─────────────────────────────────────────────
    SOCKET.IO
-   
-   FIX SUMMARY:
-   - sendMessage: resolve senderModel/receiverModel dynamically from DB
-     instead of hardcoding "User"/"Admin" (caused "messaging yourself" bug)
-   - sendMessage: only emit "receiveMessage" to the RECEIVER's room.
-     The sender gets "messageSent" only — never both. This eliminates duplicates.
-   - The saved message includes a plain `sender` id string so the frontend
-     can reliably distinguish sent vs received with `String(msg.sender) === userId`
 ───────────────────────────────────────────── */
 
 const onlineUsers = new Map();
@@ -1047,19 +1223,15 @@ io.on("connection", (socket) => {
     io.to("admins").emit("appointmentCancelled", rest);
   });
 
-  /* ── FIXED sendMessage ── */
   socket.on("sendMessage", async ({ senderId, receiverId, content }) => {
-    // Basic validation
     if (!senderId || !receiverId || !content?.trim()) return;
 
     try {
-      // Resolve correct model names by checking which collection each ID lives in
       const [senderModel, receiverModel] = await Promise.all([
         resolveModel(senderId),
         resolveModel(receiverId),
       ]);
 
-      // Save to DB
       const message = await Message.create({
         sender:        senderId,
         senderModel,
@@ -1069,13 +1241,8 @@ io.on("connection", (socket) => {
         read:          false,
       });
 
-      // Populate sender info (name, photo, role) for display
       await message.populate("sender", "name photo role");
 
-      // ── KEY FIX ──
-      // Emit "messageSent" ONLY back to the sender's socket (so it appears in their chat)
-      // Emit "receiveMessage" ONLY to the receiver's room (so they get the notification)
-      // Never emit both to the same person — that's what caused the duplication.
       socket.emit("messageSent", message);
       socket.to(String(receiverId)).emit("receiveMessage", message);
 
