@@ -1,13 +1,13 @@
-/* Homepage.css */
 
-/* ── RESET ── */
+
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* ── VARIABLES ── */
+
 :root {
   --navy: #0B1F4B;
   --blue: #1A4FA0;
@@ -90,7 +90,7 @@ nav {
   transform: rotate(-45deg);
 }
 
-/* ── NAV LINKS ── */
+
 .nav-links {
   display: flex;
   align-items: center;
@@ -130,7 +130,7 @@ nav {
   color: var(--white);
 }
 
-/* Menu Overlay */
+
 .menu-overlay {
   display: none;
   position: fixed;
@@ -148,12 +148,12 @@ nav {
   to { opacity: 1; }
 }
 
-/* ── HERO ── */
+
 .hero {
   position: relative;
   overflow: hidden;
   min-height: 520px;
-  background: linear-gradient(135deg, #0B1F4B 0%, #1A4FA0 50%, #2A7DE1 100%);
+  background: linear-gradient(135deg, #0B1F4B 0%, #1a2a4a 50%, #1a2a4a 100%);
   display: flex;
   align-items: center;
   margin: 24px 60px;

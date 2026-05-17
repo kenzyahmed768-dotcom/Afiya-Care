@@ -1,4 +1,4 @@
-/* PatientCommunity.css — Afiya Care brand palette */
+
 
 :root {
   --blue-deep: #0a3d6b;
@@ -32,7 +32,6 @@ body {
   line-height: 1.6;
 }
 
-/* ── NAV ── */
 .pc-nav {
   background: var(--blue-deep);
   padding: 0 2.5rem;
@@ -40,7 +39,7 @@ body {
   align-items: center;
   justify-content: space-between;
   height: 60px;
-  position: sticky;
+  position: static;
   top: 0;
   z-index: 100;
 }
@@ -98,9 +97,9 @@ body {
   background: #0b9490 !important;
 }
 
-/* ── HERO ── */
+
 .pc-hero {
-  background: var(--blue-deep);
+  background-color: #1a2a4a;
   padding: 5rem 2rem 4rem;
   text-align: center;
   position: relative;
@@ -273,7 +272,7 @@ body {
   align-items: start;
 }
 
-/* ── SECTION HEADER ── */
+
 .pc-section-header {
   display: flex;
   align-items: center;
@@ -328,9 +327,9 @@ body {
   border-color: var(--blue-mid);
 }
 
-/* ── FEATURED CARD ── */
+
 .pc-featured-card {
-  background: var(--blue-mid);
+  background-color: #1a2a4a;
   border-radius: 12px;
   padding: 1.75rem;
   margin-bottom: 1rem;

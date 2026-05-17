@@ -7,9 +7,9 @@ const API = "http://localhost:5000";
 
 const SPECIALISTS = [
   {
-    id:"amara-osei",
-    name: "Dr. Amara Osei",
-    title: "Physiotherapist",
+    id:"abdallah-hamdy",
+    name: "Dr. Abdallah Hamdy",
+    title: "General Physiotherapist",
     image:
       "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&q=80",
     rating: "4.9",
@@ -27,8 +27,8 @@ const SPECIALISTS = [
     reviews: 278,
   },
   {
-    id:"kwame-ansah",
-    name: "Dr. Kwame Ansah",
+    id:"ahmed-hassan",
+    name: "Dr. Ahmed Hassan",
     title: "Elderly Care Specialist",
     image:
       "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400&q=80",
@@ -37,9 +37,9 @@ const SPECIALISTS = [
     reviews: 196,
   },
   {
-    id:"lena-boateng",
-    name: "Dr. Lena Boateng",
-    title: "Pediatrician",
+    id:"fatima-noor",
+    name: "Dr. Fatima Noor",
+    title: "Post surgery specialist",
     image:
       "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&q=80",
     rating: "5.0",
@@ -57,9 +57,9 @@ const SPECIALISTS = [
     reviews: 223,
   },
   {
-    id:"aisha-diallo",
-    name: "Dr. Aisha Diallo",
-    title: "Physiotherapist",
+    id:"malak-awad",
+    name: "Dr. Malak Awad",
+    title: "General Physiotherapist",
     image:
       "https://images.unsplash.com/photo-1651008376811-b90baee60c1f?w=400&q=80",
     rating: "4.9",
@@ -314,15 +314,11 @@ export default function JoinUs() {
               <div className="team-doctor">
                 <div className="team-doctor-avatar">👨‍⚕️</div>
                 <div>
-                  <strong>Dr. James Afiya</strong>
+                  <strong>Dr. Ahmed Hassan</strong>
                   <span>Lead Physiotherapist, MRCP (UK)</span>
                 </div>
               </div>
-              <div className="team-badge-247">
-                <span>🎧</span>
-                <strong>24/7</strong>
-                <span>Service</span>
-              </div>
+             
             </div>
             <div className="team-perks">
               <h3>Experienced in multiple medical services</h3>

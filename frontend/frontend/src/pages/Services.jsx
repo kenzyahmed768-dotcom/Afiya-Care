@@ -95,50 +95,50 @@ function BodyMap() {
 const SERVICES = [
   {
     label: "Post surgery rehab",
-    img: "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?w=900&q=80"
+    img: "https://images.unsplash.com/photo-1706777227772-629b1cdb8a9f?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
   {
     label: "Sports injury rehab",
-    img: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=900&q=80"
+    img: "https://plus.unsplash.com/premium_photo-1661634342444-23d9c37dfc2d?q=80&w=1591&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
   {
-    label: "Speech therapy",
-    img: "https://images.unsplash.com/photo-1584515933487-779824d29309?w=900&q=80"
+    label: "Neurological Physiotherapy",
+    img: "https://images.unsplash.com/photo-1645005512788-71110dc23393?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
   {
     label: "Muscle and joint diseases",
-    img: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=900&q=80"
+    img: "https://images.unsplash.com/photo-1649751361457-01d3a696c7e6?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
   {
     label: "Post cardiovascular diseases",
-    img: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=900&q=80"
+    img: "https://images.unsplash.com/photo-1645685045094-bdbd2841843e?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
   {
     label: "Nursing and elderly care",
-    img: "https://images.unsplash.com/photo-1584516150909-c43483ee7938?w=900&q=80"
+    img: "https://plus.unsplash.com/premium_photo-1663036885930-7cdd25c9c80e?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
   {
     label: "In-clinic physiotherapy",
-    img: "https://images.unsplash.com/photo-1573377378599-f14e90f4f0da?w=900&q=80"
+    img: "https://plus.unsplash.com/premium_photo-1663091434747-1d64d6602a23?q=80&w=2100&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
   {
     label: "At home lab tests",
-    img: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80"
+    img: "https://images.unsplash.com/photo-1614935151651-0bea6508db6b?q=80&w=1525&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
 ];
 
 const SMART_CARE = [
   {
     id: "telehealth",
-    title: "Virtual Consultations",
-    desc: "Connect with our top physiotherapists from the comfort of your home. Receive real-time form correction, guided exercises, and progress tracking through secure, high-definition video.",
-    img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80"
+    title: "Video Conference Consultations",
+    desc: "Connect with a qualified physiotherapist through a secure video consultation. Discuss your condition face-to-face, demonstrate your movement or pain areas, receive real-time guidance, and get a personalized recovery plan without needing to visit the clinic.",
+    img: "https://images.unsplash.com/photo-1758691463620-188ca7c1a04f?q=80&w=1632&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
   {
     id: "wearables",
-    title: "Wearable Integration",
-    desc: "Sync your smartwatch or fitness tracker directly with the AfiyaCare portal. Our system monitors your vitals, step count, and mobility metrics daily to adapt your recovery plan dynamically.",
-    img: "https://images.unsplash.com/photo-1510017803434-a899398421b3?w=800&q=80"
+    title: "Phone Consultation",
+    desc: "Speak with a qualified physiotherapist from the comfort of your home. Our phone consultation service allows you to discuss your symptoms, receive professional guidance, understand your recovery steps, and get advice on exercises or treatment options without needing to visit the clinic.",
+    img: "https://images.unsplash.com/photo-1758691462848-31a39258dbd8?q=80&w=2064&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
   {
     id: "elderly",

@@ -1,5 +1,5 @@
 
-/* ── VARIABLES ── */
+
 :root {
   --ab-navy:      #1a2a4a;
   --ab-navy-dark: #0f1d35;
@@ -12,9 +12,6 @@
 }
 
 
-/* ══════════════════════════════════════
-   HERO — parallax + particles + stats
-══════════════════════════════════════ */
 .ab-hero {
   margin-top: 0px;
   height: 420px;
@@ -821,7 +818,10 @@
   to { transform: rotate(360deg); }
 }
 
-/* Adding a slightly longer delay for the 3rd card reveal */
+
 .ab-reveal-delay-2 {
   animation-delay: 0.4s;
+}
+.ab-reviews {
+  margin-bottom: 70px;
 }

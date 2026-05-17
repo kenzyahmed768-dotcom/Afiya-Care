@@ -186,6 +186,7 @@ function Layout() {
               <li><Link to="/booking">Booking</Link></li>
               <li><Link to="/service">Services</Link></li>
               <li><Link to="/blog">Blog</Link></li>
+               <li><Link to="/patient-community">Patient Community</Link></li>
             </ul>
           </div>
 
@@ -208,7 +209,7 @@ function Layout() {
               <li><a href="mailto:afiyacare@gmail.com">afiyacare@gmail.com</a></li>
               <li><a href="https://www.facebook.com/profile.php?id=61585057423569" target="_blank" rel="noopener noreferrer">Facebook</a></li>
               <li><a href="https://www.instagram.com/afiyacare_1/?hl=en" target="_blank" rel="noopener noreferrer">Instagram</a></li>
-              <li><a href="https://wa.me/" target="_blank" rel="noopener noreferrer">WhatsApp</a></li>
+              <li><a href="https://wa.me/201014737320" target="_blank" rel="noopener noreferrer">WhatsApp</a></li>
               <li><Link to="/help">Help Center</Link></li>
             </ul>
             <div className="newsletter-row">
@@ -222,7 +223,7 @@ function Layout() {
           <div className="social-links">
             <a href="https://www.facebook.com/profile.php?id=61585057423569" target="_blank" rel="noopener noreferrer" aria-label="Facebook">f</a>
             <a href="https://www.instagram.com/afiyacare_1/?hl=en" target="_blank" rel="noopener noreferrer" aria-label="Instagram">i</a>
-            <a href="#" aria-label="LinkedIn">in</a>
+            
           </div>
           <p>© 2025 Afiya Care. All Rights Reserved.</p>
         </div>

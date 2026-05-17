@@ -225,7 +225,7 @@ function Homepage() {
 
         <div className="contact-image-area">
           <img
-            src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&q=80"
+            src="https://images.unsplash.com/photo-1758691462860-b1b9532c7394?q=80&w=1632&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
             alt="Medical team"
           />
           <div className="testimonial-card">
@@ -254,7 +254,7 @@ function Homepage() {
             />
             <div className="blog-card-body">
               <h3>5 Physiotherapy Exercises You Can Do at Home</h3>
-              <a href="#" className="blog-read">
+              <a href="/blog" className="blog-read">
                 Read more
               </a>
             </div>
@@ -267,7 +267,7 @@ function Homepage() {
             />
             <div className="blog-card-body">
               <h3>The Science Behind Physiotherapy and Neural Recovery</h3>
-              <a href="#" className="blog-read">
+              <a href="/blog" className="blog-read">
                 Read more
               </a>
             </div>
@@ -280,7 +280,7 @@ function Homepage() {
             />
             <div className="blog-card-body">
               <h3>Understanding Pain: When to See a Specialist</h3>
-              <a href="#" className="blog-read">
+              <a href="/blog" className="blog-read">
                 Read more
               </a>
             </div>

@@ -37,7 +37,7 @@ const ARTICLES = {
       categoryLabel: "Therapy",
       title: "Understanding Manual Therapy Techniques",
       desc: "A guide to various manual therapy approaches and how they can benefit your treatment plan.",
-      img: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=700&q=85",
+      img: "https://plus.unsplash.com/premium_photo-1661779394380-e372d6a1f198?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       url: "https://phoenixrehabgroup.com/articles/physiotherapy/manual-physiotherapy/",
       source: "Phoenix Rehab Group",
     },
@@ -494,8 +494,8 @@ export default function AfiyaCareBlog() {
               type="button"
               onClick={() => setActiveFilter(filter.key)}
               style={{
-                border:      active ? "1px solid #29A8D8" : "1px solid rgba(255,255,255,0.18)",
-                background:  active ? "#29A8D8" : "rgba(255,255,255,0.08)",
+                border:      active ? "1px solid #00b4a2" : "1px solid rgba(255,255,255,0.18)",
+                background:  active ? "#00b4a2" : "rgba(255,255,255,0.08)",
                 color:       "#fff",
                 borderRadius: 999,
                 padding:     "9px 18px",
@@ -530,7 +530,7 @@ export default function AfiyaCareBlog() {
     </div>
   );
 
-  /* ── ALL ARTICLES VIEW — sectioned layout ── */
+  
   const AllView = () => (
     <>
       {/* Featured */}
@@ -547,7 +547,7 @@ export default function AfiyaCareBlog() {
         </div>
       </div>
 
-      {/* Health Tips */}
+      
       <div style={{ background: "#F7F9FC", padding: "56px 40px" }}>
         <div style={{ ...W, ...fade(0.12) }}>
           <SectionLabel text="Health Tips & Exercises" />
@@ -558,7 +558,7 @@ export default function AfiyaCareBlog() {
         </div>
       </div>
 
-      {/* Therapy */}
+      
       <div style={{ background: "#0F2347", padding: "56px 40px" }}>
         <div style={{ ...W, ...fade(0.12) }}>
           <SectionLabel text="Therapy & Information" />
@@ -569,7 +569,7 @@ export default function AfiyaCareBlog() {
         </div>
       </div>
 
-      {/* Injuries */}
+     
       <div style={{ background: "#fff", padding: "56px 40px" }}>
         <div style={{ ...W, ...fade(0.12) }}>
           <SectionLabel text="Injuries & Conditions" />
@@ -580,7 +580,7 @@ export default function AfiyaCareBlog() {
         </div>
       </div>
 
-      {/* Guides */}
+     
       <div style={{ background: "#F7F9FC", padding: "56px 40px 72px" }}>
         <div style={{ ...W, ...fade(0.12) }}>
           <SectionLabel text="Patient Guides" />
@@ -600,7 +600,7 @@ export default function AfiyaCareBlog() {
     const isBg2       = activeFilter === "healthTips" || activeFilter === "guides" || activeFilter === "bookmarked";
     const bgColor     = isDark ? "#0F2347" : isBg2 ? "#F7F9FC" : "#fff";
 
-    /* featured gets its own hero layout */
+   
     if (activeFilter === "featured") {
       return (
         <div style={{ background: "#fff", padding: "56px 40px 72px" }}>
@@ -651,7 +651,6 @@ export default function AfiyaCareBlog() {
 
       <div style={{ background: "#F7F9FC", minHeight: "100vh" }}>
 
-        {/* HERO / HEADER */}
         <div style={{ background: "#0F2347", padding: "60px 40px 56px" }}>
           <div style={{ ...W, ...fade(0) }}>
             <div style={{ maxWidth: 760 }}>
@@ -677,7 +676,7 @@ export default function AfiyaCareBlog() {
                 letterSpacing: -1,
               }}>
                 Evidence-based<br />
-                <span style={{ color: "#29A8D8", fontStyle: "italic" }}>
+                <span style={{ color: "#00b4a2", fontStyle: "italic" }}>
                   recovery, explained.
                 </span>
               </h1>
@@ -709,7 +708,7 @@ export default function AfiyaCareBlog() {
           </div>
         </div>
 
-        {/* CONTENT */}
+        
         {activeFilter === "all" ? <AllView /> : <FilteredView />}
 
       </div>
