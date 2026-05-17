@@ -929,52 +929,7 @@ footer {
 }
 
 /* Small Devices (481px - 768px) */
-@media (min-width: 481px) and (max-width: 768px) {
-  .nav-links { 
-    display: none; 
-  }
 
-  .mobile-menu-toggle {
-    display: flex;
-  }
-
-  .hc-nav {
-    position: relative;
-  }
-
-  .mobile-menu {
-    top: 100%;
-  }
-
-  .hc-faq { 
-    flex-direction: column; 
-    padding: 32px 20px; 
-    gap: 24px;
-  }
-
-  .hc-faq-sidebar { 
-    width: 100%; 
-  }
-
-  .hc-faq-sidebar {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 10px;
-  }
-
-  .hc-contact { 
-    padding: 32px 20px; 
-  }
-
-  footer { 
-    padding: 40px 20px 0; 
-  }
-
-  .footer-grid { 
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem; 
-  }
-}
 
 /* Tablet (769px - 1024px) */
 @media (min-width: 769px) and (max-width: 1024px) {

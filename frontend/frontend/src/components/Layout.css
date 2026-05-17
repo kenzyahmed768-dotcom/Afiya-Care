@@ -25,13 +25,18 @@
   padding: 0;
 }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
+}
 
 body {
   font-family: 'DM Sans', sans-serif;
   color: var(--text-dark);
   background: var(--white);
   overflow-x: hidden;
+  max-width: 100%;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -39,11 +44,13 @@ a { text-decoration: none; color: inherit; }
 ul { list-style: none; }
 img { max-width: 100%; display: block; }
 
-/* ── LAYOUT ROOT ── */
+
 .layout-root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 @media (max-width: 768px) {
@@ -71,22 +78,33 @@ img { max-width: 100%; display: block; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 clamp(16px, 5vw, 60px);
-  height: clamp(64px, 10vw, 80px);
+  padding: 0 12px;
+  height: clamp(56px, 10vw, 80px);
   background: var(--white);
   border-bottom: 1px solid var(--border);
   box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  min-width: 0;
+  flex-wrap: nowrap;
+  z-index: 50;
 }
 
-@media (max-width: 768px) {
-  .site-nav { z-index: 50; }
+@media (min-width: 480px) {
+  .site-nav {
+    padding: 0 clamp(16px, 4vw, 60px);
+  }
 }
 
-.logo { display: flex; align-items: center; }
+.logo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
 
 .logo-img {
-  width: clamp(45px, 8vw, 75px);
-  height: clamp(45px, 8vw, 75px);
+  width: clamp(36px, 8vw, 75px);
+  height: clamp(36px, 8vw, 75px);
+  min-width: 36px;
+  min-height: 36px;
   object-fit: contain;
 }
 
@@ -97,10 +115,13 @@ img { max-width: 100%; display: block; }
   justify-content: space-around;
   width: 28px;
   height: 22px;
+  min-width: 28px;
   background: transparent;
   border: none;
   cursor: pointer;
   padding: 0;
+  flex-shrink: 0;
+  z-index: 51;
 }
 
 .hamburger span {
@@ -422,8 +443,6 @@ footer {
 }
 
 /* ── MOBILE ≤ 768px ── */
-/* All !important here because other page CSS files also define
-   .nav-links with display:flex and override our mobile styles */
 @media (max-width: 768px) {
 
   .hamburger { display: flex !important; }
@@ -502,9 +521,66 @@ footer {
   }
 }
 
-/* ── SMALL MOBILE ≤ 480px ── */
+/* ── VERY SMALL ≤ 480px ── */
 @media (max-width: 480px) {
   .nav-links { width: 100% !important; }
   .newsletter-row { flex-direction: column; }
   .newsletter-row button { width: 100%; }
+
+  .site-nav {
+    padding: 0 10px;
+    height: 56px;
+  }
+
+  .logo-img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .hamburger {
+    width: 26px;
+    height: 20px;
+  }
+}
+/* ── NUCLEAR NAV OVERRIDE — beats all page CSS ── */
+@media (max-width: 768px) {
+  .site-nav {
+    padding: 0 12px !important;
+    height: 56px !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 50 !important;
+  }
+
+  .logo {
+    flex-direction: row !important;
+    gap: 0 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .logo-img {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .hamburger {
+    display: flex !important;
+    flex-shrink: 0 !important;
+    min-width: 28px !important;
+    flex-direction: column !important;
+    height: 22px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-nav {
+    padding: 0 10px !important;
+    height: 52px !important;
+  }
 }
