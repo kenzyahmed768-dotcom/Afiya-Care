@@ -269,25 +269,11 @@ body {
   flex-shrink: 0;
 }
 
-.stat-icon-box.blue {
-  background: #eff6ff;
-}
-
-.stat-icon-box.green {
-  background: #f0fdf4;
-}
-
-.stat-icon-box.red {
-  background: #fef2f2;
-}
-
-.stat-icon-box.amber {
-  background: #fffbeb;
-}
-
-.stat-icon-box.slate {
-  background: #f8fafc;
-}
+.stat-icon-box.blue  { background: #eff6ff; }
+.stat-icon-box.green { background: #f0fdf4; }
+.stat-icon-box.red   { background: #fef2f2; }
+.stat-icon-box.amber { background: #fffbeb; }
+.stat-icon-box.slate { background: #f8fafc; }
 
 .stat-value {
   font-size: 24px;
@@ -388,13 +374,8 @@ body {
   flex-shrink: 0;
 }
 
-.avatar.green {
-  background: linear-gradient(135deg, var(--approve), #15803d);
-}
-
-.avatar.amber {
-  background: linear-gradient(135deg, var(--warn), #d97706);
-}
+.avatar.green { background: linear-gradient(135deg, var(--approve), #15803d); }
+.avatar.amber { background: linear-gradient(135deg, var(--warn), #d97706); }
 
 .pill {
   display: inline-block;
@@ -466,9 +447,7 @@ body {
   flex-shrink: 0;
 }
 
-.doc-info {
-  flex: 1;
-}
+.doc-info { flex: 1; }
 
 .doc-name {
   font-size: 14px;
@@ -642,20 +621,9 @@ body {
   text-transform: capitalize;
 }
 
-.role-pill.doctor {
-  background: #eff6ff;
-  color: var(--primary);
-}
-
-.role-pill.patient {
-  background: #f0fdf4;
-  color: #15803d;
-}
-
-.role-pill.admin {
-  background: #faf5ff;
-  color: #7c3aed;
-}
+.role-pill.doctor  { background: #eff6ff; color: var(--primary); }
+.role-pill.patient { background: #f0fdf4; color: #15803d; }
+.role-pill.admin   { background: #faf5ff; color: #7c3aed; }
 
 .appt-stats {
   padding: 20px;
@@ -692,21 +660,10 @@ body {
   transition: width 0.6s ease;
 }
 
-.appt-bar.pending {
-  background: var(--warn);
-}
-
-.appt-bar.confirmed {
-  background: var(--primary);
-}
-
-.appt-bar.completed {
-  background: var(--approve);
-}
-
-.appt-bar.cancelled {
-  background: var(--reject);
-}
+.appt-bar.pending   { background: var(--warn); }
+.appt-bar.confirmed { background: var(--primary); }
+.appt-bar.completed { background: var(--approve); }
+.appt-bar.cancelled { background: var(--reject); }
 
 .appt-stat-count {
   font-size: 13px;
@@ -868,9 +825,7 @@ body {
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 .toast {
@@ -887,24 +842,12 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
-.toast.success {
-  background: var(--approve);
-}
-
-.toast.error {
-  background: var(--reject);
-}
+.toast.success { background: var(--approve); }
+.toast.error   { background: var(--reject); }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(16px);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
 @media (max-width: 1100px) {

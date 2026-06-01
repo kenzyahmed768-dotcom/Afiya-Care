@@ -7,7 +7,7 @@ const API = "http://localhost:5000";
 
 const SPECIALISTS = [
   {
-    id:"abdallah-hamdy",
+    id: "abdallah-hamdy",
     name: "Dr. Abdallah Hamdy",
     title: "General Physiotherapist",
     image:
@@ -17,7 +17,7 @@ const SPECIALISTS = [
     reviews: 312,
   },
   {
-    id:"fatima-noor",
+    id: "fatima-noor",
     name: "Dr. Fatima Noor",
     title: "Sports Rehab Specialist",
     image:
@@ -27,7 +27,7 @@ const SPECIALISTS = [
     reviews: 278,
   },
   {
-    id:"ahmed-hassan",
+    id: "ahmed-hassan",
     name: "Dr. Ahmed Hassan",
     title: "Elderly Care Specialist",
     image:
@@ -37,9 +37,9 @@ const SPECIALISTS = [
     reviews: 196,
   },
   {
-    id:"fatima-noor",
-    name: "Dr. Fatima Noor",
-    title: "Post surgery specialist",
+    id: "layla-ibrahim",            // ← was duplicate "fatima-noor", now fixed
+    name: "Dr. Layla Ibrahim",
+    title: "Post Surgery Specialist",
     image:
       "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&q=80",
     rating: "5.0",
@@ -47,7 +47,7 @@ const SPECIALISTS = [
     reviews: 401,
   },
   {
-    id:"yusuf-musa",
+    id: "yusuf-musa",
     name: "Dr. Yusuf Musa",
     title: "Orthopedic Surgeon",
     image:
@@ -57,7 +57,7 @@ const SPECIALISTS = [
     reviews: 223,
   },
   {
-    id:"malak-awad",
+    id: "malak-awad",
     name: "Dr. Malak Awad",
     title: "General Physiotherapist",
     image:
@@ -121,16 +121,13 @@ export default function JoinUs() {
 
     handleResize();
     window.addEventListener("resize", handleResize);
-
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const maxSlide = Math.max(SPECIALISTS.length - visibleCards, 0);
 
   useEffect(() => {
-    if (slide > maxSlide) {
-      setSlide(maxSlide);
-    }
+    if (slide > maxSlide) setSlide(maxSlide);
   }, [slide, maxSlide]);
 
   const goTo = (n) => setSlide(Math.max(0, Math.min(n, maxSlide)));
@@ -238,12 +235,14 @@ export default function JoinUs() {
             <em>Afiya Care.</em>
           </h2>
           <p>
-            At AfiyaCare we believe that providing world class patient care starts with taking world class care of our staff, as we have proudly served communities across the region 
-            , growing alongside our ever-expanding population and team.
+            At AfiyaCare we believe that providing world class patient care
+            starts with taking world class care of our staff, as we have
+            proudly served communities across the region, growing alongside our
+            ever-expanding population and team.
           </p>
           <p>
             Our medical staffing includes highly qualified professionals and
-            specialists licensed a multitude of convenient locations
+            specialists licensed at a multitude of convenient locations
             nationwide.
           </p>
           <div className="story-highlights">
@@ -309,7 +308,7 @@ export default function JoinUs() {
               <p>
                 Our mission is to improve the health of our community by
                 providing high quality, comprehensive physiotherapy care in a
-                welcoming & compassionate environment.
+                welcoming &amp; compassionate environment.
               </p>
               <div className="team-doctor">
                 <div className="team-doctor-avatar">👨‍⚕️</div>
@@ -318,7 +317,6 @@ export default function JoinUs() {
                   <span>Lead Physiotherapist, MRCP (UK)</span>
                 </div>
               </div>
-             
             </div>
             <div className="team-perks">
               <h3>Experienced in multiple medical services</h3>
@@ -359,7 +357,7 @@ export default function JoinUs() {
 
           <div className="specialists-track">
             {SPECIALISTS.slice(slide, slide + visibleCards).map((s) => (
-              <div className="specialist-card" key={s.name}>
+              <div className="specialist-card" key={s.id}>
                 <div className="specialist-avatar">
                   <img src={s.image} alt={s.name} />
                 </div>
@@ -370,8 +368,8 @@ export default function JoinUs() {
                 <p>{s.title}</p>
                 <p className="specialist-reviews">{s.reviews} patient reviews</p>
                 <Link to={`/doctor-profile/${s.id}`} className="btn-card">
-  View Profile →
-</Link>
+                  View Profile →
+                </Link>
               </div>
             ))}
           </div>
@@ -402,13 +400,13 @@ export default function JoinUs() {
         <div className="apply-header">
           <div className="section-label">JOIN THE TEAM</div>
           <h2>
-            Apply Now & Start
+            Apply Now &amp; Start
             <br />
             <em>Making a Difference</em>
           </h2>
           <p>
-            Ready to bring your skills to AfiyaCare? Fill out the form below and
-            let's connect.
+            Ready to bring your skills to AfiyaCare? Fill out the form below
+            and let's connect.
           </p>
         </div>
 
@@ -417,8 +415,9 @@ export default function JoinUs() {
             <div className="success-icon">🎉</div>
             <h2>Application Received!</h2>
             <p>
-              Thank you, <strong>{form.firstName}</strong>! Our team will review
-              your application and get back to you within 3–5 business days.
+              Thank you, <strong>{form.firstName}</strong>! Our team will
+              review your application and get back to you within 3–5 business
+              days.
             </p>
             <button className="btn-primary" onClick={resetForm}>
               Submit Another
@@ -555,7 +554,11 @@ export default function JoinUs() {
             {submitError && <div className="submit-error">{submitError}</div>}
 
             <div className="form-submit-row">
-              <button type="submit" className="btn-submit" disabled={submitting}>
+              <button
+                type="submit"
+                className="btn-submit"
+                disabled={submitting}
+              >
                 {submitting ? "Submitting..." : "Submit Application ✦"}
               </button>
             </div>

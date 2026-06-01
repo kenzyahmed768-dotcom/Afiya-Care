@@ -17,6 +17,7 @@ import About from "./pages/About";
 import Services from "./pages/Services";
 import Blog from "./pages/Blog";
 import PatientCommunity from "./pages/PatientCommunity";
+import DoctorProfile from "./pages/DoctorProfile";
 
 function ProtectedRoute({ children, allowedRoles }) {
   const token = localStorage.getItem("token");
@@ -27,18 +28,9 @@ function ProtectedRoute({ children, allowedRoles }) {
   }
 
   if (allowedRoles && !allowedRoles.includes(role)) {
-    if (role === "admin") {
-      return <Navigate to="/admin" replace />;
-    }
-
-    if (role === "doctor") {
-      return <Navigate to="/doctor" replace />;
-    }
-
-    if (role === "patient") {
-      return <Navigate to="/patient" replace />;
-    }
-
+    if (role === "admin")   return <Navigate to="/admin"   replace />;
+    if (role === "doctor")  return <Navigate to="/doctor"  replace />;
+    if (role === "patient") return <Navigate to="/patient" replace />;
     return <Navigate to="/login" replace />;
   }
 
@@ -51,19 +43,22 @@ function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Homepage />} />
-          <Route path="join" element={<JoinUs />} />
-          <Route path="booking" element={<Booking />} />
-          <Route path="help" element={<HelpCenter />} />
-          <Route path="payment" element={<Payment />} />
-          <Route path="about" element={<About />} />
-          <Route path="service" element={<Services />} />
-          <Route path="blog" element={<Blog />} />
+          <Route path="join"              element={<JoinUs />} />
+          <Route path="booking"           element={<Booking />} />
+          <Route path="help"              element={<HelpCenter />} />
+          <Route path="payment"           element={<Payment />} />
+          <Route path="about"             element={<About />} />
+          <Route path="service"           element={<Services />} />
+          <Route path="blog"              element={<Blog />} />
           <Route path="patient-community" element={<PatientCommunity />} />
+
+          {/* ✅ Fixed: removed leading slash so it resolves as /doctor-profile/:id */}
+          <Route path="doctor-profile/:id" element={<DoctorProfile />} />
         </Route>
 
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/register"              element={<Register />} />
+        <Route path="/login"                 element={<Login />} />
+        <Route path="/forgot-password"       element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         <Route

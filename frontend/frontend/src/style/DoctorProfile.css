@@ -1,211 +1,308 @@
-.doctor-profile-page {
+/* ============================================================
+   AfiyaCare — doctor-profile.css
+   ============================================================ */
+
+/* ── Page wrapper ── */
+.dp-page {
+  font-family: 'DM Sans', sans-serif;
+  color: #1a1a2e;
   background: #f8fafb;
-  color: #0a1628;
+  min-height: 100vh;
 }
 
-.doctor-hero {
-  padding: 70px 60px 40px;
-  background: linear-gradient(135deg, #e6f9f7, #ffffff);
-}
-
-.doctor-card {
-  max-width: 1100px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 24px;
-  padding: 32px;
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 36px;
-  box-shadow: 0 8px 40px rgba(10, 22, 40, 0.12);
-}
-
-.doctor-photo {
-  width: 100%;
-  height: 320px;
-  object-fit: cover;
-  border-radius: 20px;
-}
-
-.doctor-tag {
-  display: inline-block;
-  background: #e6f9f7;
-  color: #00b4a2;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.doctor-main-info h1 {
-  font-size: 38px;
-  margin-bottom: 6px;
-}
-
-.doctor-title {
-  color: #6b7c93;
-  margin-bottom: 18px;
-}
-
-.doctor-meta {
+/* ── Not-found state ── */
+.dp-not-found {
   display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-}
-
-.doctor-meta span {
-  background: #f8fafb;
-  border: 1px solid #dde8ef;
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 13px;
-}
-
-.doctor-about {
-  max-width: 700px;
-  line-height: 1.7;
-  color: #3a4a5c;
-  margin-bottom: 24px;
-}
-
-.doctor-book-btn,
-.side-book-btn {
-  display: inline-block;
-  background: #00b4a2;
-  color: white;
-  padding: 13px 24px;
-  border-radius: 999px;
-  font-weight: 700;
-  transition: 0.2s;
-}
-
-.doctor-book-btn:hover,
-.side-book-btn:hover {
-  background: #008b7c;
-  transform: translateY(-2px);
-}
-
-.doctor-content {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 40px 60px 80px;
-  display: grid;
-  grid-template-columns: 1fr 330px;
-  gap: 28px;
-}
-
-.profile-section,
-.booking-box {
-  background: white;
-  border: 1px solid #dde8ef;
-  border-radius: 18px;
-  padding: 24px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 18px rgba(10, 22, 40, 0.06);
-}
-
-.profile-section h2,
-.booking-box h3 {
-  margin-bottom: 14px;
-  font-size: 22px;
-}
-
-.profile-section p,
-.profile-section li,
-.booking-box p {
-  color: #3a4a5c;
-  line-height: 1.7;
-}
-
-.profile-section ul {
-  padding-left: 20px;
-}
-
-.specialty-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.specialty-tags span {
-  background: #e6f9f7;
-  color: #008b7c;
-  padding: 8px 12px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.fee {
-  font-size: 32px;
-  font-weight: 800;
-  color: #00b4a2;
-  margin-bottom: 4px;
-}
-
-.fee-note {
-  color: #6b7c93;
-  font-size: 13px;
-}
-
-.time-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.time-grid button {
-  border: 1px solid #00b4a2;
-  background: white;
-  color: #008b7c;
-  border-radius: 10px;
-  padding: 10px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.time-grid button:hover {
-  background: #00b4a2;
-  color: white;
-}
-
-.side-book-btn {
-  display: block;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1rem;
   text-align: center;
+  padding: 2rem;
 }
+.dp-not-found h2 { font-size: 2rem; color: #0a1628; }
+.dp-not-found p  { color: #6b7c93; }
 
-.review-card {
-  border-top: 1px solid #dde8ef;
-  padding-top: 16px;
-  margin-top: 16px;
+/* ── Back link ── */
+.dp-back-link,
+.dp-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .85rem;
+  font-weight: 600;
+  color: #00b4a2;
+  text-decoration: none;
+  margin-bottom: 1.75rem;
+  transition: gap .2s;
 }
+.dp-back-link:hover,
+.dp-back-btn:hover { gap: .7rem; }
 
-.review-top {
+/* ── Hero section ── */
+.dp-hero {
+  background: linear-gradient(135deg, #0a1628 0%, #1a3254 100%);
+  padding: 56px 80px 64px;
+}
+.dp-hero-inner { max-width: 1100px; margin: 0 auto; }
+
+.dp-hero-card {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 3rem;
+  align-items: flex-start;
 }
 
-.review-top span {
+/* Avatar */
+.dp-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.dp-avatar {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 5px solid rgba(0,180,162,.5);
+  box-shadow: 0 16px 48px rgba(0,0,0,.35);
+}
+.dp-badge-online {
+  position: absolute;
+  bottom: 8px;
+  right: 4px;
+  background: #fff;
+  color: #00b4a2;
+  font-size: .7rem;
+  font-weight: 700;
+  padding: .25rem .65rem;
+  border-radius: 50px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+
+/* Info block */
+.dp-hero-info { flex: 1; }
+
+.dp-specialty-tag {
+  display: inline-block;
+  background: rgba(0,180,162,.2);
+  color: #00b4a2;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: .3rem .85rem;
+  border-radius: 50px;
+  margin-bottom: .85rem;
+}
+
+.dp-name {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  color: #fff;
+  line-height: 1.15;
+  margin-bottom: .75rem;
+}
+
+/* Rating */
+.dp-meta-row { margin-bottom: 1.25rem; }
+.dp-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
   color: #f0b429;
+  font-size: .95rem;
+}
+.dp-rating strong { color: #fff; font-size: .95rem; }
+.dp-review-count { color: rgba(255,255,255,.5); font-size: .82rem; }
+
+/* Stats */
+.dp-stats-row {
+  display: flex;
+  gap: 2.5rem;
+  margin-bottom: 1.25rem;
+}
+.dp-stat {
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+}
+.dp-stat strong {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  color: #fff;
+  line-height: 1;
+}
+.dp-stat span { font-size: .75rem; color: rgba(255,255,255,.5); font-weight: 500; }
+
+/* Languages */
+.dp-lang-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: 1.75rem;
+}
+.dp-lang-pill {
+  background: rgba(255,255,255,.1);
+  color: rgba(255,255,255,.75);
+  font-size: .75rem;
+  font-weight: 600;
+  padding: .28rem .8rem;
+  border-radius: 50px;
+  border: 1px solid rgba(255,255,255,.15);
 }
 
-@media (max-width: 900px) {
-  .doctor-card,
-  .doctor-content {
-    grid-template-columns: 1fr;
-  }
+/* Price + CTA */
+.dp-price-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.dp-price {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #00b4a2;
+}
 
-  .doctor-hero,
-  .doctor-content {
-    padding-left: 24px;
-    padding-right: 24px;
-  }
+.dp-book-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .75rem 1.8rem;
+  background: #00b4a2;
+  color: #fff;
+  border-radius: 50px;
+  font-size: .9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background .2s, transform .2s, box-shadow .2s;
+  white-space: nowrap;
+}
+.dp-book-btn:hover {
+  background: #17c3b2;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,180,162,.35);
+}
+.dp-book-btn--full { width: 100%; justify-content: center; }
 
-  .doctor-photo {
-    height: 280px;
-  }
+/* ── Body ── */
+.dp-body { padding: 56px 80px; }
+.dp-body-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* Cards */
+.dp-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 24px rgba(10,22,40,.08);
+  border: 1px solid #dde8ef;
+  margin-bottom: 1.5rem;
+}
+.dp-card:last-child { margin-bottom: 0; }
+
+.dp-card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.25rem;
+  color: #0a1628;
+  margin-bottom: 1rem;
+}
+
+.dp-about-text {
+  color: #3a4a5c;
+  line-height: 1.8;
+  font-size: .95rem;
+}
+
+/* Services */
+.dp-services-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: .7rem;
+}
+.dp-service-item {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  font-size: .92rem;
+  color: #3a4a5c;
+}
+.dp-service-dot { color: #00b4a2; font-size: .6rem; flex-shrink: 0; }
+
+/* Education */
+.dp-edu-text {
+  font-size: .92rem;
+  color: #3a4a5c;
+  line-height: 1.6;
+}
+
+/* Availability */
+.dp-availability {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-top: .25rem;
+}
+.dp-day {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .78rem;
+  font-weight: 600;
+  background: #f0f4f8;
+  color: #aab8c8;
+  border: 2px solid transparent;
+}
+.dp-day--on {
+  background: #e6f9f7;
+  color: #00b4a2;
+  border-color: #00b4a2;
+}
+
+/* CTA card */
+.dp-cta-card {
+  background: linear-gradient(135deg, #0a1628 0%, #1a3254 100%);
+  border-color: transparent;
+}
+.dp-cta-card h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  color: #fff;
+  margin-bottom: .5rem;
+}
+.dp-cta-card p {
+  font-size: .88rem;
+  color: rgba(255,255,255,.6);
+  margin-bottom: 1.25rem;
+  line-height: 1.6;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .dp-hero,
+  .dp-body { padding-left: 32px; padding-right: 32px; }
+}
+
+@media (max-width: 768px) {
+  .dp-hero { padding: 40px 20px 48px; }
+  .dp-hero-card { flex-direction: column; align-items: center; text-align: center; gap: 1.5rem; }
+
+  .dp-avatar { width: 130px; height: 130px; }
+
+  .dp-stats-row { justify-content: center; }
+  .dp-lang-row  { justify-content: center; }
+  .dp-price-row { justify-content: center; }
+
+  .dp-body { padding: 32px 20px; }
+  .dp-body-inner { grid-template-columns: 1fr; }
 }

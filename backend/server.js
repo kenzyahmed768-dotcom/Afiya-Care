@@ -127,6 +127,8 @@ const Message = require("./models/message");
 const Application = require("./models/application");
 const Review = require("./models/review");
 const MedicalFile = require("./models/medicalFile");
+const Progress = require("./models/progress");
+
 
 const {
   buildInvoiceEmail,
@@ -179,6 +181,10 @@ async function resolveModel(userId) {
 }
 
 
+
+// ==========================================
+// AUTH ROUTES
+// ==========================================
 
 app.post("/register", async (req, res) => {
   try {
@@ -386,6 +392,202 @@ app.post("/reset-password/:token", async (req, res) => {
 
 
 
+// ==========================================
+// ADMIN ROUTES
+// ==========================================
+
+// GET /admin/overview  ← WAS MISSING
+app.get("/admin/overview", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const [
+      totalDoctors,
+      totalPatients,
+      pendingDoctors,
+      totalAppointments,
+      pendingAppointments,
+      confirmedAppointments,
+      completedAppointments,
+      cancelledAppointments,
+      recentRegistrations,
+    ] = await Promise.all([
+      Doctor.countDocuments(),
+      User.countDocuments(),
+      Doctor.countDocuments({ status: "pending" }),
+      Appointment.countDocuments(),
+      Appointment.countDocuments({ status: "pending" }),
+      Appointment.countDocuments({ status: "confirmed" }),
+      Appointment.countDocuments({ status: "completed" }),
+      Appointment.countDocuments({ status: "cancelled" }),
+      Promise.all([
+        User.find()
+          .select("name email role createdAt")
+          .sort({ createdAt: -1 })
+          .limit(5),
+        Doctor.find()
+          .select("name email role createdAt")
+          .sort({ createdAt: -1 })
+          .limit(5),
+      ]).then(([users, doctors]) =>
+        [...users, ...doctors]
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .slice(0, 5)
+      ),
+    ]);
+
+    res.json({
+      totalDoctors,
+      totalPatients,
+      pendingDoctors,
+      totalAppointments,
+      pendingAppointments,
+      confirmedAppointments,
+      completedAppointments,
+      cancelledAppointments,
+      recentRegistrations,
+    });
+  } catch (err) {
+    console.error("Admin overview error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET /admin/pending-doctors  ← WAS MISSING
+app.get("/admin/pending-doctors", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const doctors = await Doctor.find({ status: "pending" })
+      .select("-password -resetToken -resetTokenExpiry")
+      .sort({ createdAt: -1 });
+
+    res.json(doctors);
+  } catch (err) {
+    console.error("Admin pending doctors fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET /admin/all-doctors  ← WAS MISSING
+app.get("/admin/all-doctors", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const doctors = await Doctor.find()
+      .select("-password -resetToken -resetTokenExpiry")
+      .sort({ createdAt: -1 });
+
+    res.json(doctors);
+  } catch (err) {
+    console.error("Admin all doctors fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// PATCH /admin/doctor/:id  ← WAS MISSING
+app.patch("/admin/doctor/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!["pending", "approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const doctor = await Doctor.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    ).select("-password -resetToken -resetTokenExpiry");
+
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+    res.json({ message: `Doctor ${status}`, doctor });
+  } catch (err) {
+    console.error("Admin doctor update error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// DELETE /admin/doctors/:id  ← WAS MISSING
+app.delete("/admin/doctors/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const doctor = await Doctor.findById(req.params.id);
+
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+    await Promise.all([
+      Appointment.deleteMany({ doctor: req.params.id }),
+      Message.deleteMany({
+        $or: [{ sender: req.params.id }, { receiver: req.params.id }],
+      }),
+      Review.deleteMany({ doctor: req.params.id }),
+    ]);
+
+    await doctor.deleteOne();
+
+    res.json({ message: "Doctor deleted" });
+  } catch (err) {
+    console.error("Admin doctor delete error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET /admin/appointments  ← WAS MISSING
+app.get("/admin/appointments", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const appointments = await Appointment.find()
+      .populate("patient", "name email")
+      .populate("doctor", "name email specialty")
+      .sort({ date: -1 });
+
+    res.json(appointments);
+  } catch (err) {
+    console.error("Admin appointments fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// PATCH /admin/appointments/:id  ← WAS MISSING
+app.patch("/admin/appointments/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!["pending", "confirmed", "completed", "cancelled"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const appointment = await Appointment.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    res.json({ message: "Appointment updated", appointment });
+  } catch (err) {
+    console.error("Admin appointment update error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// DELETE /admin/appointments/:id  ← WAS MISSING
+app.delete("/admin/appointments/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const appointment = await Appointment.findByIdAndDelete(req.params.id);
+
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    res.json({ message: "Appointment deleted" });
+  } catch (err) {
+    console.error("Admin appointment delete error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 app.get("/admin/patients", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const patients = await User.find()
@@ -515,6 +717,145 @@ app.delete("/admin/messages/:id", authMiddleware, adminMiddleware, async (req, r
   }
 });
 
+app.get("/admin/reviews", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { status } = req.query;
+    const query = status ? { status } : {};
+
+    const reviews = await Review.find(query)
+      .populate("patient", "name email")
+      .populate("doctor", "name specialty")
+      .sort({ createdAt: -1 });
+
+    res.json(reviews);
+  } catch (err) {
+    console.error("Admin reviews fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.get("/admin/reviews/stats", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const stats = await Review.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+          avgRating: { $avg: "$rating" },
+        },
+      },
+    ]);
+
+    const total = stats.reduce((sum, s) => sum + s.count, 0);
+    const pending = stats.find((s) => s._id === "pending")?.count || 0;
+    const approved = stats.find((s) => s._id === "approved")?.count || 0;
+    const rejected = stats.find((s) => s._id === "rejected")?.count || 0;
+
+    res.json({ total, pending, approved, rejected, stats });
+  } catch (err) {
+    console.error("Admin review stats error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.patch("/admin/reviews/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { status, adminNotes } = req.body;
+
+    if (!["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const review = await Review.findByIdAndUpdate(
+      req.params.id,
+      {
+        status,
+        isPublic: status === "approved",
+        adminNotes,
+        reviewedBy: req.user.id,
+        reviewedAt: new Date(),
+      },
+      { new: true }
+    )
+      .populate("patient", "name")
+      .populate("doctor", "name");
+
+    if (!review) {
+      return res.status(404).json({ message: "Review not found" });
+    }
+
+    res.json({ message: `Review ${status}`, review });
+  } catch (err) {
+    console.error("Admin review update error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.delete("/admin/reviews/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const review = await Review.findByIdAndDelete(req.params.id);
+
+    if (!review) {
+      return res.status(404).json({ message: "Review not found" });
+    }
+
+    res.json({ message: "Review deleted successfully" });
+  } catch (err) {
+    console.error("Admin review delete error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.get("/admin/applications", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const applications = await Application.find().sort({ createdAt: -1 });
+    res.json(applications);
+  } catch (err) {
+    console.error("Admin applications fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.patch("/admin/applications/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!["pending", "reviewed", "accepted", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const application = await Application.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    res.json({ message: `Application marked as ${status}`, application });
+  } catch (err) {
+    console.error("Admin application update error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.delete("/admin/applications/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const application = await Application.findByIdAndDelete(req.params.id);
+
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    res.json({ message: "Application deleted" });
+  } catch (err) {
+    console.error("Admin application delete error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 app.get("/admin/debug-counts", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const [
@@ -556,6 +897,10 @@ app.get("/admin/debug-counts", authMiddleware, adminMiddleware, async (req, res)
 
 
 
+// ==========================================
+// APPLICATIONS ROUTES
+// ==========================================
+
 app.post("/applications", async (req, res) => {
   try {
     const { firstName, lastName, email, phone, role, experience, message } =
@@ -587,60 +932,11 @@ app.post("/applications", async (req, res) => {
   }
 });
 
-app.get("/admin/applications", authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const applications = await Application.find().sort({ createdAt: -1 });
-    res.json(applications);
-  } catch (err) {
-    console.error("Admin applications fetch error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.patch("/admin/applications/:id", authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const { status } = req.body;
-
-    if (!["pending", "reviewed", "accepted", "rejected"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
-    }
-
-    const application = await Application.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
-
-    if (!application) {
-      return res.status(404).json({ message: "Application not found" });
-    }
-
-    res.json({
-      message: `Application marked as ${status}`,
-      application,
-    });
-  } catch (err) {
-    console.error("Admin application update error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.delete("/admin/applications/:id", authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const application = await Application.findByIdAndDelete(req.params.id);
-
-    if (!application) {
-      return res.status(404).json({ message: "Application not found" });
-    }
-
-    res.json({ message: "Application deleted" });
-  } catch (err) {
-    console.error("Admin application delete error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
 
 
+// ==========================================
+// BOOKING ROUTES
+// ==========================================
 
 app.get("/booking/doctors", async (req, res) => {
   try {
@@ -870,6 +1166,10 @@ app.post("/booking/init-chat", authMiddleware, async (req, res) => {
 
 
 
+// ==========================================
+// PATIENT ROUTES
+// ==========================================
+
 app.patch("/patient/appointments/:id/cancel", authMiddleware, async (req, res) => {
   try {
     const appointment = await Appointment.findOne({
@@ -950,242 +1250,6 @@ app.patch("/patient/appointments/:id/cancel", authMiddleware, async (req, res) =
   }
 });
 
-
-app.get("/doctor/profile", authMiddleware, doctorMiddleware, async (req, res) => {
-  try {
-    const doctor = await Doctor.findById(req.user.id).select("-password");
-
-    if (!doctor) {
-      return res.status(404).json({ message: "Not found" });
-    }
-
-    res.json(doctor);
-  } catch (err) {
-    console.error("Doctor profile fetch error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.patch("/doctor/profile", authMiddleware, doctorMiddleware, async (req, res) => {
-  try {
-    const { name, specialty, experience, bio, phone } = req.body;
-
-    const doctor = await Doctor.findByIdAndUpdate(
-      req.user.id,
-      {
-        name,
-        specialty,
-        experience,
-        bio,
-        phone,
-      },
-      { new: true }
-    ).select("-password");
-
-    res.json({ message: "Profile updated", doctor });
-  } catch (err) {
-    console.error("Doctor profile update error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.post(
-  "/doctor/profile/photo",
-  authMiddleware,
-  doctorMiddleware,
-  upload.single("photo"),
-  async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded" });
-      }
-
-      const photoUrl = `/uploads/profiles/${req.file.filename}`;
-
-      const doctor = await Doctor.findByIdAndUpdate(
-        req.user.id,
-        { photo: photoUrl },
-        { new: true }
-      ).select("-password");
-
-      res.json({ message: "Photo updated", photo: doctor.photo });
-    } catch (err) {
-      console.error("Doctor photo update error:", err);
-      res.status(500).json({ message: "Server error" });
-    }
-  }
-);
-
-app.get("/doctor/stats", authMiddleware, doctorMiddleware, async (req, res) => {
-  try {
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
-
-    const [
-      totalPatients,
-      totalAppointments,
-      todayAppointments,
-      pendingAppointments,
-      completedAppointments,
-      unreadMessages,
-    ] = await Promise.all([
-      Appointment.distinct("patient", { doctor: req.user.id }).then(
-        (r) => r.length
-      ),
-      Appointment.countDocuments({ doctor: req.user.id }),
-      Appointment.countDocuments({
-        doctor: req.user.id,
-        date: { $gte: start, $lte: end },
-      }),
-      Appointment.countDocuments({
-        doctor: req.user.id,
-        status: "pending",
-      }),
-      Appointment.countDocuments({
-        doctor: req.user.id,
-        status: "completed",
-      }),
-      Message.countDocuments({
-        receiver: req.user.id,
-        read: false,
-      }),
-    ]);
-
-    res.json({
-      totalPatients,
-      totalAppointments,
-      todayAppointments,
-      pendingAppointments,
-      completedAppointments,
-      unreadMessages,
-    });
-  } catch (err) {
-    console.error("Doctor stats error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.get("/doctor/schedule/today", authMiddleware, doctorMiddleware, async (req, res) => {
-  try {
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
-
-    const schedule = await Appointment.find({
-      doctor: req.user.id,
-      date: { $gte: start, $lte: end },
-    })
-      .populate("patient", "name email phone")
-      .sort({ time: 1 });
-
-    res.json(schedule);
-  } catch (err) {
-    console.error("Doctor schedule today error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.get("/doctor/appointments", authMiddleware, doctorMiddleware, async (req, res) => {
-  try {
-    const appointments = await Appointment.find({ doctor: req.user.id })
-      .populate("patient", "name email phone")
-      .sort({ date: -1 });
-
-    res.json(appointments);
-  } catch (err) {
-    console.error("Doctor appointments fetch error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.patch("/doctor/appointments/:id", authMiddleware, doctorMiddleware, async (req, res) => {
-  try {
-    const { status } = req.body;
-
-    if (!["confirmed", "completed", "cancelled"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
-    }
-
-    const appt = await Appointment.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        doctor: req.user.id,
-      },
-      { status },
-      { new: true }
-    ).populate("patient", "name");
-
-    if (!appt) {
-      return res.status(404).json({ message: "Not found" });
-    }
-
-    res.json({ message: "Updated", appointment: appt });
-  } catch (err) {
-    console.error("Doctor appointment update error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.get("/doctor/patients", authMiddleware, doctorMiddleware, async (req, res) => {
-  try {
-    const appts = await Appointment.find({ doctor: req.user.id }).populate(
-      "patient",
-      "name email phone createdAt"
-    );
-
-    const seen = new Set();
-    const patients = [];
-
-    for (const a of appts) {
-      if (a.patient && !seen.has(String(a.patient._id))) {
-        seen.add(String(a.patient._id));
-        patients.push(a.patient);
-      }
-    }
-
-    res.json(patients);
-  } catch (err) {
-    console.error("Doctor patients fetch error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.get(
-  "/doctor/patients/:patientId/files",
-  authMiddleware,
-  doctorMiddleware,
-  async (req, res) => {
-    try {
-      const linked = await Appointment.exists({
-        doctor: req.user.id,
-        patient: req.params.patientId,
-      });
-
-      if (!linked) {
-        return res.status(403).json({
-          message: "This patient is not in your list",
-        });
-      }
-
-      const files = await MedicalFile.find({
-        patient: req.params.patientId,
-      }).sort({ createdAt: -1 });
-
-      res.json(files);
-    } catch (err) {
-      console.error("Doctor patient files fetch error:", err);
-      res.status(500).json({ message: "Server error" });
-    }
-  }
-);
-
-
-
 app.get("/patient/profile", authMiddleware, async (req, res) => {
   try {
     const patient = await User.findById(req.user.id).select("-password");
@@ -1265,6 +1329,22 @@ app.get("/patient/appointments", authMiddleware, async (req, res) => {
   }
 });
 
+app.get("/patient/appointments/completed", authMiddleware, async (req, res) => {
+  try {
+    const appointments = await Appointment.find({
+      patient: req.user.id,
+      status: "completed",
+    })
+      .populate("doctor", "name specialty")
+      .sort({ date: -1 });
+
+    res.json(appointments);
+  } catch (err) {
+    console.error("Patient completed appointments fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 app.get("/patient/reviews", authMiddleware, async (req, res) => {
   try {
     const reviews = await Review.find({ patient: req.user.id })
@@ -1322,22 +1402,6 @@ app.post("/patient/reviews", authMiddleware, async (req, res) => {
   }
 });
 
-app.get("/patient/appointments/completed", authMiddleware, async (req, res) => {
-  try {
-    const appointments = await Appointment.find({
-      patient: req.user.id,
-      status: "completed",
-    })
-      .populate("doctor", "name specialty")
-      .sort({ date: -1 });
-
-    res.json(appointments);
-  } catch (err) {
-    console.error("Patient completed appointments fetch error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
 app.post("/patient/files", authMiddleware, multerArray("files", 10), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
@@ -1363,10 +1427,7 @@ app.post("/patient/files", authMiddleware, multerArray("files", 10), async (req,
     res.status(201).json({ message: "Files uploaded", files: saved });
   } catch (err) {
     console.error("Medical file upload error:", err);
-    res.status(500).json({
-      message: "Upload failed",
-      detail: err.message,
-    });
+    res.status(500).json({ message: "Upload failed", detail: err.message });
   }
 });
 
@@ -1410,6 +1471,346 @@ app.delete("/patient/files/:id", authMiddleware, async (req, res) => {
 });
 
 
+
+// ==========================================
+// DOCTOR ROUTES
+// ==========================================
+
+app.get("/doctor/profile", authMiddleware, doctorMiddleware, async (req, res) => {
+  try {
+    const doctor = await Doctor.findById(req.user.id).select("-password");
+
+    if (!doctor) {
+      return res.status(404).json({ message: "Not found" });
+    }
+
+    res.json(doctor);
+  } catch (err) {
+    console.error("Doctor profile fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.patch("/doctor/profile", authMiddleware, doctorMiddleware, async (req, res) => {
+  try {
+    const { name, specialty, experience, bio, phone } = req.body;
+
+    const doctor = await Doctor.findByIdAndUpdate(
+      req.user.id,
+      { name, specialty, experience, bio, phone },
+      { new: true }
+    ).select("-password");
+
+    res.json({ message: "Profile updated", doctor });
+  } catch (err) {
+    console.error("Doctor profile update error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.post(
+  "/doctor/profile/photo",
+  authMiddleware,
+  doctorMiddleware,
+  upload.single("photo"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const photoUrl = `/uploads/profiles/${req.file.filename}`;
+
+      const doctor = await Doctor.findByIdAndUpdate(
+        req.user.id,
+        { photo: photoUrl },
+        { new: true }
+      ).select("-password");
+
+      res.json({ message: "Photo updated", photo: doctor.photo });
+    } catch (err) {
+      console.error("Doctor photo update error:", err);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+);
+
+app.get("/doctor/stats", authMiddleware, doctorMiddleware, async (req, res) => {
+  try {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    const [
+      totalPatients,
+      totalAppointments,
+      todayAppointments,
+      pendingAppointments,
+      completedAppointments,
+      unreadMessages,
+    ] = await Promise.all([
+      Appointment.distinct("patient", { doctor: req.user.id }).then(
+        (r) => r.length
+      ),
+      Appointment.countDocuments({ doctor: req.user.id }),
+      Appointment.countDocuments({
+        doctor: req.user.id,
+        date: { $gte: start, $lte: end },
+      }),
+      Appointment.countDocuments({ doctor: req.user.id, status: "pending" }),
+      Appointment.countDocuments({ doctor: req.user.id, status: "completed" }),
+      Message.countDocuments({ receiver: req.user.id, read: false }),
+    ]);
+
+    res.json({
+      totalPatients,
+      totalAppointments,
+      todayAppointments,
+      pendingAppointments,
+      completedAppointments,
+      unreadMessages,
+    });
+  } catch (err) {
+    console.error("Doctor stats error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.get("/doctor/schedule/today", authMiddleware, doctorMiddleware, async (req, res) => {
+  try {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    const schedule = await Appointment.find({
+      doctor: req.user.id,
+      date: { $gte: start, $lte: end },
+    })
+      .populate("patient", "name email phone")
+      .sort({ time: 1 });
+
+    res.json(schedule);
+  } catch (err) {
+    console.error("Doctor schedule today error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.get("/doctor/appointments", authMiddleware, doctorMiddleware, async (req, res) => {
+  try {
+    const appointments = await Appointment.find({ doctor: req.user.id })
+      .populate("patient", "name email phone")
+      .sort({ date: -1 });
+
+    res.json(appointments);
+  } catch (err) {
+    console.error("Doctor appointments fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.patch("/doctor/appointments/:id", authMiddleware, doctorMiddleware, async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!["confirmed", "completed", "cancelled"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const appt = await Appointment.findOneAndUpdate(
+      { _id: req.params.id, doctor: req.user.id },
+      { status },
+      { new: true }
+    ).populate("patient", "name");
+
+    if (!appt) {
+      return res.status(404).json({ message: "Not found" });
+    }
+
+    res.json({ message: "Updated", appointment: appt });
+  } catch (err) {
+    console.error("Doctor appointment update error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.get("/doctor/patients", authMiddleware, doctorMiddleware, async (req, res) => {
+  try {
+    const appts = await Appointment.find({ doctor: req.user.id }).populate(
+      "patient",
+      "name email phone createdAt"
+    );
+
+    const seen = new Set();
+    const patients = [];
+
+    for (const a of appts) {
+      if (a.patient && !seen.has(String(a.patient._id))) {
+        seen.add(String(a.patient._id));
+        patients.push(a.patient);
+      }
+    }
+
+    res.json(patients);
+  } catch (err) {
+    console.error("Doctor patients fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.get(
+  "/doctor/patients/:patientId/files",
+  authMiddleware,
+  doctorMiddleware,
+  async (req, res) => {
+    try {
+      const linked = await Appointment.exists({
+        doctor: req.user.id,
+        patient: req.params.patientId,
+      });
+
+      if (!linked) {
+        return res.status(403).json({
+          message: "This patient is not in your list",
+        });
+      }
+
+      const files = await MedicalFile.find({
+        patient: req.params.patientId,
+      }).sort({ createdAt: -1 });
+
+      res.json(files);
+    } catch (err) {
+      console.error("Doctor patient files fetch error:", err);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+);
+// DOCTOR — add a progress entry for a patient
+app.post(
+  "/doctor/patients/:patientId/progress",
+  authMiddleware,
+  doctorMiddleware,
+  async (req, res) => {
+    try {
+      const { recoveryPct, note, appointmentId, sessionDate } = req.body;
+
+      if (recoveryPct === undefined || recoveryPct === null) {
+        return res.status(400).json({ message: "recoveryPct is required" });
+      }
+
+      if (recoveryPct < 0 || recoveryPct > 100) {
+        return res.status(400).json({ message: "recoveryPct must be 0–100" });
+      }
+
+      // Verify this patient belongs to this doctor
+      const linked = await Appointment.exists({
+        doctor: req.user.id,
+        patient: req.params.patientId,
+      });
+
+      if (!linked) {
+        return res.status(403).json({ message: "Patient not in your list" });
+      }
+
+      const entry = await new Progress({
+        patient:     req.params.patientId,
+        doctor:      req.user.id,
+        appointment: appointmentId || null,
+        recoveryPct: Number(recoveryPct),
+        note:        note?.trim() || "",
+        sessionDate: sessionDate ? new Date(sessionDate) : new Date(),
+      }).save();
+
+      await entry.populate("appointment", "date time reason");
+
+      res.status(201).json({ message: "Progress saved", entry });
+    } catch (err) {
+      console.error("Progress create error:", err);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+);
+
+// DOCTOR — get all progress entries for a patient
+app.get(
+  "/doctor/patients/:patientId/progress",
+  authMiddleware,
+  doctorMiddleware,
+  async (req, res) => {
+    try {
+      const linked = await Appointment.exists({
+        doctor: req.user.id,
+        patient: req.params.patientId,
+      });
+
+      if (!linked) {
+        return res.status(403).json({ message: "Patient not in your list" });
+      }
+
+      const entries = await Progress.find({
+        patient: req.params.patientId,
+        doctor:  req.user.id,
+      })
+        .populate("appointment", "date time reason")
+        .sort({ sessionDate: 1 });
+
+      res.json(entries);
+    } catch (err) {
+      console.error("Progress fetch error:", err);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+);
+
+// DOCTOR — delete a single progress entry
+app.delete(
+  "/doctor/progress/:entryId",
+  authMiddleware,
+  doctorMiddleware,
+  async (req, res) => {
+    try {
+      const entry = await Progress.findOneAndDelete({
+        _id:    req.params.entryId,
+        doctor: req.user.id,
+      });
+
+      if (!entry) {
+        return res.status(404).json({ message: "Entry not found" });
+      }
+
+      res.json({ message: "Deleted" });
+    } catch (err) {
+      console.error("Progress delete error:", err);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+);
+
+// PATIENT — get own progress (all doctors)
+app.get("/patient/progress", authMiddleware, async (req, res) => {
+  try {
+    const entries = await Progress.find({ patient: req.user.id })
+      .populate("doctor",      "name specialty")
+      .populate("appointment", "date time reason")
+      .sort({ sessionDate: 1 });
+
+    res.json(entries);
+  } catch (err) {
+    console.error("Patient progress fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+
+// ==========================================
+// CHAT ROUTES
+// ==========================================
 
 app.get("/chat/conversations/list", authMiddleware, async (req, res) => {
   try {
@@ -1505,11 +1906,7 @@ app.get("/chat/:userId", authMiddleware, async (req, res) => {
     }).sort({ createdAt: 1 });
 
     await Message.updateMany(
-      {
-        sender: req.params.userId,
-        receiver: req.user.id,
-        read: false,
-      },
+      { sender: req.params.userId, receiver: req.user.id, read: false },
       { read: true }
     );
 
@@ -1522,105 +1919,9 @@ app.get("/chat/:userId", authMiddleware, async (req, res) => {
 
 
 
-app.get("/admin/reviews", authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const { status } = req.query;
-    const query = status ? { status } : {};
-
-    const reviews = await Review.find(query)
-      .populate("patient", "name email")
-      .populate("doctor", "name specialty")
-      .sort({ createdAt: -1 });
-
-    res.json(reviews);
-  } catch (err) {
-    console.error("Admin reviews fetch error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.get("/admin/reviews/stats", authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const stats = await Review.aggregate([
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 },
-          avgRating: { $avg: "$rating" },
-        },
-      },
-    ]);
-
-    const total = stats.reduce((sum, s) => sum + s.count, 0);
-    const pending = stats.find((s) => s._id === "pending")?.count || 0;
-    const approved = stats.find((s) => s._id === "approved")?.count || 0;
-    const rejected = stats.find((s) => s._id === "rejected")?.count || 0;
-
-    res.json({
-      total,
-      pending,
-      approved,
-      rejected,
-      stats,
-    });
-  } catch (err) {
-    console.error("Admin review stats error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.patch("/admin/reviews/:id", authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const { status, adminNotes } = req.body;
-
-    if (!["approved", "rejected"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
-    }
-
-    const review = await Review.findByIdAndUpdate(
-      req.params.id,
-      {
-        status,
-        isPublic: status === "approved",
-        adminNotes,
-        reviewedBy: req.user.id,
-        reviewedAt: new Date(),
-      },
-      { new: true }
-    )
-      .populate("patient", "name")
-      .populate("doctor", "name");
-
-    if (!review) {
-      return res.status(404).json({ message: "Review not found" });
-    }
-
-    res.json({
-      message: `Review ${status}`,
-      review,
-    });
-  } catch (err) {
-    console.error("Admin review update error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.delete("/admin/reviews/:id", authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const review = await Review.findByIdAndDelete(req.params.id);
-
-    if (!review) {
-      return res.status(404).json({ message: "Review not found" });
-    }
-
-    res.json({ message: "Review deleted successfully" });
-  } catch (err) {
-    console.error("Admin review delete error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-
+// ==========================================
+// CRON JOB — APPOINTMENT REMINDERS
+// ==========================================
 
 cron.schedule("0 * * * *", async () => {
   try {
@@ -1693,6 +1994,10 @@ cron.schedule("0 * * * *", async () => {
 
 
 
+// ==========================================
+// SOCKET.IO
+// ==========================================
+
 const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
@@ -1747,11 +2052,7 @@ io.on("connection", (socket) => {
   socket.on("markRead", async ({ senderId, receiverId }) => {
     try {
       await Message.updateMany(
-        {
-          sender: senderId,
-          receiver: receiverId,
-          read: false,
-        },
+        { sender: senderId, receiver: receiverId, read: false },
         { read: true }
       );
     } catch (err) {
@@ -1768,6 +2069,13 @@ io.on("connection", (socket) => {
     }
   });
 });
+
+
+
+
+// ==========================================
+// START SERVER
+// ==========================================
 
 const PORT = process.env.PORT || 5000;
 

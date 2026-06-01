@@ -73,7 +73,6 @@ export default function AdminDashboard() {
       handleLogout();
       return true;
     }
-
     return false;
   };
 
@@ -83,17 +82,25 @@ export default function AdminDashboard() {
       if (await handleAccessDenied(res)) return;
 
       const data = await res.json();
+      console.log("Overview API response:", data);
 
       if (res.ok) {
         setStats({
-          totalDoctors: data.totalDoctors || 0,
-          totalPatients: data.totalPatients || 0,
-          pendingDoctors: data.pendingDoctors || 0,
-          totalAppointments: data.totalAppointments || 0,
-          pendingAppointments: data.pendingAppointments || 0,
-          confirmedAppointments: data.confirmedAppointments || 0,
-          completedAppointments: data.completedAppointments || 0,
-          cancelledAppointments: data.cancelledAppointments || 0,
+          totalDoctors:
+            data.totalDoctors ?? data.doctors ?? data.doctorCount ?? 0,
+          totalPatients:
+            data.totalPatients ?? data.patients ?? data.patientCount ?? 0,
+          pendingDoctors:
+            data.pendingDoctors ?? data.pending ?? data.pendingDoctorCount ?? 0,
+          totalAppointments:
+            data.totalAppointments ??
+            data.appointments ??
+            data.appointmentCount ??
+            0,
+          pendingAppointments: data.pendingAppointments ?? 0,
+          confirmedAppointments: data.confirmedAppointments ?? 0,
+          completedAppointments: data.completedAppointments ?? 0,
+          cancelledAppointments: data.cancelledAppointments ?? 0,
           recentRegistrations: Array.isArray(data.recentRegistrations)
             ? data.recentRegistrations
             : [],
@@ -211,10 +218,10 @@ export default function AdminDashboard() {
 
       if (res.ok) {
         setReviewStats({
-          pending: data.pending || 0,
-          approved: data.approved || 0,
-          rejected: data.rejected || 0,
-          total: data.total || 0,
+          pending: data.pending ?? 0,
+          approved: data.approved ?? 0,
+          rejected: data.rejected ?? 0,
+          total: data.total ?? 0,
         });
       }
     } catch (err) {
@@ -566,7 +573,6 @@ export default function AdminDashboard() {
 
   const formatDate = (date) => {
     if (!date) return "---";
-
     return new Date(date).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -576,7 +582,6 @@ export default function AdminDashboard() {
 
   const formatDateTime = (date) => {
     if (!date) return "---";
-
     return new Date(date).toLocaleString("en-US", {
       month: "short",
       day: "numeric",
@@ -611,11 +616,12 @@ export default function AdminDashboard() {
     );
   }
 
+  // Calculate totals locally from individual counts for reliability
   const totalAppointments =
-    stats.pendingAppointments +
-    stats.confirmedAppointments +
-    stats.completedAppointments +
-    stats.cancelledAppointments;
+    (stats.pendingAppointments || 0) +
+    (stats.confirmedAppointments || 0) +
+    (stats.completedAppointments || 0) +
+    (stats.cancelledAppointments || 0);
 
   const maxAppointments = totalAppointments || 1;
 
@@ -725,6 +731,7 @@ export default function AdminDashboard() {
               <div className="stat-card">
                 <div className="stat-icon-box slate">📅</div>
                 <div>
+                  {/* Use locally calculated total for accuracy */}
                   <div className="stat-value">{totalAppointments}</div>
                   <div className="stat-label">Total Appointments</div>
                 </div>
@@ -747,11 +754,11 @@ export default function AdminDashboard() {
                       <div
                         className="appt-bar pending"
                         style={{
-                          width: `${(stats.pendingAppointments / maxAppointments) * 100}%`,
+                          width: `${((stats.pendingAppointments || 0) / maxAppointments) * 100}%`,
                         }}
                       ></div>
                     </div>
-                    <span className="appt-stat-count">{stats.pendingAppointments}</span>
+                    <span className="appt-stat-count">{stats.pendingAppointments || 0}</span>
                   </div>
 
                   <div className="appt-stat-row">
@@ -760,11 +767,11 @@ export default function AdminDashboard() {
                       <div
                         className="appt-bar confirmed"
                         style={{
-                          width: `${(stats.confirmedAppointments / maxAppointments) * 100}%`,
+                          width: `${((stats.confirmedAppointments || 0) / maxAppointments) * 100}%`,
                         }}
                       ></div>
                     </div>
-                    <span className="appt-stat-count">{stats.confirmedAppointments}</span>
+                    <span className="appt-stat-count">{stats.confirmedAppointments || 0}</span>
                   </div>
 
                   <div className="appt-stat-row">
@@ -773,11 +780,11 @@ export default function AdminDashboard() {
                       <div
                         className="appt-bar completed"
                         style={{
-                          width: `${(stats.completedAppointments / maxAppointments) * 100}%`,
+                          width: `${((stats.completedAppointments || 0) / maxAppointments) * 100}%`,
                         }}
                       ></div>
                     </div>
-                    <span className="appt-stat-count">{stats.completedAppointments}</span>
+                    <span className="appt-stat-count">{stats.completedAppointments || 0}</span>
                   </div>
 
                   <div className="appt-stat-row">
@@ -786,11 +793,11 @@ export default function AdminDashboard() {
                       <div
                         className="appt-bar cancelled"
                         style={{
-                          width: `${(stats.cancelledAppointments / maxAppointments) * 100}%`,
+                          width: `${((stats.cancelledAppointments || 0) / maxAppointments) * 100}%`,
                         }}
                       ></div>
                     </div>
-                    <span className="appt-stat-count">{stats.cancelledAppointments}</span>
+                    <span className="appt-stat-count">{stats.cancelledAppointments || 0}</span>
                   </div>
                 </div>
               </div>
@@ -1010,7 +1017,9 @@ export default function AdminDashboard() {
                           <select
                             className="status-select"
                             value={patient.status || "approved"}
-                            onChange={(e) => handlePatientStatus(patient._id, e.target.value)}
+                            onChange={(e) =>
+                              handlePatientStatus(patient._id, e.target.value)
+                            }
                           >
                             <option value="approved">Approved</option>
                             <option value="pending">Pending</option>
@@ -1180,7 +1189,9 @@ export default function AdminDashboard() {
             <div className="section-header">
               <div>
                 <div className="section-title">Messages</div>
-                <div className="section-sub">Admin can review and delete system messages</div>
+                <div className="section-sub">
+                  Admin can review and delete system messages
+                </div>
               </div>
             </div>
 

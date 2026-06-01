@@ -14,10 +14,8 @@ async function seedAdmin() {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Remove wrongly-created admin from User collection
     await User.deleteOne({ email });
 
-    // Create or update admin in Admin collection
     await Admin.findOneAndUpdate(
       { email },
       {
