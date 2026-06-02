@@ -4,6 +4,7 @@
   "description": "afiya care grad project",
   "main": "index.js",
   "scripts": {
+    "build": "cd frontend && npm install && npm run build",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node backend/index.js",
     "dev": "nodemon backend/index.js"
