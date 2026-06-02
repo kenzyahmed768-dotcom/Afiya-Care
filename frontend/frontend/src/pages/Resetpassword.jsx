@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import "../style/forgetPassword.css";
+import "../style/forgetpassword.css";
 
 function ResetPassword() {
   const [password, setPassword] = useState("");
