@@ -16,14 +16,27 @@ const cron = require("node-cron");
 const app = express();
 const server = http.createServer(app);
 
+
+
+app.use(cors({
+  origin: 'https://afiya-care.vercel.app/'
+}));
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
 const io = new Server(server, {
-  cors: { origin: "http://localhost:5173", methods: ["GET", "POST"] },
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
 });
 
-app.set("io", io);
-
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: allowedOrigins,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
@@ -2076,9 +2089,6 @@ io.on("connection", (socket) => {
 // ==========================================
 // START SERVER
 // ==========================================
-
 const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
