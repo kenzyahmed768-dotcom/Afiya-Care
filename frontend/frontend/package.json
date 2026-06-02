@@ -1,43 +1,23 @@
 {
-  "name": "afiya-care",
+  "name": "afiya-care-frontend",
+  "private": true,
   "version": "1.0.0",
-  "description": "afiya care grad project",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/kenzyahmed768-dotcom/Afiya-Care.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/kenzyahmed768-dotcom/Afiya-Care/issues"
-  },
-  "homepage": "https://github.com/kenzyahmed768-dotcom/Afiya-Care#readme",
   "dependencies": {
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.6",
-    "dotenv": "^17.3.1",
-    "express": "^5.2.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-i18next": "^17.0.3",
     "i18next": "^26.0.5",
     "i18next-browser-languagedetector": "^8.2.1",
-    "jsonwebtoken": "^9.0.3",
-    "mongodb": "^7.1.1",
-    "mongoose": "^9.2.1",
-    "multer": "^2.1.1",
-    "node-cron": "^4.2.1",
-    "nodemailer": "^8.0.1",
-    "react-i18next": "^17.0.3",
-    "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "@vitejs/plugin-react": "^5.0.0",
+    "vite": "^7.1.0"
   }
 }
