@@ -825,3 +825,426 @@
 .ab-reviews {
   margin-bottom: 70px;
 }
+
+/* =========================
+   ABOUT RESPONSIVE FIX
+   ========================= */
+
+.ab-hero,
+.ab-intro,
+.ab-rehab-modern,
+.ab-bodymap-section,
+.ab-svc-strip,
+.ab-rehab,
+.ab-reviews,
+.ab-values-section {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.ab-intro,
+.ab-rehab-modern,
+.ab-bodymap-section,
+.ab-rehab,
+.ab-reviews,
+.ab-values-section {
+  padding-left: clamp(16px, 5vw, 60px);
+  padding-right: clamp(16px, 5vw, 60px);
+}
+
+.ab-photos img,
+.ab-rehab-doctor img,
+.ab-rehab-card img,
+.ab-reviewer img,
+.ab-value-icon-wrapper img {
+  max-width: 100%;
+  display: block;
+}
+
+.ab-photos img,
+.ab-rehab-doctor img,
+.ab-rehab-card img {
+  background: #e6eef5;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .ab-hero {
+    height: 380px;
+  }
+
+  .ab-hero-content h1 {
+    font-size: clamp(2.4rem, 7vw, 3.4rem);
+  }
+
+  .ab-intro {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding-top: 60px;
+    padding-bottom: 60px;
+  }
+
+  .ab-intro-left {
+    max-width: 760px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .ab-badge-list {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  .ab-photos {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .ab-rehab-modern-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .ab-rehab-modern-header h2 {
+    font-size: clamp(2rem, 5vw, 2.6rem);
+  }
+
+  .ab-rehab-services-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ab-bodymap-wrap {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    text-align: center;
+  }
+
+  .ab-bodymap-left,
+  .ab-bodymap-right {
+    width: 100%;
+  }
+
+  .ab-bodymap-right {
+    justify-content: center;
+  }
+
+  .ab-zone-info {
+    max-width: 650px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .ab-reviews-inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    text-align: center;
+  }
+
+  .ab-rev-nav,
+  .ab-rev-dots {
+    justify-content: center;
+  }
+
+  .ab-review-card {
+    min-width: calc(50% - 12px);
+  }
+
+  .ab-values-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .ab-hero {
+    height: auto;
+    min-height: 360px;
+    padding: 70px 16px;
+  }
+
+  .ab-hero-bg {
+    background-position: center;
+  }
+
+  .ab-hero-content h1 {
+    font-size: 2.5rem;
+  }
+
+  .ab-hero-sub {
+    font-size: 0.9rem;
+  }
+
+  .ab-hero-stats {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ab-hero-stat {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 10px 20px;
+  }
+
+  .ab-hero-stat:last-child {
+    border-bottom: none;
+  }
+
+  .ab-intro {
+    padding-top: 50px;
+    padding-bottom: 50px;
+  }
+
+  .ab-intro-left h2 {
+    font-size: 1.8rem;
+  }
+
+  .ab-desc-box {
+    padding: 18px;
+    font-size: 0.88rem;
+  }
+
+  .ab-badge-item {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .ab-photos {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .ab-col-left,
+  .ab-col-right {
+    margin-top: 0;
+    width: 100%;
+  }
+
+  .ab-col-left img,
+  .ab-col-right img,
+  .ab-col-left img:nth-child(1),
+  .ab-col-left img:nth-child(2),
+  .ab-col-left img:nth-child(3),
+  .ab-col-right img:nth-child(1),
+  .ab-col-right img:nth-child(2),
+  .ab-col-right img:nth-child(3) {
+    height: 220px;
+    object-fit: cover;
+  }
+
+  .ab-rehab-modern {
+    padding-top: 55px;
+    padding-bottom: 55px;
+  }
+
+  .ab-rehab-modern-header {
+    margin-bottom: 32px;
+  }
+
+  .ab-rehab-modern-header h2 {
+    font-size: 2rem;
+  }
+
+  .ab-rehab-doctor img {
+    width: 100%;
+    max-width: 340px;
+    height: 400px;
+  }
+
+  .ab-doctor-floating-card {
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    width: calc(100% - 40px);
+    max-width: 280px;
+  }
+
+  .ab-rehab-services-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ab-rehab-service-box {
+    padding: 22px 18px;
+  }
+
+  .ab-bodymap-section {
+    padding-top: 55px;
+    padding-bottom: 55px;
+  }
+
+  .ab-body-svg {
+    max-width: 230px;
+  }
+
+  .ab-svc-strip {
+    padding: 24px 16px;
+    border-radius: 24px 24px 0 0;
+    gap: 12px;
+  }
+
+  .ab-svc-item {
+    width: calc(50% - 10px);
+    padding: 12px 8px;
+  }
+
+  .ab-rehab {
+    padding-top: 55px;
+    padding-bottom: 55px;
+  }
+
+  .ab-section-title {
+    font-size: 1.8rem;
+  }
+
+  .ab-rehab-card {
+    height: 240px;
+  }
+
+  .ab-rehab-overlay {
+    padding: 20px;
+  }
+
+  .ab-reviews {
+    padding-top: 55px;
+    padding-bottom: 55px;
+    margin-bottom: 40px;
+  }
+
+  .ab-reviews-left h2 {
+    font-size: 1.8rem;
+  }
+
+  .ab-slider-wrap {
+    overflow: hidden;
+  }
+
+  .ab-reviews-track {
+    gap: 14px;
+  }
+
+  .ab-review-card {
+    min-width: 100%;
+    width: 100%;
+    padding: 22px 18px;
+  }
+
+  .ab-reviewer {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .ab-values-section {
+    padding-top: 60px;
+    padding-bottom: 60px;
+  }
+
+  .ab-values-header h2 {
+    font-size: 2rem;
+  }
+
+  .ab-values-header p {
+    font-size: 0.95rem;
+    margin-bottom: 32px;
+  }
+
+  .ab-values-grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .ab-value-card {
+    padding: 32px 22px;
+  }
+}
+
+/* Small Phones */
+@media (max-width: 480px) {
+  .ab-intro,
+  .ab-rehab-modern,
+  .ab-bodymap-section,
+  .ab-rehab,
+  .ab-reviews,
+  .ab-values-section {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .ab-hero {
+    min-height: 330px;
+    padding: 60px 12px;
+  }
+
+  .ab-hero-content h1 {
+    font-size: 2.1rem;
+  }
+
+  .ab-hero-eyebrow {
+    font-size: 0.68rem;
+    letter-spacing: 2px;
+  }
+
+  .ab-hero-sub {
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+  }
+
+  .ab-hero-stat strong {
+    font-size: 1.5rem;
+  }
+
+  .ab-photos {
+    gap: 10px;
+  }
+
+  .ab-col-left img,
+  .ab-col-right img,
+  .ab-col-left img:nth-child(1),
+  .ab-col-left img:nth-child(2),
+  .ab-col-left img:nth-child(3),
+  .ab-col-right img:nth-child(1),
+  .ab-col-right img:nth-child(2),
+  .ab-col-right img:nth-child(3) {
+    height: 190px;
+  }
+
+  .ab-rehab-doctor img {
+    height: 330px;
+  }
+
+  .ab-rehab-service-box h3 {
+    font-size: 16px;
+  }
+
+  .ab-rehab-service-box p {
+    font-size: 13px;
+  }
+
+  .ab-svc-item {
+    width: 100%;
+  }
+
+  .ab-rehab-card {
+    height: 220px;
+  }
+
+  .ab-rehab-overlay h3 {
+    font-size: 1.15rem;
+  }
+
+  .ab-rehab-overlay p {
+    font-size: 0.8rem;
+  }
+
+  .ab-review-card p {
+    font-size: 0.84rem;
+  }
+
+  .ab-value-icon-wrapper {
+    width: 70px;
+    height: 70px;
+  }
+
+  .ab-value-card h3 {
+    font-size: 1.2rem;
+  }
+}

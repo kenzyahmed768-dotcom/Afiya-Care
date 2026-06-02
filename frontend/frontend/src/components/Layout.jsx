@@ -16,6 +16,7 @@ function Layout() {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
     const name = localStorage.getItem("userName");
+
     if (token && role) {
       setUser({ role, name: name || "User" });
     } else {
@@ -32,6 +33,7 @@ function Layout() {
 
   useEffect(() => {
     document.body.style.overflow = isMenuOpen ? "hidden" : "";
+
     return () => {
       document.body.style.overflow = "";
     };
@@ -43,16 +45,23 @@ function Layout() {
         setDropdownOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleOutsideClick);
+
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
-  const closeMenu = () => setIsMenuOpen(false);
+
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+    setDropdownOpen(false);
+  };
 
   const handleDashboard = () => {
     setDropdownOpen(false);
     closeMenu();
+
     if (user?.role === "admin") navigate("/admin");
     else if (user?.role === "doctor") navigate("/doctor");
     else navigate("/patient");
@@ -62,6 +71,7 @@ function Layout() {
     ["token", "role", "userName", "userEmail"].forEach((key) =>
       localStorage.removeItem(key)
     );
+
     setUser(null);
     setDropdownOpen(false);
     closeMenu();
@@ -70,7 +80,6 @@ function Layout() {
 
   return (
     <div className={`layout-root ${isMenuOpen ? "menu-open" : ""}`}>
-
       <nav className="site-nav">
         <Link to="/" className="logo" onClick={closeMenu}>
           <img src={Logo} alt="AfiyaCare Logo" className="logo-img" />
@@ -89,12 +98,41 @@ function Layout() {
         </button>
 
         <ul className={`nav-links ${isMenuOpen ? "active" : ""}`}>
-          <li><NavLink to="/" end onClick={closeMenu}>Home</NavLink></li>
-          <li><NavLink to="/about" onClick={closeMenu}>About us</NavLink></li>
-          <li><NavLink to="/join" onClick={closeMenu}>Join us</NavLink></li>
-          <li><NavLink to="/booking" onClick={closeMenu}>Booking</NavLink></li>
-          <li><NavLink to="/service" onClick={closeMenu}>Services</NavLink></li>
-          <li><NavLink to="/blog" onClick={closeMenu}>Blog</NavLink></li>
+          <li>
+            <NavLink to="/" end onClick={closeMenu}>
+              Home
+            </NavLink>
+          </li>
+
+          <li>
+            <NavLink to="/about" onClick={closeMenu}>
+              About us
+            </NavLink>
+          </li>
+
+          <li>
+            <NavLink to="/join" onClick={closeMenu}>
+              Join us
+            </NavLink>
+          </li>
+
+          <li>
+            <NavLink to="/booking" onClick={closeMenu}>
+              Booking
+            </NavLink>
+          </li>
+
+          <li>
+            <NavLink to="/service" onClick={closeMenu}>
+              Services
+            </NavLink>
+          </li>
+
+          <li>
+            <NavLink to="/blog" onClick={closeMenu}>
+              Blog
+            </NavLink>
+          </li>
 
           {user ? (
             <li className="profile-nav-item" ref={dropdownRef}>
@@ -106,9 +144,11 @@ function Layout() {
                 <div className="profile-icon-avatar">
                   {user.name?.charAt(0).toUpperCase() || "U"}
                 </div>
+
                 <span className="profile-icon-name">
                   {user.name?.split(" ")[0] || "User"}
                 </span>
+
                 <svg
                   className={`profile-chevron ${dropdownOpen ? "open" : ""}`}
                   width="12"
@@ -128,17 +168,34 @@ function Layout() {
                     <div className="profile-dropdown-avatar">
                       {user.name?.charAt(0).toUpperCase() || "U"}
                     </div>
+
                     <div>
-                      <div className="profile-dropdown-name">{user.name || "User"}</div>
-                      <div className={`profile-dropdown-role ${user.role}`}>{user.role}</div>
+                      <div className="profile-dropdown-name">
+                        {user.name || "User"}
+                      </div>
+                      <div className={`profile-dropdown-role ${user.role}`}>
+                        {user.role}
+                      </div>
                     </div>
                   </div>
+
                   <div className="profile-dropdown-divider" />
-                  <button type="button" className="profile-dropdown-item" onClick={handleDashboard}>
+
+                  <button
+                    type="button"
+                    className="profile-dropdown-item"
+                    onClick={handleDashboard}
+                  >
                     <span>🏠</span> My Dashboard
                   </button>
+
                   <div className="profile-dropdown-divider" />
-                  <button type="button" className="profile-dropdown-item logout" onClick={handleLogout}>
+
+                  <button
+                    type="button"
+                    className="profile-dropdown-item logout"
+                    onClick={handleLogout}
+                  >
                     <span>🚪</span> Logout
                   </button>
                 </div>
@@ -147,10 +204,17 @@ function Layout() {
           ) : (
             <>
               <li>
-                <Link to="/login" className="btn-nav" onClick={closeMenu}>Login</Link>
+                <Link to="/login" className="btn-nav" onClick={closeMenu}>
+                  Login
+                </Link>
               </li>
+
               <li>
-                <Link to="/register" className="btn-nav btn-nav-signup" onClick={closeMenu}>
+                <Link
+                  to="/register"
+                  className="btn-nav btn-nav-signup"
+                  onClick={closeMenu}
+                >
                   Sign Up
                 </Link>
               </li>
@@ -169,6 +233,7 @@ function Layout() {
             <Link to="/" className="logo">
               <img src={Logo} alt="AfiyaCare Logo" className="logo-img" />
             </Link>
+
             <p>
               At Afiya Care, we provide expert physiotherapy services designed
               to restore movement, reduce pain, and support overall wellness.
@@ -186,7 +251,7 @@ function Layout() {
               <li><Link to="/booking">Booking</Link></li>
               <li><Link to="/service">Services</Link></li>
               <li><Link to="/blog">Blog</Link></li>
-               <li><Link to="/patient-community">Patient Community</Link></li>
+              <li><Link to="/patient-community">Patient Community</Link></li>
             </ul>
           </div>
 
@@ -206,25 +271,73 @@ function Layout() {
           <div className="footer-col">
             <h5>Contact us</h5>
             <ul>
-              <li><a href="mailto:afiyacare@gmail.com">afiyacare@gmail.com</a></li>
-              <li><a href="https://www.facebook.com/profile.php?id=61585057423569" target="_blank" rel="noopener noreferrer">Facebook</a></li>
-              <li><a href="https://www.instagram.com/afiyacare_1/?hl=en" target="_blank" rel="noopener noreferrer">Instagram</a></li>
-              <li><a href="https://wa.me/201014737320" target="_blank" rel="noopener noreferrer">WhatsApp</a></li>
+              <li>
+                <a href="mailto:afiyacare@gmail.com">afiyacare@gmail.com</a>
+              </li>
+
+              <li>
+                <a
+                  href="https://www.facebook.com/profile.php?id=61585057423569"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Facebook
+                </a>
+              </li>
+
+              <li>
+                <a
+                  href="https://www.instagram.com/afiyacare_1/?hl=en"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Instagram
+                </a>
+              </li>
+
+              <li>
+                <a
+                  href="https://wa.me/201014737320"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  WhatsApp
+                </a>
+              </li>
+
               <li><Link to="/help">Help Center</Link></li>
             </ul>
+
             <div className="newsletter-row">
               <input type="email" placeholder="Your email" />
-              <button type="button" aria-label="Subscribe">→</button>
+              <button type="button" aria-label="Subscribe">
+                →
+              </button>
             </div>
           </div>
         </div>
 
         <div className="footer-bottom">
           <div className="social-links">
-            <a href="https://www.facebook.com/profile.php?id=61585057423569" target="_blank" rel="noopener noreferrer" aria-label="Facebook">f</a>
-            <a href="https://www.instagram.com/afiyacare_1/?hl=en" target="_blank" rel="noopener noreferrer" aria-label="Instagram">i</a>
-            
+            <a
+              href="https://www.facebook.com/profile.php?id=61585057423569"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook"
+            >
+              f
+            </a>
+
+            <a
+              href="https://www.instagram.com/afiyacare_1/?hl=en"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+            >
+              i
+            </a>
           </div>
+
           <p>© 2025 Afiya Care. All Rights Reserved.</p>
         </div>
       </footer>

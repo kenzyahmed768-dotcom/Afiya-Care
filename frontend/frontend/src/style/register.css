@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
   --bg: #eaf4fb;
@@ -11,52 +11,16 @@
   --muted: rgba(12, 42, 74, 0.45);
 }
 
-/* ── Full page background ── */
-body {
-  margin: 0;
-  background: var(--bg);
-  font-family: 'DM Sans', sans-serif;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-body::before,
-body::after {
-  content: '';
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(90px);
-  pointer-events: none;
-  z-index: 0;
-}
-body::before {
-  width: 520px;
-  height: 520px;
-  background: rgba(14, 165, 233, 0.10);
-  top: -120px;
-  right: -120px;
-}
-body::after {
-  width: 420px;
-  height: 420px;
-  background: rgba(56, 189, 248, 0.08);
-  bottom: -100px;
-  left: -100px;
-}
-
-/* ── Card wrapper ── */
 .register-wrapper {
   position: relative;
-  z-index: 1;
-  width: 520px;
-  margin: 0 auto;
-  padding: 64px 56px;
+  width: min(520px, calc(100% - 32px));
+  margin: 60px auto;
+  padding: clamp(28px, 6vw, 64px) clamp(22px, 5vw, 56px);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 24px;
-  box-shadow: 0 8px 40px rgba(14, 100, 180, 0.10);
+  box-shadow: 0 8px 40px rgba(14, 100, 180, 0.1);
+  font-family: 'DM Sans', sans-serif;
   animation: fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -70,47 +34,49 @@ body::after {
 }
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* ── Heading ── */
 .register-wrapper h2 {
-  font-size: 34px;
-  font-weight: 500;
+  font-size: clamp(28px, 7vw, 34px);
+  font-weight: 600;
   color: var(--text);
   letter-spacing: -0.4px;
   margin-bottom: 6px;
 }
 
-/* ── Subtitle ── */
 .register-subtitle {
   font-size: 13px;
   color: var(--muted);
-  font-weight: 300;
+  font-weight: 400;
   margin-bottom: 32px;
 }
 
-/* ── Message (success or error) ── */
 .register-message {
   font-size: 13px;
   color: #0369a1;
   background: rgba(14, 165, 233, 0.08);
-  border: 1px solid rgba(14, 165, 233, 0.20);
+  border: 1px solid rgba(14, 165, 233, 0.2);
   border-radius: 8px;
   padding: 10px 14px;
   margin-bottom: 16px;
 }
 
-/* ── Form ── */
 .register-form {
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
-/* ── Inputs ── */
 .register-input {
-  display: block;
   width: 100%;
   background: #f0f8ff;
   border: 1px solid var(--border);
@@ -122,10 +88,11 @@ body::after {
   font-size: 15px;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  box-sizing: border-box;
 }
 
 .register-input::placeholder {
-  color: rgba(12, 42, 74, 0.30);
+  color: rgba(12, 42, 74, 0.3);
 }
 
 .register-input:focus {
@@ -134,37 +101,40 @@ body::after {
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-/* ── Register button ── */
-.register-btn {
+.register-btn,
+.register-btn-login {
   width: 100%;
+  min-height: 48px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.register-btn {
   padding: 15px;
   background: var(--accent);
   color: #ffffff;
   border: none;
-  border-radius: 10px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
+  font-weight: 600;
   letter-spacing: 0.02em;
   transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
 }
+
 .register-btn:hover {
   opacity: 0.9;
   transform: translateY(-1px);
   box-shadow: 0 8px 24px rgba(14, 165, 233, 0.32);
 }
-.register-btn:active {
-  transform: translateY(0);
-}
 
-/* ── Divider ── */
 .register-divider {
   display: flex;
   align-items: center;
   gap: 12px;
   margin: 20px 0 16px;
 }
+
 .register-divider::before,
 .register-divider::after {
   content: '';
@@ -172,6 +142,7 @@ body::after {
   height: 1px;
   background: var(--border);
 }
+
 .register-divider span {
   font-size: 11px;
   color: var(--muted);
@@ -179,22 +150,46 @@ body::after {
   letter-spacing: 0.08em;
 }
 
-/* ── Back to login button ── */
 .register-btn-login {
-  width: 100%;
   padding: 13px;
   background: transparent;
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  cursor: pointer;
+  font-weight: 500;
   transition: border-color 0.2s, background 0.2s, color 0.2s;
 }
+
 .register-btn-login:hover {
   border-color: var(--accent);
   background: rgba(14, 165, 233, 0.05);
   color: var(--accent-deep);
+}
+
+@media (max-width: 480px) {
+  .register-wrapper {
+    width: calc(100% - 24px);
+    margin: 32px auto;
+    padding: 28px 18px;
+    border-radius: 18px;
+  }
+
+  .register-wrapper h2,
+  .register-subtitle {
+    text-align: center;
+  }
+
+  .register-subtitle {
+    margin-bottom: 24px;
+  }
+
+  .register-input {
+    padding: 14px 15px;
+    font-size: 14px;
+  }
+
+  .register-btn,
+  .register-btn-login {
+    min-height: 46px;
+    font-size: 14px;
+  }
 }
