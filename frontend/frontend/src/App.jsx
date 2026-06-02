@@ -15,7 +15,7 @@ import HelpCenter from "./pages/Helpcenter";
 import Payment from "./pages/Payment";
 import About from "./pages/About";
 import Services from "./pages/Services";
-import Blog from "./pages/Blog";
+import Blog from "./pages/blog";
 import PatientCommunity from "./pages/PatientCommunity";
 import DoctorProfile from "./pages/DoctorProfile";
 
