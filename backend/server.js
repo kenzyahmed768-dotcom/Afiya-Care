@@ -18,9 +18,7 @@ const server = http.createServer(app);
 
 
 
-app.use(cors({
-  origin: 'https://afiya-care.vercel.app/'
-}));
+app.use(cors());
 
 const allowedOrigins = [
   "http://localhost:5173",
