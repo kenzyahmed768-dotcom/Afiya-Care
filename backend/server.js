@@ -140,7 +140,7 @@ const Message = require("./models/message");
 const Application = require("./models/application");
 const Review = require("./models/review");
 const MedicalFile = require("./models/medicalFile");
-const Progress = require("./models/progress");
+const Progress = require("./models/Progress");
 
 
 const {
