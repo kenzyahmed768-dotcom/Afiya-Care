@@ -626,3 +626,11 @@ footer {
     height: 52px !important;
   }
 }
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
