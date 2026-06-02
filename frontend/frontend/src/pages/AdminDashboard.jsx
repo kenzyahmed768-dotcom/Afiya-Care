@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AfiyaLogo from "../images/logo.jpeg";
 import "../style/admindashboard.css";
 
-const API = "http://localhost:5000";
+const API = "https://afiya-care.onrender.com";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");

@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import "../style/DoctorDashboard.css";
 import Logo from "../images/logo.jpeg";
 
-const API = "http://localhost:5000";
+const API = "https://afiya-care.onrender.com";
 let socket;
 
 export default function DoctorDashboard() {

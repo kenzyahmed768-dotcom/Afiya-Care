@@ -1,4 +1,4 @@
-// pages/Register.jsx
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../style/register.css";
@@ -20,7 +20,7 @@ function Register() {
 
   const handleRegister = async () => {
     try {
-      const res = await fetch("http://localhost:5000/register", {
+      const res = await fetch("https://afiya-care.onrender.com/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

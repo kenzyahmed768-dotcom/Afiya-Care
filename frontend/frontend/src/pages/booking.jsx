@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "../style/Booking.css";
-const API = "http://localhost:5000";
+const API = "https://afiya-care.onrender.com";
 
 const TIME_SLOTS = [
   "09:00 AM","09:30 AM","10:00 AM","10:30 AM",

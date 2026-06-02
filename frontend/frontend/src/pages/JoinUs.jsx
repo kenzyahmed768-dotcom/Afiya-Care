@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "../style/joinus.css";
 
-const API = "http://localhost:5000";
+const API = "https://afiya-care.onrender.com";
 
 const SPECIALISTS = [
   {
