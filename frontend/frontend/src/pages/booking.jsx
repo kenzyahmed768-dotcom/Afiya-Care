@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "../style/Booking.css";
@@ -40,6 +39,33 @@ const LABS = [
   { id: "assfra-lab", name: "Assfra Lab", address: "42 Port Said St, Sidi Gaber, Alexandria, Egypt", phone: "+20 3 987 6543" },
 ];
 
+const PRIORITY_LEVELS = [
+  {
+    value: "normal",
+    label: "Normal",
+    icon: "📅",
+    desc: "Standard scheduling — next available slot",
+    fee: 0,
+    badge: null,
+  },
+  {
+    value: "priority",
+    label: "Priority",
+    icon: "⚡",
+    desc: "Jump the queue — confirmed within 24 hours",
+    fee: 150,
+    badge: "Popular",
+  },
+  {
+    value: "urgent",
+    label: "Urgent",
+    icon: "🚨",
+    desc: "Same-day or next-day emergency slot",
+    fee: 300,
+    badge: "Fastest",
+  },
+];
+
 const formatDoctorName = (doctor) => {
   if (doctor.name && doctor.name !== doctor.email?.split('@')[0]) return doctor.name;
   const emailName = doctor.email?.split('@')[0] || "Doctor";
@@ -58,6 +84,7 @@ export default function Booking() {
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [serviceType, setServiceType] = useState("physiotherapy");
   const [consultationType, setConsultationType] = useState("phone");
+  const [priorityLevel, setPriorityLevel] = useState("normal");
   const [loadingDoctors, setLoadingDoctors] = useState(true);
   const [booking, setBooking] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -70,13 +97,16 @@ export default function Booking() {
   const isConsultation = serviceType === "consultation";
   const isHomeLab = serviceType === "home-lab";
 
+  const getPriorityFee = () => PRIORITY_LEVELS.find(p => p.value === priorityLevel)?.fee || 0;
+
   const getAmount = () => {
+    let base = 500;
     if (selectedPackage) {
-      if (selectedPackage.name === "Single") return 500;
-      if (selectedPackage.name === "Progress") return 3200;
-      if (selectedPackage.name === "Athlete") return 4000;
+      if (selectedPackage.name === "Single") base = 500;
+      else if (selectedPackage.name === "Progress") base = 3200;
+      else if (selectedPackage.name === "Athlete") base = 4000;
     }
-    return 500;
+    return base + getPriorityFee();
   };
 
   useEffect(() => {
@@ -135,6 +165,8 @@ export default function Booking() {
         consultationType,
         packageName: selectedPackage?.name || "Single",
         paymentMethod: "visa",
+        priorityLevel,
+        priorityFee: getPriorityFee(),
       };
       sessionStorage.setItem("pendingBooking", JSON.stringify(bookingData));
       navigate("/payment");
@@ -163,6 +195,8 @@ export default function Booking() {
           patientName: form.name,
           patientEmail: form.email,
           patientPhone: form.phone,
+          priorityLevel,
+          priorityFee: getPriorityFee(),
         }),
       });
       const data = await res.json();
@@ -187,6 +221,7 @@ export default function Booking() {
     setSuccess(false); setSelectedDoctor(null); setSelectedLab(null);
     setSelectedDate(""); setSelectedTime(""); setPaymentMethod("cash");
     setSelectedPackage(null); setServiceType("physiotherapy"); setConsultationType("phone");
+    setPriorityLevel("normal");
     setForm({ name:"", email:"", phone:"", location:"at-clinic", notes:"", address:"" });
   };
 
@@ -201,6 +236,11 @@ export default function Booking() {
             <strong>{isHomeLab ? selectedLab.name : formatDoctorName(selectedDoctor)}</strong>{" "}
             on <strong>{new Date(selectedDate).toDateString()}</strong> at <strong>{selectedTime}</strong> is confirmed.
           </p>
+          {priorityLevel !== "normal" && (
+            <p className="bk-success-payment">
+              {priorityLevel === "urgent" ? "🚨" : "⚡"} <strong>{PRIORITY_LEVELS.find(p=>p.value===priorityLevel)?.label} Booking</strong> — your slot has been prioritised.
+            </p>
+          )}
           {isHomeLab && (
             <p className="bk-success-address">📍 <strong>Lab address:</strong> {selectedLab.address}</p>
           )}
@@ -382,19 +422,21 @@ export default function Booking() {
               </select>
             </div>
           )}
-{/* Address for Home Lab Tests */}
-{isHomeLab && (
-  <div className="bk-field">
-    <label>Home Address *</label>
-    <textarea
-      className="bk-input bk-textarea"
-      rows={2}
-      placeholder="Enter your full address for the lab visit..."
-      value={form.address}
-      onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
-    />
-  </div>
-)}
+
+          {/* Address for Home Lab Tests */}
+          {isHomeLab && (
+            <div className="bk-field">
+              <label>Home Address *</label>
+              <textarea
+                className="bk-input bk-textarea"
+                rows={2}
+                placeholder="Enter your full address for the lab visit..."
+                value={form.address}
+                onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
+              />
+            </div>
+          )}
+
           {/* Address for at-home physiotherapy */}
           {!isHomeLab && !isConsultation && form.location === "at-home" && (
             <div className="bk-field">
@@ -420,10 +462,51 @@ export default function Booking() {
             </div>
           )}
 
+          {/* ── PRIORITY BOOKING ── */}
+          <div className="bk-field">
+            <label>Booking Priority</label>
+            <div className="bk-priority-grid">
+              {PRIORITY_LEVELS.map(pl => (
+                <button
+                  key={pl.value}
+                  type="button"
+                  className={`bk-priority-btn${priorityLevel === pl.value ? " active" : ""}${pl.value === "urgent" ? " urgent" : ""}${pl.value === "priority" ? " priority" : ""}`}
+                  onClick={() => setPriorityLevel(pl.value)}
+                >
+                  {pl.badge && <span className="bk-priority-badge">{pl.badge}</span>}
+                  <span className="bk-priority-icon">{pl.icon}</span>
+                  <span className="bk-priority-label">{pl.label}</span>
+                  <span className="bk-priority-desc">{pl.desc}</span>
+                  <span className="bk-priority-fee">
+                    {pl.fee === 0 ? "No extra fee" : `+${pl.fee} EGP`}
+                  </span>
+                </button>
+              ))}
+            </div>
+            {priorityLevel !== "normal" && (
+              <div className="bk-priority-notice">
+                {priorityLevel === "urgent"
+                  ? "🚨 Our team will contact you within 1–2 hours to confirm your same-day slot."
+                  : "⚡ Your appointment will be confirmed within 24 hours — ahead of standard queue."}
+              </div>
+            )}
+          </div>
+
           <div className="bk-field">
             <label>Describe the issue or reason for visit</label>
             <textarea className="bk-input bk-textarea" rows={3} placeholder="Tell us about your symptoms or reason for booking..." value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
           </div>
+
+          {/* Amount summary */}
+          {(selectedPackage || priorityLevel !== "normal") && (
+            <div className="bk-amount-display">
+              <span className="bk-amount-label">Total Amount:</span>
+              <span className="bk-amount-value">{getAmount().toLocaleString()} EGP</span>
+              {priorityLevel !== "normal" && (
+                <span className="bk-amount-package">incl. {getPriorityFee()} EGP priority fee</span>
+              )}
+            </div>
+          )}
 
           {/* Payment */}
           <div className="bk-field">
@@ -504,4 +587,3 @@ export default function Booking() {
     </div>
   );
 }
-
